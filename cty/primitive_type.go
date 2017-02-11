@@ -31,13 +31,15 @@ var String Type = &primitiveType{Name: "string"}
 var Bool Type = &primitiveType{Name: "bool"}
 
 // True is the truthy value of type Bool
-var True = Value{
+var True = trueValue
+var trueValue = Value{
 	ty:    Bool,
 	value: true,
 }
 
 // False is the falsey value of type Bool
-var False = Value{
+var False = falseValue
+var falseValue = Value{
 	ty:    Bool,
 	value: false,
 }
