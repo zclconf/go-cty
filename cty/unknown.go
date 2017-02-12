@@ -65,7 +65,7 @@ func (t pseudoTypeDynamic) GoString() string {
 // DynamicValue is the only valid value of the pseudo-type dynamic.
 // This value can be used as a placeholder where a value or expression's
 // type and value are both unknown, thus allowing partial evaluation. See
-// the docs for PseudoTypeDynamic for more information.
+// the docs for DynamicPseudoType for more information.
 var DynamicValue Value
 
 func init() {
