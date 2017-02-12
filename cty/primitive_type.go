@@ -33,15 +33,15 @@ var Bool Type = &primitiveType{Name: "bool"}
 // True is the truthy value of type Bool
 var True = trueValue
 var trueValue = Value{
-	ty:    Bool,
-	value: true,
+	ty: Bool,
+	v:  true,
 }
 
 // False is the falsey value of type Bool
 var False = falseValue
 var falseValue = Value{
-	ty:    Bool,
-	value: false,
+	ty: Bool,
+	v:  false,
 }
 
 // IsPrimitiveType returns true if and only if the given type is a primitive

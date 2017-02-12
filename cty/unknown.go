@@ -17,8 +17,8 @@ var unknown interface{} = &unknownType{}
 // Unknown values themselves return Unknown.
 func Unknown(t Type) Value {
 	return Value{
-		ty:    t,
-		value: unknown,
+		ty: t,
+		v:  unknown,
 	}
 }
 
@@ -56,6 +56,6 @@ func (t *pseudoTypeDynamic) FriendlyName() string {
 // type and value are both unknown, thus allowing partial evaluation. See
 // the docs for PseudoTypeDynamic for more information.
 var PseudoTypeDynamicValue = Value{
-	ty:    PseudoTypeDynamic,
-	value: unknown,
+	ty: DynamicPseudoType,
+	v:  unknown,
 }

@@ -8,7 +8,7 @@ package cty
 // checker.
 func Null(t Type) Value {
 	return Value{
-		ty:    t,
-		value: nil,
+		ty: t,
+		v:  nil,
 	}
 }
