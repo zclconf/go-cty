@@ -93,7 +93,7 @@ func TestObjectTypeEquals(t *testing.T) {
 		t.Run(fmt.Sprintf("%#v.Equals(%#v)", test.LHS, test.RHS), func(t *testing.T) {
 			got := test.LHS.Equals(test.RHS)
 			if got != test.Expected {
-				t.Fatalf("Equals returned %#v; want %#v", got, test.Expected)
+				t.Errorf("Equals returned %#v; want %#v", got, test.Expected)
 			}
 		})
 	}

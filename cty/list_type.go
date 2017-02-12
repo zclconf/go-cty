@@ -7,7 +7,7 @@ import (
 // TypeList instances represent specific list types. Each distinct ElementType
 // creates a distinct, non-equal list type.
 type typeList struct {
-	typeImpl
+	typeImplSigil
 	elementType Type
 }
 
@@ -15,15 +15,17 @@ type typeList struct {
 //
 // List types are CollectionType implementations.
 func List(elem Type) Type {
-	return typeList{
-		elementType: elem,
+	return Type{
+		typeList{
+			elementType: elem,
+		},
 	}
 }
 
 // Equals returns true if the other Type is a list whose element type is
 // equal to that of the receiver.
 func (t typeList) Equals(other Type) bool {
-	ot, isList := other.(typeList)
+	ot, isList := other.typeImpl.(typeList)
 	if !isList {
 		return false
 	}
@@ -45,21 +47,22 @@ func (t typeList) GoString() string {
 
 // IsListType returns true if the given type is a list type, regardless of its
 // element type.
-func IsListType(t Type) bool {
-	_, ok := t.(typeList)
+func (t Type) IsListType() bool {
+	_, ok := t.typeImpl.(typeList)
 	return ok
 }
 
 // ListElementType is a convenience method that checks if the given type is
-// a list type, returning its element type if so and nil otherwise. This is
-// intended to allow convenient conditional branches, like so:
+// a list type, returning a pointer to its element type if so and nil
+// otherwise. This is intended to allow convenient conditional branches,
+// like so:
 //
-//     if et := ListElementType(t); et != nil {
-//         // Do something with "et"
+//     if et := t.ListElementType(); et != nil {
+//         // Do something with *et
 //     }
-func ListElementType(t Type) Type {
-	if lt, ok := t.(typeList); ok {
-		return lt.elementType
+func (t Type) ListElementType() *Type {
+	if lt, ok := t.typeImpl.(typeList); ok {
+		return &lt.elementType
 	}
 	return nil
 }

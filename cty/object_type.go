@@ -5,7 +5,7 @@ import (
 )
 
 type typeObject struct {
-	typeImpl
+	typeImplSigil
 	attrTypes map[string]Type
 }
 
@@ -14,13 +14,15 @@ type typeObject struct {
 // After a map is passed to this function the caller must no longer access it,
 // since ownership is transferred to this library.
 func Object(attrTypes map[string]Type) Type {
-	return typeObject{
-		attrTypes: attrTypes,
+	return Type{
+		typeObject{
+			attrTypes: attrTypes,
+		},
 	}
 }
 
 func (t typeObject) Equals(other Type) bool {
-	if ot, ok := other.(typeObject); ok {
+	if ot, ok := other.typeImpl.(typeObject); ok {
 		if len(t.attrTypes) != len(ot.attrTypes) {
 			// Fast path: if we don't have the same number of attributes
 			// then we can't possibly be equal. This also avoids the need
@@ -41,7 +43,7 @@ func (t typeObject) Equals(other Type) bool {
 
 		return true
 	}
-	return false
+	panic("not an object type")
 }
 
 func (t typeObject) FriendlyName() string {

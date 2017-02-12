@@ -30,7 +30,7 @@ func (t unknownType) GoString() string {
 }
 
 type pseudoTypeDynamic struct {
-	typeImpl
+	typeImplSigil
 }
 
 // DynamicPseudoType represents the dynamic pseudo-type.
@@ -47,18 +47,20 @@ type pseudoTypeDynamic struct {
 // application. "Unknown" is the only valid value of this pseudo-type, so
 // operations on values of this type will always short-circuit as per
 // the rules for that special value.
-var DynamicPseudoType Type = &pseudoTypeDynamic{}
+var DynamicPseudoType = Type{
+	pseudoTypeDynamic{},
+}
 
-func (t *pseudoTypeDynamic) Equals(other Type) bool {
-	_, ok := other.(*pseudoTypeDynamic)
+func (t pseudoTypeDynamic) Equals(other Type) bool {
+	_, ok := other.typeImpl.(pseudoTypeDynamic)
 	return ok
 }
 
-func (t *pseudoTypeDynamic) FriendlyName() string {
+func (t pseudoTypeDynamic) FriendlyName() string {
 	return "dynamic"
 }
 
-func (t *pseudoTypeDynamic) GoString() string {
+func (t pseudoTypeDynamic) GoString() string {
 	return "cty.DynamicPseudoType"
 }
 
