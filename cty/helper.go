@@ -49,7 +49,7 @@ func typeCheck(ty Type, values ...Value) (shortCircuit *Value, err error) {
 	}
 
 	if hasUnknown {
-		ret := Unknown(ty)
+		ret := UnknownVal(ty)
 		return &ret, nil
 	}
 

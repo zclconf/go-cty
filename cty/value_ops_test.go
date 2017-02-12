@@ -28,13 +28,13 @@ func TestValueAdd(t *testing.T) {
 		},
 		{
 			NumberIntVal(1),
-			Unknown(Number),
-			Unknown(Number),
+			UnknownVal(Number),
+			UnknownVal(Number),
 		},
 		{
-			Unknown(Number),
-			Unknown(Number),
-			Unknown(Number),
+			UnknownVal(Number),
+			UnknownVal(Number),
+			UnknownVal(Number),
 		},
 		{
 			NumberIntVal(1),
@@ -81,13 +81,13 @@ func TestValueSub(t *testing.T) {
 		},
 		{
 			NumberIntVal(1),
-			Unknown(Number),
-			Unknown(Number),
+			UnknownVal(Number),
+			UnknownVal(Number),
 		},
 		{
-			Unknown(Number),
-			Unknown(Number),
-			Unknown(Number),
+			UnknownVal(Number),
+			UnknownVal(Number),
+			UnknownVal(Number),
 		},
 		{
 			NumberIntVal(1),
@@ -125,8 +125,8 @@ func TestValueNeg(t *testing.T) {
 			NumberFloatVal(-0.5),
 		},
 		{
-			Unknown(Number),
-			Unknown(Number),
+			UnknownVal(Number),
+			UnknownVal(Number),
 		},
 		{
 			DynamicValue,

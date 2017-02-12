@@ -60,7 +60,7 @@ func (val Value) Equals(other Value) Value {
 	}
 
 	if !(val.IsKnown() && other.IsKnown()) {
-		return Unknown(Bool)
+		return UnknownVal(Bool)
 	}
 
 	if val.IsNull() || other.IsNull() {

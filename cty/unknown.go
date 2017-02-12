@@ -8,14 +8,14 @@ type unknownType struct {
 // Unknown is a special value that can be
 var unknown interface{} = &unknownType{}
 
-// Unknown returns an Value that represents an unknown value of the given
+// UnknownVal returns an Value that represents an unknown value of the given
 // type. Unknown values can be used to represent a value that is
 // not yet known. Its meaning is undefined in cty, but it could be used by
 // an calling application to allow partial evaluation.
 //
 // Unknown values of any type can be created of any type. All operations on
 // Unknown values themselves return Unknown.
-func Unknown(t Type) Value {
+func UnknownVal(t Type) Value {
 	return Value{
 		ty: t,
 		v:  unknown,
