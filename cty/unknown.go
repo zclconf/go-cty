@@ -26,7 +26,7 @@ type pseudoTypeDynamic struct {
 	typeImpl
 }
 
-// PseudoTypeDynamic represents the dynamic pseudo-type.
+// DynamicPseudoType represents the dynamic pseudo-type.
 //
 // This type can represent situations where a type is not yet known. Its
 // meaning is undefined in cty, but it could be used by a calling
@@ -40,7 +40,7 @@ type pseudoTypeDynamic struct {
 // application. "Unknown" is the only valid value of this pseudo-type, so
 // operations on values of this type will always short-circuit as per
 // the rules for that special value.
-var PseudoTypeDynamic Type = &pseudoTypeDynamic{}
+var DynamicPseudoType Type = &pseudoTypeDynamic{}
 
 func (t *pseudoTypeDynamic) Equals(other Type) bool {
 	_, ok := other.(*pseudoTypeDynamic)
@@ -51,11 +51,11 @@ func (t *pseudoTypeDynamic) FriendlyName() string {
 	return "dynamic"
 }
 
-// PseudoTypeDynamicValue is the only valid value of the pseudo-type dynamic.
+// DynamicValue is the only valid value of the pseudo-type dynamic.
 // This value can be used as a placeholder where a value or expression's
 // type and value are both unknown, thus allowing partial evaluation. See
 // the docs for PseudoTypeDynamic for more information.
-var PseudoTypeDynamicValue = Value{
+var DynamicValue = Value{
 	ty: DynamicPseudoType,
 	v:  unknown,
 }
