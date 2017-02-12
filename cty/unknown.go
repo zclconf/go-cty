@@ -47,9 +47,7 @@ type pseudoTypeDynamic struct {
 // application. "Unknown" is the only valid value of this pseudo-type, so
 // operations on values of this type will always short-circuit as per
 // the rules for that special value.
-var DynamicPseudoType = Type{
-	pseudoTypeDynamic{},
-}
+var DynamicPseudoType Type
 
 func (t pseudoTypeDynamic) Equals(other Type) bool {
 	_, ok := other.typeImpl.(pseudoTypeDynamic)
@@ -68,7 +66,14 @@ func (t pseudoTypeDynamic) GoString() string {
 // This value can be used as a placeholder where a value or expression's
 // type and value are both unknown, thus allowing partial evaluation. See
 // the docs for PseudoTypeDynamic for more information.
-var DynamicValue = Value{
-	ty: DynamicPseudoType,
-	v:  unknown,
+var DynamicValue Value
+
+func init() {
+	DynamicPseudoType = Type{
+		pseudoTypeDynamic{},
+	}
+	DynamicValue = Value{
+		ty: DynamicPseudoType,
+		v:  unknown,
+	}
 }

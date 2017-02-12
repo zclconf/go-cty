@@ -53,33 +53,39 @@ func (t primitiveType) GoString() string {
 // Number is the numeric type. Number values are arbitrary-precision
 // decimal numbers, which can then be converted into Go's various numeric
 // types only if they are in the appropriate range.
-var Number = Type{
-	primitiveType{Kind: primitiveTypeNumber},
-}
+var Number Type
 
 // String is the string type. String values are sequences of unicode codepoints
 // encoded internally as UTF-8.
-var String = Type{
-	primitiveType{Kind: primitiveTypeString},
-}
+var String Type
 
 // Bool is the boolean type. The two values of this type are True and False.
-var Bool = Type{
-	primitiveType{Kind: primitiveTypeBool},
-}
+var Bool Type
 
 // True is the truthy value of type Bool
-var True = trueValue
-var trueValue = Value{
-	ty: Bool,
-	v:  true,
-}
+var True Value
 
 // False is the falsey value of type Bool
-var False = falseValue
-var falseValue = Value{
-	ty: Bool,
-	v:  false,
+var False Value
+
+func init() {
+	Number = Type{
+		primitiveType{Kind: primitiveTypeNumber},
+	}
+	String = Type{
+		primitiveType{Kind: primitiveTypeString},
+	}
+	Bool = Type{
+		primitiveType{Kind: primitiveTypeBool},
+	}
+	True = Value{
+		ty: Bool,
+		v:  true,
+	}
+	False = Value{
+		ty: Bool,
+		v:  false,
+	}
 }
 
 // IsPrimitiveType returns true if and only if the reciever is a primitive
