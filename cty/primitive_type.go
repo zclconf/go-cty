@@ -18,6 +18,20 @@ func (t *primitiveType) FriendlyName() string {
 	return t.Name
 }
 
+func (t *primitiveType) GoString() string {
+	switch t {
+	case Bool:
+		return "cty.Bool"
+	case Number:
+		return "cty.Number"
+	case String:
+		return "cty.String"
+	default:
+		// should never happen
+		panic("invalid primitive type")
+	}
+}
+
 // Number is the numeric type. Number values are arbitrary-precision
 // decimal numbers, which can then be converted into Go's various numeric
 // types only if they are in the appropriate range.

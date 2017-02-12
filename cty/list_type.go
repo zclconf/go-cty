@@ -1,5 +1,9 @@
 package cty
 
+import (
+	"fmt"
+)
+
 // TypeList instances represent specific list types. Each distinct ElementType
 // creates a distinct, non-equal list type.
 type typeList struct {
@@ -33,6 +37,10 @@ func (t typeList) FriendlyName() string {
 
 func (t typeList) ElementType() Type {
 	return t.elementType
+}
+
+func (t typeList) GoString() string {
+	return fmt.Sprintf("cty.List(%#v)", t.elementType)
 }
 
 // IsListType returns true if the given type is a list type, regardless of its

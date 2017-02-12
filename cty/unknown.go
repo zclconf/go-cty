@@ -22,6 +22,13 @@ func Unknown(t Type) Value {
 	}
 }
 
+func (t unknownType) GoString() string {
+	// This is the stringification of our internal unknown marker. The
+	// stringification of the public representation of unknowns is in
+	// Value.GoString.
+	return "cty.unknown"
+}
+
 type pseudoTypeDynamic struct {
 	typeImpl
 }
@@ -49,6 +56,10 @@ func (t *pseudoTypeDynamic) Equals(other Type) bool {
 
 func (t *pseudoTypeDynamic) FriendlyName() string {
 	return "dynamic"
+}
+
+func (t *pseudoTypeDynamic) GoString() string {
+	return "cty.DynamicPseudoType"
 }
 
 // DynamicValue is the only valid value of the pseudo-type dynamic.
