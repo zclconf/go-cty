@@ -7,7 +7,7 @@ package cty
 type Type interface {
 	// typeSigil is a do-nothing method that exists only to express
 	// that a type is an implementation of Type.
-	typeSigil()
+	typeSigil() typeImpl
 
 	// Equals returns true if the other given Type exactly equals the
 	// receiver Type.
@@ -22,5 +22,6 @@ type Type interface {
 // to signal that they are implementations of Type.
 type typeImpl struct{}
 
-func (t typeImpl) typeSigil() {
+func (t typeImpl) typeSigil() typeImpl {
+	return typeImpl{}
 }
