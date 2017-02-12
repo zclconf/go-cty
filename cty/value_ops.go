@@ -125,3 +125,24 @@ func (val Value) Add(other Value) Value {
 	ret.Add(val.v.(*big.Float), other.v.(*big.Float))
 	return NumberVal(ret)
 }
+
+// Sub returns receiver minus the given other value. Both values must be
+// numbers; this method will panic if not.
+func (val Value) Sub(other Value) Value {
+	if shortCircuit := mustTypeCheck(Number, val, other); shortCircuit != nil {
+		return *shortCircuit
+	}
+
+	return val.Add(other.Neg())
+}
+
+// Neg returns the numeric negative of the receiver, which must be a number.
+// This method will panic when given a value of any other type.
+func (val Value) Neg() Value {
+	if shortCircuit := mustTypeCheck(Number, val); shortCircuit != nil {
+		return *shortCircuit
+	}
+
+	ret := new(big.Float).Neg(val.v.(*big.Float))
+	return NumberVal(ret)
+}
