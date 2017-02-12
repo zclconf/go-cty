@@ -44,3 +44,20 @@ func StringVal(v string) Value {
 		v:  v,
 	}
 }
+
+// ObjectVal returns a Value of an object type whose structure is defined
+// by the key names and value types in the given map.
+func ObjectVal(attrs map[string]Value) Value {
+	attrTypes := make(map[string]Type, len(attrs))
+	attrVals := make(map[string]interface{}, len(attrs))
+
+	for attr, val := range attrs {
+		attrTypes[attr] = val.ty
+		attrVals[attr] = val.v
+	}
+
+	return Value{
+		ty: Object(attrTypes),
+		v:  attrVals,
+	}
+}
