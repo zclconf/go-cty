@@ -316,27 +316,27 @@ func TestValueEquals(t *testing.T) {
 		},
 		{
 			NumberIntVal(1),
-			DynamicValue,
+			DynamicVal,
 			UnknownVal(Bool),
 		},
 		{
-			DynamicValue,
+			DynamicVal,
 			BoolVal(true),
 			UnknownVal(Bool),
 		},
 		{
-			DynamicValue,
-			DynamicValue,
+			DynamicVal,
+			DynamicVal,
 			UnknownVal(Bool),
 		},
 		{
 			ListVal([]Value{
 				StringVal("hi"),
-				DynamicValue,
+				DynamicVal,
 			}),
 			ListVal([]Value{
 				StringVal("hi"),
-				DynamicValue,
+				DynamicVal,
 			}),
 			UnknownVal(Bool),
 		},
@@ -354,11 +354,11 @@ func TestValueEquals(t *testing.T) {
 		{
 			MapVal(map[string]Value{
 				"static":  StringVal("hi"),
-				"dynamic": DynamicValue,
+				"dynamic": DynamicVal,
 			}),
 			MapVal(map[string]Value{
 				"static":  StringVal("hi"),
-				"dynamic": DynamicValue,
+				"dynamic": DynamicVal,
 			}),
 			UnknownVal(Bool),
 		},
@@ -418,13 +418,13 @@ func TestValueAdd(t *testing.T) {
 		},
 		{
 			NumberIntVal(1),
-			DynamicValue,
-			DynamicValue,
+			DynamicVal,
+			DynamicVal,
 		},
 		{
-			DynamicValue,
-			DynamicValue,
-			DynamicValue,
+			DynamicVal,
+			DynamicVal,
+			DynamicVal,
 		},
 	}
 
@@ -471,13 +471,13 @@ func TestValueSub(t *testing.T) {
 		},
 		{
 			NumberIntVal(1),
-			DynamicValue,
-			DynamicValue,
+			DynamicVal,
+			DynamicVal,
 		},
 		{
-			DynamicValue,
-			DynamicValue,
-			DynamicValue,
+			DynamicVal,
+			DynamicVal,
+			DynamicVal,
 		},
 	}
 
@@ -509,8 +509,8 @@ func TestValueNeg(t *testing.T) {
 			UnknownVal(Number),
 		},
 		{
-			DynamicValue,
-			DynamicValue,
+			DynamicVal,
+			DynamicVal,
 		},
 	}
 

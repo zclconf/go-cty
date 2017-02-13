@@ -45,7 +45,7 @@ func typeCheck(ty Type, values ...Value) (shortCircuit *Value, err error) {
 	}
 
 	if hasDynamic {
-		return &DynamicValue, nil
+		return &DynamicVal, nil
 	}
 
 	if hasUnknown {
