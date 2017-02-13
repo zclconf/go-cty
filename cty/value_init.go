@@ -1,7 +1,10 @@
 package cty
 
 import (
+	"fmt"
 	"math/big"
+
+	"golang.org/x/text/unicode/norm"
 )
 
 // BoolVal returns a Value of type Number whose internal value is the given
@@ -38,10 +41,16 @@ func NumberFloatVal(v float64) Value {
 
 // StringVal returns a Value of type String whose internal value is the
 // given string.
+//
+// Strings must be UTF-8 encoded sequences of valid unicode codepoints, and
+// they are NFC-normalized on entry into the world of cty values.
+//
+// If the given string is not valid UTF-8 then behavior of string operations
+// is undefined.
 func StringVal(v string) Value {
 	return Value{
 		ty: String,
-		v:  v,
+		v:  norm.NFC.String(v),
 	}
 }
 
@@ -59,5 +68,87 @@ func ObjectVal(attrs map[string]Value) Value {
 	return Value{
 		ty: Object(attrTypes),
 		v:  attrVals,
+	}
+}
+
+// ListVal returns a Value of alistmap type whose element type is defined by
+// the types of the given values, which must be homogenous.
+//
+// If the types are not all consistent (aside from elements that are of the
+// dynamic pseudo-type) then this function will panic. It will panic also
+// if the given list is empty, since then the element type cannot be inferred.
+// (See also ListValEmpty.)
+func ListVal(vals []Value) Value {
+	if len(vals) == 0 {
+		panic("must not call ListVal with empty slice")
+	}
+	elementType := DynamicPseudoType
+	rawList := make([]interface{}, len(vals))
+
+	for i, val := range vals {
+		if elementType == DynamicPseudoType {
+			elementType = val.ty
+		} else if val.ty != DynamicPseudoType && !elementType.Equals(val.ty) {
+			panic(fmt.Errorf(
+				"inconsistent list element types (%#v then %#v)",
+				elementType, val.ty,
+			))
+		}
+
+		rawList[i] = val.v
+	}
+
+	return Value{
+		ty: List(elementType),
+		v:  rawList,
+	}
+}
+
+// ListValEmpty returns an empty map of the given element type.
+func ListValEmpty(element Type) Value {
+	return Value{
+		ty: List(element),
+		v:  []interface{}{},
+	}
+}
+
+// MapVal returns a Value of a map type whose element type is defined by
+// the types of the given values, which must be homogenous.
+//
+// If the types are not all consistent (aside from elements that are of the
+// dynamic pseudo-type) then this function will panic. It will panic also
+// if the given map is empty, since then the element type cannot be inferred.
+// (See also MapValEmpty.)
+func MapVal(vals map[string]Value) Value {
+	if len(vals) == 0 {
+		panic("must not call MapVal with empty map")
+	}
+	elementType := DynamicPseudoType
+	rawMap := make(map[string]interface{}, len(vals))
+
+	for key, val := range vals {
+		if elementType == DynamicPseudoType {
+			elementType = val.ty
+		} else if val.ty != DynamicPseudoType && !elementType.Equals(val.ty) {
+			panic(fmt.Errorf(
+				"inconsistent map element types (%#v then %#v)",
+				elementType, val.ty,
+			))
+		}
+
+		rawMap[key] = val.v
+	}
+
+	return Value{
+		ty: Map(elementType),
+		v:  rawMap,
+	}
+}
+
+// MapValEmpty returns an empty map of the given element type.
+func MapValEmpty(element Type) Value {
+	return Value{
+		ty: Map(element),
+		v:  map[string]interface{}{},
 	}
 }

@@ -52,7 +52,7 @@ func (val Value) GoString() string {
 // if two values are equal *ignoring* the short-circuit rules.
 func (val Value) Equals(other Value) Value {
 	if val.ty == DynamicPseudoType || other.ty == DynamicPseudoType {
-		return DynamicValue
+		return UnknownVal(Bool)
 	}
 
 	if !val.ty.Equals(other.ty) {
@@ -73,15 +73,113 @@ func (val Value) Equals(other Value) Value {
 	ty := val.ty
 	result := false
 
-	switch ty {
-	case Number:
+	switch {
+	case ty == Number:
 		result = val.v.(*big.Float).Cmp(other.v.(*big.Float)) == 0
+	case ty == Bool:
+		result = val.v.(bool) == other.v.(bool)
+	case ty == String:
+		// Simple equality is safe because we NFC-normalize strings as they
+		// enter our world from StringVal, and so we can assume strings are
+		// always in normal form.
+		result = val.v.(string) == other.v.(string)
+	case ty.IsObjectType():
+		oty := ty.typeImpl.(typeObject)
+		result = true
+		for attr, aty := range oty.attrTypes {
+			lhs := Value{
+				ty: aty,
+				v:  val.v.(map[string]interface{})[attr],
+			}
+			rhs := Value{
+				ty: aty,
+				v:  other.v.(map[string]interface{})[attr],
+			}
+			eq := lhs.Equals(rhs)
+			if !eq.IsKnown() {
+				return UnknownVal(Bool)
+			}
+			if eq.False() {
+				result = false
+				break
+			}
+		}
+	case ty.IsListType():
+		ety := ty.typeImpl.(typeList).elementType
+		if len(val.v.([]interface{})) == len(other.v.([]interface{})) {
+			result = true
+			for i := range val.v.([]interface{}) {
+				lhs := Value{
+					ty: ety,
+					v:  val.v.([]interface{})[i],
+				}
+				rhs := Value{
+					ty: ety,
+					v:  other.v.([]interface{})[i],
+				}
+				eq := lhs.Equals(rhs)
+				if !eq.IsKnown() {
+					return UnknownVal(Bool)
+				}
+				if eq.False() {
+					result = false
+					break
+				}
+			}
+		}
+	case ty.IsMapType():
+		ety := ty.typeImpl.(typeMap).elementType
+		if len(val.v.(map[string]interface{})) == len(other.v.(map[string]interface{})) {
+			result = true
+			for k := range val.v.(map[string]interface{}) {
+				if _, ok := other.v.(map[string]interface{})[k]; !ok {
+					result = false
+					break
+				}
+				lhs := Value{
+					ty: ety,
+					v:  val.v.(map[string]interface{})[k],
+				}
+				rhs := Value{
+					ty: ety,
+					v:  other.v.(map[string]interface{})[k],
+				}
+				eq := lhs.Equals(rhs)
+				if !eq.IsKnown() {
+					return UnknownVal(Bool)
+				}
+				if eq.False() {
+					result = false
+					break
+				}
+			}
+		}
+
 	default:
-		// FIXME: This is not yet complete
-		panic("unsupported value type in Equals")
+		// should never happen
+		panic(fmt.Errorf("unsupported value type %#v in Equals", ty))
 	}
 
 	return BoolVal(result)
+}
+
+// True returns true if the receiver is True, false if False, and panics if
+// the receiver is not of type Bool.
+//
+// This is a helper function to help write application logic that works with
+// values, rather than a first-class operation. It does not work with unknown
+// or null values. For more robust handling with unknown value
+// short-circuiting, use val.Equals(cty.True).
+func (val Value) True() bool {
+	if val.ty != Bool {
+		panic("not bool")
+	}
+	return val.Equals(True).v.(bool)
+}
+
+// False is the opposite of True.
+func (val Value) False() bool {
+	return !val.True()
 }
 
 // RawEquals returns true if and only if the two given values have the same

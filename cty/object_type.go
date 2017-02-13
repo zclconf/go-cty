@@ -79,3 +79,10 @@ func init() {
 		v:  map[string]interface{}{},
 	}
 }
+
+// IsObjectType returns true if the given type is an object type, regardless
+// of its element type.
+func (t Type) IsObjectType() bool {
+	_, ok := t.typeImpl.(typeObject)
+	return ok
+}

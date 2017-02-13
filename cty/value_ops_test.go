@@ -5,6 +5,386 @@ import (
 	"testing"
 )
 
+func TestValueEquals(t *testing.T) {
+	tests := []struct {
+		LHS      Value
+		RHS      Value
+		Expected Value
+	}{
+		// Booleans
+		{
+			BoolVal(true),
+			BoolVal(true),
+			BoolVal(true),
+		},
+		{
+			BoolVal(false),
+			BoolVal(false),
+			BoolVal(true),
+		},
+		{
+			BoolVal(true),
+			BoolVal(false),
+			BoolVal(false),
+		},
+
+		// Numbers
+		{
+			NumberIntVal(1),
+			NumberIntVal(2),
+			BoolVal(false),
+		},
+		{
+			NumberIntVal(2),
+			NumberIntVal(2),
+			BoolVal(true),
+		},
+
+		// Strings
+		{
+			StringVal(""),
+			StringVal(""),
+			BoolVal(true),
+		},
+		{
+			StringVal("hello"),
+			StringVal("hello"),
+			BoolVal(true),
+		},
+		{
+			StringVal("hello"),
+			StringVal("world"),
+			BoolVal(false),
+		},
+		{
+			StringVal("0"),
+			StringVal(""),
+			BoolVal(false),
+		},
+		{
+			StringVal("años"),
+			StringVal("años"),
+			BoolVal(true),
+		},
+		{
+			// Combining marks are normalized by StringVal
+			StringVal("años"),  // (precomposed tilde-n)
+			StringVal("años"), // (combining tilde followed by bare n)
+			BoolVal(true),
+		},
+		{
+			// tilde-n does not normalize with bare n
+			StringVal("años"),
+			StringVal("anos"),
+			BoolVal(false),
+		},
+
+		// Objects
+		{
+			ObjectVal(map[string]Value{}),
+			ObjectVal(map[string]Value{}),
+			BoolVal(true),
+		},
+		{
+			ObjectVal(map[string]Value{
+				"num": NumberIntVal(1),
+			}),
+			ObjectVal(map[string]Value{
+				"num": NumberIntVal(1),
+			}),
+			BoolVal(true),
+		},
+		{
+			ObjectVal(map[string]Value{
+				"num": NumberIntVal(1),
+			}),
+			ObjectVal(map[string]Value{}),
+			BoolVal(false),
+		},
+		{
+			ObjectVal(map[string]Value{
+				"num":  NumberIntVal(1),
+				"flag": BoolVal(true),
+			}),
+			ObjectVal(map[string]Value{
+				"num":  NumberIntVal(1),
+				"flag": BoolVal(true),
+			}),
+			BoolVal(true),
+		},
+		{
+			ObjectVal(map[string]Value{
+				"num": NumberIntVal(1),
+			}),
+			ObjectVal(map[string]Value{
+				"num": NumberIntVal(2),
+			}),
+			BoolVal(false),
+		},
+		{
+			ObjectVal(map[string]Value{
+				"num": NumberIntVal(1),
+			}),
+			ObjectVal(map[string]Value{
+				"othernum": NumberIntVal(1),
+			}),
+			BoolVal(false),
+		},
+		{
+			ObjectVal(map[string]Value{
+				"num":  NumberIntVal(1),
+				"flag": BoolVal(true),
+			}),
+			ObjectVal(map[string]Value{
+				"num": NumberIntVal(1),
+			}),
+			BoolVal(false),
+		},
+		{
+			ObjectVal(map[string]Value{
+				"num":  NumberIntVal(1),
+				"flag": BoolVal(true),
+			}),
+			ObjectVal(map[string]Value{
+				"num":  NumberIntVal(1),
+				"flag": BoolVal(false),
+			}),
+			BoolVal(false),
+		},
+
+		// Lists
+		{
+			ListValEmpty(Number),
+			ListValEmpty(Number),
+			BoolVal(true),
+		},
+		{
+			ListValEmpty(Number),
+			ListValEmpty(Bool),
+			BoolVal(false),
+		},
+		{
+			ListVal([]Value{
+				NumberIntVal(1),
+			}),
+			ListVal([]Value{
+				NumberIntVal(1),
+			}),
+			BoolVal(true),
+		},
+		{
+			ListVal([]Value{
+				NumberIntVal(1),
+			}),
+			ListValEmpty(String),
+			BoolVal(false),
+		},
+		{
+			ListVal([]Value{
+				NumberIntVal(1),
+				NumberIntVal(2),
+			}),
+			ListVal([]Value{
+				NumberIntVal(1),
+				NumberIntVal(2),
+			}),
+			BoolVal(true),
+		},
+		{
+			ListVal([]Value{
+				NumberIntVal(1),
+			}),
+			ListVal([]Value{
+				NumberIntVal(2),
+			}),
+			BoolVal(false),
+		},
+		{
+			ListVal([]Value{
+				NumberIntVal(1),
+				NumberIntVal(2),
+			}),
+			ListVal([]Value{
+				NumberIntVal(1),
+			}),
+			BoolVal(false),
+		},
+		{
+			ListVal([]Value{
+				NumberIntVal(1),
+			}),
+			ListVal([]Value{
+				NumberIntVal(1),
+				NumberIntVal(2),
+			}),
+			BoolVal(false),
+		},
+
+		// Maps
+		{
+			MapValEmpty(Number),
+			MapValEmpty(Number),
+			BoolVal(true),
+		},
+		{
+			MapValEmpty(Number),
+			MapValEmpty(Bool),
+			BoolVal(false),
+		},
+		{
+			MapVal(map[string]Value{
+				"num": NumberIntVal(1),
+			}),
+			MapVal(map[string]Value{
+				"num": NumberIntVal(1),
+			}),
+			BoolVal(true),
+		},
+		{
+			MapVal(map[string]Value{
+				"num": NumberIntVal(1),
+			}),
+			MapValEmpty(String),
+			BoolVal(false),
+		},
+		{
+			MapVal(map[string]Value{
+				"num1": NumberIntVal(1),
+				"num2": NumberIntVal(2),
+			}),
+			MapVal(map[string]Value{
+				"num1": NumberIntVal(1),
+				"num2": NumberIntVal(2),
+			}),
+			BoolVal(true),
+		},
+		{
+			MapVal(map[string]Value{
+				"num": NumberIntVal(1),
+			}),
+			MapVal(map[string]Value{
+				"num": NumberIntVal(2),
+			}),
+			BoolVal(false),
+		},
+		{
+			MapVal(map[string]Value{
+				"num": NumberIntVal(1),
+			}),
+			MapVal(map[string]Value{
+				"othernum": NumberIntVal(1),
+			}),
+			BoolVal(false),
+		},
+		{
+			MapVal(map[string]Value{
+				"num1": NumberIntVal(1),
+				"num2": NumberIntVal(2),
+			}),
+			MapVal(map[string]Value{
+				"num1": NumberIntVal(1),
+			}),
+			BoolVal(false),
+		},
+		{
+			MapVal(map[string]Value{
+				"num1": NumberIntVal(1),
+			}),
+			MapVal(map[string]Value{
+				"num1": NumberIntVal(1),
+				"num2": NumberIntVal(2),
+			}),
+			BoolVal(false),
+		},
+		{
+			MapVal(map[string]Value{
+				"num1": NumberIntVal(1),
+				"num2": NumberIntVal(2),
+			}),
+			MapVal(map[string]Value{
+				"num1": NumberIntVal(1),
+				"num2": NumberIntVal(3),
+			}),
+			BoolVal(false),
+		},
+
+		// Unknowns and Dynamics
+		{
+			NumberIntVal(2),
+			UnknownVal(Number),
+			UnknownVal(Bool),
+		},
+		{
+			NumberIntVal(1),
+			DynamicValue,
+			UnknownVal(Bool),
+		},
+		{
+			DynamicValue,
+			BoolVal(true),
+			UnknownVal(Bool),
+		},
+		{
+			DynamicValue,
+			DynamicValue,
+			UnknownVal(Bool),
+		},
+		{
+			ListVal([]Value{
+				StringVal("hi"),
+				DynamicValue,
+			}),
+			ListVal([]Value{
+				StringVal("hi"),
+				DynamicValue,
+			}),
+			UnknownVal(Bool),
+		},
+		{
+			ListVal([]Value{
+				StringVal("hi"),
+				UnknownVal(String),
+			}),
+			ListVal([]Value{
+				StringVal("hi"),
+				UnknownVal(String),
+			}),
+			UnknownVal(Bool),
+		},
+		{
+			MapVal(map[string]Value{
+				"static":  StringVal("hi"),
+				"dynamic": DynamicValue,
+			}),
+			MapVal(map[string]Value{
+				"static":  StringVal("hi"),
+				"dynamic": DynamicValue,
+			}),
+			UnknownVal(Bool),
+		},
+		{
+			MapVal(map[string]Value{
+				"static":  StringVal("hi"),
+				"dynamic": UnknownVal(String),
+			}),
+			MapVal(map[string]Value{
+				"static":  StringVal("hi"),
+				"dynamic": UnknownVal(String),
+			}),
+			UnknownVal(Bool),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%#v.Equals(%#v)", test.LHS, test.RHS), func(t *testing.T) {
+			got := test.LHS.Equals(test.RHS)
+			if !got.RawEquals(test.Expected) {
+				t.Fatalf("Equals returned %#v; want %#v", got, test.Expected)
+			}
+		})
+	}
+}
+
 func TestValueAdd(t *testing.T) {
 	tests := []struct {
 		LHS      Value
