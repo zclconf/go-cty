@@ -3,6 +3,7 @@ package cty
 import (
 	"fmt"
 	"math/big"
+	"sort"
 )
 
 func (val Value) GoString() string {
@@ -243,4 +244,59 @@ func (val Value) Neg() Value {
 
 	ret := new(big.Float).Neg(val.v.(*big.Float))
 	return NumberVal(ret)
+}
+
+// ForEachElement executes a given callback function for each element of
+// the receiver, which must be a collection type or this method will panic.
+//
+// If the receiver is of a list type, the key passed to to the callback
+// will be of type Number and the value will be of the list's element type.
+//
+// If the receiver is of a map type, the key passed to the callback will
+// be of type String and the value will be of the map's element type.
+// Elements are passed in ascending lexicographical order by key.
+//
+// Returns true if the iteration exited early due to the callback function
+// returning true, or false if the loop ran to completion.
+func (val Value) ForEachElement(cb ElementIterator) bool {
+	switch {
+	case val.ty.IsListType():
+		ety := val.ty.ElementType()
+
+		for i, rawVal := range val.v.([]interface{}) {
+			stop := cb(NumberIntVal(int64(i)), Value{
+				ty: ety,
+				v:  rawVal,
+			})
+			if stop {
+				return true
+			}
+		}
+		return false
+	case val.ty.IsMapType():
+		ety := val.ty.ElementType()
+
+		// We iterate the keys in a predictable lexicographical order so
+		// that results will always be stable given the same input map.
+		rawMap := val.v.(map[string]interface{})
+		keys := make([]string, 0, len(rawMap))
+		for key := range rawMap {
+			keys = append(keys, key)
+		}
+		sort.Strings(keys)
+
+		for _, key := range keys {
+			rawVal := rawMap[key]
+			stop := cb(StringVal(key), Value{
+				ty: ety,
+				v:  rawVal,
+			})
+			if stop {
+				return true
+			}
+		}
+		return false
+	default:
+		panic("ForEachElement on non-collection type")
+	}
 }

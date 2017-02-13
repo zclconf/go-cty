@@ -2,6 +2,7 @@ package cty
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 )
 
@@ -519,6 +520,100 @@ func TestValueNeg(t *testing.T) {
 			got := test.Receiver.Neg()
 			if !got.RawEquals(test.Expected) {
 				t.Fatalf("Neg returned %#v; want %#v", got, test.Expected)
+			}
+		})
+	}
+}
+
+func TestValueForEachElement(t *testing.T) {
+	type call struct {
+		Key     Value
+		Element Value
+	}
+	tests := []struct {
+		Receiver Value
+		Expected []call
+		Stopped  bool
+	}{
+		{
+			ListValEmpty(String),
+			[]call{},
+			false,
+		},
+		{
+			ListVal([]Value{
+				NumberIntVal(1),
+				NumberIntVal(2),
+			}),
+			[]call{
+				{NumberIntVal(0), NumberIntVal(1)},
+				{NumberIntVal(1), NumberIntVal(2)},
+			},
+			false,
+		},
+		{
+			ListVal([]Value{
+				StringVal("hey"),
+				StringVal("stop"),
+				StringVal("hey"),
+			}),
+			[]call{
+				{NumberIntVal(0), StringVal("hey")},
+				{NumberIntVal(1), StringVal("stop")},
+			},
+			true,
+		},
+		{
+			MapVal(map[string]Value{
+				"second": NumberIntVal(2),
+				"first":  NumberIntVal(1),
+			}),
+			[]call{
+				{StringVal("first"), NumberIntVal(1)},
+				{StringVal("second"), NumberIntVal(2)},
+			},
+			false,
+		},
+		{
+			MapVal(map[string]Value{
+				"item2": StringVal("value2"),
+				"item1": StringVal("stop"),
+				"item0": StringVal("value0"),
+			}),
+			[]call{
+				{StringVal("item0"), StringVal("value0")},
+				{StringVal("item1"), StringVal("stop")},
+			},
+			true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%#v.ForEachElement()", test.Receiver), func(t *testing.T) {
+			calls := make([]call, 0)
+			stopped := test.Receiver.ForEachElement(
+				func(key Value, elem Value) (stop bool) {
+					calls = append(calls, call{
+						Key:     key,
+						Element: elem,
+					})
+					if elem.v == "stop" {
+						stop = true
+					}
+					return
+				},
+			)
+			if !reflect.DeepEqual(calls, test.Expected) {
+				t.Errorf(
+					"wrong calls from ForEachElement\ngot:  %#v\nwant: %#v",
+					calls, test.Expected,
+				)
+			}
+			if stopped != test.Stopped {
+				t.Errorf(
+					"ForEachElement returned %#v; want %#v",
+					stopped, test.Stopped,
+				)
 			}
 		})
 	}

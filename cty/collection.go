@@ -24,3 +24,11 @@ func (t Type) ElementType() Type {
 	}
 	panic(errors.New("not a collection type"))
 }
+
+// ElementIterator is a callback type used for iterating over elements of
+// collections and attributes of objects.
+//
+// The types of key and value depend on what type is being iterated over.
+// Return true to stop iterating after the current element, or false to
+// continue iterating.
+type ElementIterator func(key Value, val Value) (stop bool)
