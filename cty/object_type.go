@@ -86,3 +86,43 @@ func (t Type) IsObjectType() bool {
 	_, ok := t.typeImpl.(typeObject)
 	return ok
 }
+
+// HasAttribute returns true if the receiver has an attribute with the given
+// name, regardless of its type. Will panic if the reciever isn't an object
+// type; use IsObjectType to determine whether this operation will succeed.
+func (t Type) HasAttribute(name string) bool {
+	if ot, ok := t.typeImpl.(typeObject); ok {
+		_, hasAttr := ot.attrTypes[name]
+		return hasAttr
+	}
+	panic("HasAttribute on non-object Type")
+}
+
+// AttributeType returns the type of the attribute with the given name. Will
+// panic if the receiver is not an object type (use IsObjectType to confirm)
+// or if the object type has no such attribute (use HasAttribute to confirm).
+func (t Type) AttributeType(name string) Type {
+	if ot, ok := t.typeImpl.(typeObject); ok {
+		aty, hasAttr := ot.attrTypes[name]
+		if !hasAttr {
+			panic("no such attribute")
+		}
+		return aty
+	}
+	panic("HasAttribute on non-object Type")
+}
+
+// AttributeTypes returns a map from attribute names to their associated
+// types. Will panic if the receiver is not an object type (use IsObjectType
+// to confirm).
+//
+// The returned map is part of the internal state of the type, and is provided
+// for read access only. It is forbidden for any caller to modify the returned
+// map. For many purposes the attribute-related methods of Value are more
+// appropriate and more convenient to use.
+func (t Type) AttributeTypes() map[string]Type {
+	if ot, ok := t.typeImpl.(typeObject); ok {
+		return ot.attrTypes
+	}
+	panic("HasAttribute on non-object Type")
+}
