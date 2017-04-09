@@ -1,5 +1,9 @@
 package set
 
+import (
+	"fmt"
+)
+
 // Set is an implementation of the concept of a set: a collection where all
 // values are conceptually either in or out of the set, but the members are
 // not ordered.
@@ -25,5 +29,23 @@ func NewSet(rules Rules) Set {
 	return Set{
 		vals:  map[int][]interface{}{},
 		rules: rules,
+	}
+}
+
+func NewSetFromSlice(rules Rules, vals []interface{}) Set {
+	s := NewSet(rules)
+	for _, v := range vals {
+		s.Add(v)
+	}
+	return s
+}
+
+func sameRules(s1 Set, s2 Set) bool {
+	return s1.rules == s2.rules
+}
+
+func mustHaveSameRules(s1 Set, s2 Set) {
+	if !sameRules(s1, s2) {
+		panic(fmt.Errorf("incompatible set rules: %#v, %#v", s1.rules, s2.rules))
 	}
 }
