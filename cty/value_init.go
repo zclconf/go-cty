@@ -5,6 +5,8 @@ import (
 	"math/big"
 
 	"golang.org/x/text/unicode/norm"
+
+	"github.com/apparentlymart/go-cty/cty/set"
 )
 
 // BoolVal returns a Value of type Number whose internal value is the given
@@ -71,7 +73,7 @@ func ObjectVal(attrs map[string]Value) Value {
 	}
 }
 
-// ListVal returns a Value of alistmap type whose element type is defined by
+// ListVal returns a Value of list type whose element type is defined by
 // the types of the given values, which must be homogenous.
 //
 // If the types are not all consistent (aside from elements that are of the
@@ -104,7 +106,7 @@ func ListVal(vals []Value) Value {
 	}
 }
 
-// ListValEmpty returns an empty map of the given element type.
+// ListValEmpty returns an empty list of the given element type.
 func ListValEmpty(element Type) Value {
 	return Value{
 		ty: List(element),
@@ -150,5 +152,48 @@ func MapValEmpty(element Type) Value {
 	return Value{
 		ty: Map(element),
 		v:  map[string]interface{}{},
+	}
+}
+
+// SetVal returns a Value of set type whose element type is defined by
+// the types of the given values, which must be homogenous.
+//
+// If the types are not all consistent (aside from elements that are of the
+// dynamic pseudo-type) then this function will panic. It will panic also
+// if the given list is empty, since then the element type cannot be inferred.
+// (See also SetValEmpty.)
+func SetVal(vals []Value) Value {
+	if len(vals) == 0 {
+		panic("must not call SetVal with empty slice")
+	}
+	elementType := DynamicPseudoType
+	rawList := make([]interface{}, len(vals))
+
+	for i, val := range vals {
+		if elementType == DynamicPseudoType {
+			elementType = val.ty
+		} else if val.ty != DynamicPseudoType && !elementType.Equals(val.ty) {
+			panic(fmt.Errorf(
+				"inconsistent set element types (%#v then %#v)",
+				elementType, val.ty,
+			))
+		}
+
+		rawList[i] = val.v
+	}
+
+	rawVal := set.NewSetFromSlice(setRules{elementType}, rawList)
+
+	return Value{
+		ty: Set(elementType),
+		v:  rawVal,
+	}
+}
+
+// SetValEmpty returns an empty set of the given element type.
+func SetValEmpty(element Type) Value {
+	return Value{
+		ty: Set(element),
+		v:  set.NewSet(setRules{element}),
 	}
 }

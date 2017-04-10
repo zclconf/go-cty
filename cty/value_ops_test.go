@@ -309,6 +309,74 @@ func TestValueEquals(t *testing.T) {
 			BoolVal(false),
 		},
 
+		// Sets
+		{
+			SetValEmpty(Number),
+			SetValEmpty(Number),
+			BoolVal(true),
+		},
+		{
+			SetValEmpty(Number),
+			SetValEmpty(Bool),
+			BoolVal(false),
+		},
+		{
+			SetVal([]Value{
+				NumberIntVal(1),
+			}),
+			SetVal([]Value{
+				NumberIntVal(1),
+			}),
+			BoolVal(true),
+		},
+		{
+			SetVal([]Value{
+				NumberIntVal(1),
+			}),
+			SetValEmpty(String),
+			BoolVal(false),
+		},
+		{
+			SetVal([]Value{
+				NumberIntVal(1),
+				NumberIntVal(2),
+			}),
+			SetVal([]Value{
+				NumberIntVal(2),
+				NumberIntVal(1),
+			}),
+			BoolVal(true),
+		},
+		{
+			SetVal([]Value{
+				NumberIntVal(1),
+			}),
+			SetVal([]Value{
+				NumberIntVal(2),
+			}),
+			BoolVal(false),
+		},
+		{
+			SetVal([]Value{
+				NumberIntVal(1),
+				NumberIntVal(2),
+			}),
+			SetVal([]Value{
+				NumberIntVal(1),
+			}),
+			BoolVal(false),
+		},
+		{
+			SetVal([]Value{
+				NumberIntVal(1),
+			}),
+			SetVal([]Value{
+				NumberIntVal(1),
+				NumberIntVal(2),
+			}),
+			BoolVal(false),
+		},
+
 		// Unknowns and Dynamics
 		{
 			NumberIntVal(2),

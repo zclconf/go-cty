@@ -20,7 +20,7 @@ func Set(elem Type) Type {
 	}
 }
 
-// Equals returns true if the other Type is a map whose element type is
+// Equals returns true if the other Type is a set whose element type is
 // equal to that of the receiver.
 func (t typeSet) Equals(other Type) bool {
 	ot, isSet := other.typeImpl.(typeSet)
@@ -40,7 +40,7 @@ func (t typeSet) ElementType() Type {
 }
 
 func (t typeSet) GoString() string {
-	return fmt.Sprintf("cty.Map(%#v)", t.elementType)
+	return fmt.Sprintf("cty.Set(%#v)", t.elementType)
 }
 
 // IsSetType returns true if the given type is a list type, regardless of its
