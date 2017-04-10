@@ -98,3 +98,17 @@ func (s1 Set) Union(s2 Set) Set {
 	})
 	return rs
 }
+
+// Intersection returns a new set that contains the values that both the
+// receiver and given sets have in common. Both sets must have the same rules,
+// or else this function will panic.
+func (s1 Set) Intersection(s2 Set) Set {
+	mustHaveSameRules(s1, s2)
+	rs := NewSet(s1.rules)
+	s1.EachValue(func(v interface{}) {
+		if s2.Has(v) {
+			rs.Add(v)
+		}
+	})
+	return rs
+}
