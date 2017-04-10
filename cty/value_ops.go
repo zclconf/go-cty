@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"math/big"
 	"sort"
+
+	"github.com/apparentlymart/go-cty/cty/set"
 )
 
 func (val Value) GoString() string {
@@ -38,6 +40,16 @@ func (val Value) GoString() string {
 		return fmt.Sprintf("cty.NumberVal(new(big.Float).Parse(\"%#v\", 10))", fv)
 	case String:
 		return fmt.Sprintf("cty.StringVal(%#v)", val.v)
+	}
+
+	switch {
+	case val.ty.IsSetType():
+		vals := val.v.(set.Set).Values()
+		if vals == nil || len(vals) == 0 {
+			return fmt.Sprintf("cty.SetValEmpty()")
+		} else {
+			return fmt.Sprintf("cty.SetVal(%#v)", vals)
+		}
 	}
 
 	// Default exposes implementation details, so should actually cover
@@ -128,6 +140,31 @@ func (val Value) Equals(other Value) Value {
 				}
 			}
 		}
+	case ty.IsSetType():
+		s1 := val.v.(set.Set)
+		s2 := other.v.(set.Set)
+		equal := true
+
+		// Note that by our definition of sets it's never possible for two
+		// sets that contain unknown values (directly or indicrectly) to
+		// ever be equal, even if they are otherwise identical.
+
+		// FIXME: iterating both lists and checking each item is not the
+		// ideal implementation here, but it works with the primitives we
+		// have in the set implementation. Perhaps the set implementation
+		// can provide its own equality test later.
+		s1.EachValue(func(v interface{}) {
+			if !s2.Has(v) {
+				equal = false
+			}
+		})
+		s2.EachValue(func(v interface{}) {
+			if !s1.Has(v) {
+				equal = false
+			}
+		})
+
+		result = equal
 	case ty.IsMapType():
 		ety := ty.typeImpl.(typeMap).elementType
 		if len(val.v.(map[string]interface{})) == len(other.v.(map[string]interface{})) {
