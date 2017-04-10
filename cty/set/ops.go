@@ -70,3 +70,16 @@ func (s Set) EachValue(cb func(interface{})) {
 		}
 	}
 }
+
+// Values returns a slice of all of the values in the set in no particular
+// order. This is just a wrapper around EachValue that accumulates the results
+// in a slice for caller convenience.
+//
+// The returned slice will be nil if there are no values in the set.
+func (s Set) Values() []interface{} {
+	var ret []interface{}
+	s.EachValue(func(v interface{}) {
+		ret = append(ret, v)
+	})
+	return ret
+}
