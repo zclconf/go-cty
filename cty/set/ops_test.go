@@ -1,6 +1,7 @@
 package set
 
 import (
+	"fmt"
 	"reflect"
 	"sort"
 	"testing"
@@ -89,5 +90,67 @@ func TestBasicSetOps(t *testing.T) {
 	})
 	if len(vals) > 0 {
 		t.Fatalf("s.EachValue produced values %#v; want no calls", vals)
+	}
+}
+
+func TestUnion(t *testing.T) {
+	tests := []struct {
+		s1         Set
+		s2         Set
+		wantValues []int
+	}{
+		{
+			NewSet(testRules{}),
+			NewSet(testRules{}),
+			nil,
+		},
+		{
+			NewSetFromSlice(testRules{}, []interface{}{1}),
+			NewSet(testRules{}),
+			[]int{1},
+		},
+		{
+			NewSetFromSlice(testRules{}, []interface{}{1}),
+			NewSetFromSlice(testRules{}, []interface{}{2}),
+			[]int{1, 2},
+		},
+		{
+			NewSetFromSlice(testRules{}, []interface{}{1}),
+			NewSetFromSlice(testRules{}, []interface{}{1}),
+			[]int{1},
+		},
+		{
+			NewSetFromSlice(testRules{}, []interface{}{17, 33}),
+			NewSetFromSlice(testRules{}, []interface{}{1}),
+			[]int{1, 17, 33},
+		},
+		{
+			NewSetFromSlice(testRules{}, []interface{}{17, 33}),
+			NewSetFromSlice(testRules{}, []interface{}{2, 1}),
+			[]int{1, 2, 17, 33},
+		},
+	}
+
+	for i, test := range tests {
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			got := test.s1.Union(test.s2)
+			var gotValues []int
+			got.EachValue(func(v interface{}) {
+				gotValues = append(gotValues, v.(int))
+			})
+			sort.Ints(gotValues)
+			sort.Ints(test.wantValues)
+			if !reflect.DeepEqual(gotValues, test.wantValues) {
+				s1Values := test.s1.Values()
+				s2Values := test.s2.Values()
+				t.Errorf(
+					"wrong result %#v for %#v union %#v; want %#v",
+					gotValues,
+					s1Values,
+					s2Values,
+					test.wantValues,
+				)
+			}
+		})
 	}
 }

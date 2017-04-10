@@ -83,3 +83,18 @@ func (s Set) Values() []interface{} {
 	})
 	return ret
 }
+
+// Union returns a new set that contains all of the members of both the
+// receiving set and the given set. Both sets must have the same rules, or
+// else this function will panic.
+func (s1 Set) Union(s2 Set) Set {
+	mustHaveSameRules(s1, s2)
+	rs := NewSet(s1.rules)
+	s1.EachValue(func(v interface{}) {
+		rs.Add(v)
+	})
+	s2.EachValue(func(v interface{}) {
+		rs.Add(v)
+	})
+	return rs
+}
