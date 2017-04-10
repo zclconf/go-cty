@@ -126,3 +126,23 @@ func (s1 Set) Subtract(s2 Set) Set {
 	})
 	return rs
 }
+
+// SymmetricDifference returns a new set that contains all of the values from
+// both the receiver and given sets, except those that both sets have in
+// common. Both sets must have the same rules, or else this function will
+// panic.
+func (s1 Set) SymmetricDifference(s2 Set) Set {
+	mustHaveSameRules(s1, s2)
+	rs := NewSet(s1.rules)
+	s1.EachValue(func(v interface{}) {
+		if !s2.Has(v) {
+			rs.Add(v)
+		}
+	})
+	s2.EachValue(func(v interface{}) {
+		if !s1.Has(v) {
+			rs.Add(v)
+		}
+	})
+	return rs
+}
