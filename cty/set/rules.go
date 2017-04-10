@@ -17,5 +17,9 @@ type Rules interface {
 	// equivalent cannot exist in the set at the same time, and if two
 	// equivalent values are added it is undefined which one will be
 	// returned when enumerating all of the set members.
+	//
+	// Two values that are equivalent *must* result in the same hash value,
+	// though it is *not* required that two values with the same hash value
+	// be equivalent.
 	Equivalent(interface{}, interface{}) bool
 }
