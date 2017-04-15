@@ -283,6 +283,34 @@ func (val Value) Neg() Value {
 	return NumberVal(ret)
 }
 
+// GetAttr returns the value of the given attribute of the receiver, which
+// must be of an object type that has an attribute of the given name.
+// This method will panic if the receiver type is not compatible.
+//
+// This method may be called on a value whose type is DynamicPseudoType,
+// in which case the result will also be the DynamicValue.
+func (val Value) GetAttr(name string) Value {
+	panic("GetAttr not yet implemented")
+}
+
+// Index returns the value of an element of the receiver, which must be
+// either a map or a list. This method will panic if the receiver type is
+// not compatible.
+//
+// The key value must be the correct type for the receving collection: a
+// number if the collection is a list or a string if it is a map.
+// In the case of a list, the given number must be convertable to int or this
+// method will panic. The key may alternatively be of DynamicPseudoType, in
+// which case the result itself is DynamicValue.
+//
+// The result is of the receiver collection's element type.
+//
+// This method may be called on a value whose type is DynamicPseudoType,
+// in which case the result will also be the DynamicValue.
+func (val Value) Index(key Value) Value {
+	panic("Index not yet implemented")
+}
+
 // ForEachElement executes a given callback function for each element of
 // the receiver, which must be a collection type or this method will panic.
 //
