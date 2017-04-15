@@ -3,6 +3,14 @@ package cty
 // Value represents a value of a particular type, and is the interface by
 // which operations are executed on typed values.
 //
+// Value has two different classes of method. Operation methods stay entirely
+// within the type system (methods accept and return Value instances) and
+// are intended for use in implementing a language in terms of cty, while
+// integration methods either enter or leave the type system, working with
+// native Go values. Operation methods are guaranteed to support all of the
+// expected short-circuit behavior for unknown and dynamic values, while
+// integration methods may not.
+//
 // The philosophy for the operations API is that it's the caller's
 // responsibility to ensure that the given types and values satisfy the
 // specified invariants during a separate type check, so that the caller is

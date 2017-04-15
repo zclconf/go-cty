@@ -295,6 +295,9 @@ func (val Value) Neg() Value {
 //
 // Returns true if the iteration exited early due to the callback function
 // returning true, or false if the loop ran to completion.
+//
+// ForEachElement is an integration method, so it cannot handle Unknown
+// values. This method will panic if the receiver is Unknown.
 func (val Value) ForEachElement(cb ElementIterator) bool {
 	switch {
 	case val.ty.IsListType():
