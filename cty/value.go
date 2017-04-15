@@ -55,3 +55,13 @@ func (val Value) IsKnown() bool {
 func (val Value) IsNull() bool {
 	return val.v == nil
 }
+
+// NilVal is an invalid Value that can be used as a placeholder when returning
+// with an error from a function that returns (Value, error).
+//
+// NilVal is *not* a valid error and so no operations may be performed on it.
+// Any attempt to use it will result in a panic.
+var NilVal = Value{
+	ty: Type{typeImpl: nil},
+	v:  nil,
+}
