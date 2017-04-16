@@ -309,8 +309,14 @@ func (val Value) GetAttr(name string) Value {
 		panic("value has no attribute of that name")
 	}
 
+	attrType := val.ty.AttributeType(name)
+
+	if !val.IsKnown() {
+		return UnknownVal(attrType)
+	}
+
 	return Value{
-		ty: val.ty.AttributeType(name),
+		ty: attrType,
 		v:  val.v.(map[string]interface{})[name],
 	}
 }
