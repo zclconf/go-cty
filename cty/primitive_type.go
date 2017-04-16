@@ -1,5 +1,7 @@
 package cty
 
+import "math/big"
+
 // primitiveType is the hidden implementation of the various primitive types
 // that are exposed as variables in this package.
 type primitiveType struct {
@@ -68,6 +70,12 @@ var True Value
 // False is the falsey value of type Bool
 var False Value
 
+// PositiveInfinity is a Number value representing positive infinity
+var PositiveInfinity Value
+
+// NegativeInfinity is a Number value representing negative infinity
+var NegativeInfinity Value
+
 func init() {
 	Number = Type{
 		primitiveType{Kind: primitiveTypeNumber},
@@ -85,6 +93,14 @@ func init() {
 	False = Value{
 		ty: Bool,
 		v:  false,
+	}
+	PositiveInfinity = Value{
+		ty: Number,
+		v:  (&big.Float{}).SetInf(false),
+	}
+	NegativeInfinity = Value{
+		ty: Number,
+		v:  (&big.Float{}).SetInf(true),
 	}
 }
 

@@ -646,6 +646,69 @@ func TestValueMultiply(t *testing.T) {
 	}
 }
 
+func TestValueDivide(t *testing.T) {
+	tests := []struct {
+		LHS      Value
+		RHS      Value
+		Expected Value
+	}{
+		{
+			NumberIntVal(10),
+			NumberIntVal(2),
+			NumberIntVal(5),
+		},
+		{
+			NumberIntVal(1),
+			NumberIntVal(-2),
+			NumberFloatVal(-0.5),
+		},
+		{
+			NumberIntVal(5),
+			NumberFloatVal(0.5),
+			NumberIntVal(10),
+		},
+		{
+			NumberIntVal(5),
+			NumberIntVal(0),
+			PositiveInfinity,
+		},
+		{
+			NumberIntVal(-5),
+			NumberIntVal(0),
+			NegativeInfinity,
+		},
+		{
+			NumberIntVal(1),
+			UnknownVal(Number),
+			UnknownVal(Number),
+		},
+		{
+			UnknownVal(Number),
+			UnknownVal(Number),
+			UnknownVal(Number),
+		},
+		{
+			NumberIntVal(1),
+			DynamicVal,
+			UnknownVal(Number),
+		},
+		{
+			DynamicVal,
+			DynamicVal,
+			UnknownVal(Number),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%#v.Divide(%#v)", test.LHS, test.RHS), func(t *testing.T) {
+			got := test.LHS.Divide(test.RHS)
+			if !got.RawEquals(test.Expected) {
+				t.Fatalf("Divide returned %#v; want %#v", got, test.Expected)
+			}
+		})
+	}
+}
+
 func TestValueGetAttr(t *testing.T) {
 	tests := []struct {
 		Object   Value

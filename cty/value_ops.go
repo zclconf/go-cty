@@ -303,6 +303,25 @@ func (val Value) Multiply(other Value) Value {
 	return NumberVal(ret)
 }
 
+// Divide returns the quotient of the receiver and the given other value.
+// Both values must be numbers; this method will panic if not.
+//
+// If the "other" value is exactly zero, this operation will return either
+// PositiveInfinity or NegativeInfinity, depending on the sign of the
+// receiver value. For some use-cases the presence of infinities may be
+// undesirable, in which case the caller should check whether the
+// other value equals zero before calling and raise an error instead.
+func (val Value) Divide(other Value) Value {
+	if shortCircuit := mustTypeCheck(Number, val, other); shortCircuit != nil {
+		shortCircuit = forceShortCircuitType(shortCircuit, Number)
+		return *shortCircuit
+	}
+
+	ret := new(big.Float)
+	ret.Quo(val.v.(*big.Float), other.v.(*big.Float))
+	return NumberVal(ret)
+}
+
 // GetAttr returns the value of the given attribute of the receiver, which
 // must be of an object type that has an attribute of the given name.
 // This method will panic if the receiver type is not compatible.
