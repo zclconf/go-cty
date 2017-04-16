@@ -9,6 +9,10 @@ import (
 )
 
 func (val Value) GoString() string {
+	if val == NilVal {
+		return "cty.NilVal"
+	}
+
 	if val.ty == DynamicPseudoType {
 		return "cty.DynamicValue"
 	}
