@@ -266,19 +266,19 @@ func (val Value) Add(other Value) Value {
 	return NumberVal(ret)
 }
 
-// Sub returns receiver minus the given other value. Both values must be
+// Subtract returns receiver minus the given other value. Both values must be
 // numbers; this method will panic if not.
-func (val Value) Sub(other Value) Value {
+func (val Value) Subtract(other Value) Value {
 	if shortCircuit := mustTypeCheck(Number, val, other); shortCircuit != nil {
 		return *shortCircuit
 	}
 
-	return val.Add(other.Neg())
+	return val.Add(other.Negate())
 }
 
-// Neg returns the numeric negative of the receiver, which must be a number.
+// Negate returns the numeric negative of the receiver, which must be a number.
 // This method will panic when given a value of any other type.
-func (val Value) Neg() Value {
+func (val Value) Negate() Value {
 	if shortCircuit := mustTypeCheck(Number, val); shortCircuit != nil {
 		return *shortCircuit
 	}

@@ -507,7 +507,7 @@ func TestValueAdd(t *testing.T) {
 	}
 }
 
-func TestValueSub(t *testing.T) {
+func TestValueSubtract(t *testing.T) {
 	tests := []struct {
 		LHS      Value
 		RHS      Value
@@ -551,16 +551,16 @@ func TestValueSub(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(fmt.Sprintf("%#v.Sub(%#v)", test.LHS, test.RHS), func(t *testing.T) {
-			got := test.LHS.Sub(test.RHS)
+		t.Run(fmt.Sprintf("%#v.Subtract(%#v)", test.LHS, test.RHS), func(t *testing.T) {
+			got := test.LHS.Subtract(test.RHS)
 			if !got.RawEquals(test.Expected) {
-				t.Fatalf("Sub returned %#v; want %#v", got, test.Expected)
+				t.Fatalf("Subtract returned %#v; want %#v", got, test.Expected)
 			}
 		})
 	}
 }
 
-func TestValueNeg(t *testing.T) {
+func TestValueNegate(t *testing.T) {
 	tests := []struct {
 		Receiver Value
 		Expected Value
@@ -584,10 +584,10 @@ func TestValueNeg(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(fmt.Sprintf("%#v.Neg()", test.Receiver), func(t *testing.T) {
-			got := test.Receiver.Neg()
+		t.Run(fmt.Sprintf("%#v.Negate()", test.Receiver), func(t *testing.T) {
+			got := test.Receiver.Negate()
 			if !got.RawEquals(test.Expected) {
-				t.Fatalf("Neg returned %#v; want %#v", got, test.Expected)
+				t.Fatalf("Negate returned %#v; want %#v", got, test.Expected)
 			}
 		})
 	}
