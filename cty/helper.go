@@ -21,7 +21,7 @@ func anyUnknown(values ...Value) bool {
 // values are all of the correct type but at least one is unknown then
 // a short-circuit unknown value is returned. If any other types appear then
 // an error is returned. Otherwise (finally!) the result is nil, nil.
-func typeCheck(ty Type, values ...Value) (shortCircuit *Value, err error) {
+func typeCheck(required Type, ret Type, values ...Value) (shortCircuit *Value, err error) {
 	hasDynamic := false
 	hasUnknown := false
 
@@ -31,10 +31,10 @@ func typeCheck(ty Type, values ...Value) (shortCircuit *Value, err error) {
 			continue
 		}
 
-		if !val.Type().Equals(ty) {
+		if !val.Type().Equals(required) {
 			return nil, fmt.Errorf(
 				"type mismatch: want %s but value %d is %s",
-				ty.FriendlyName(),
+				required.FriendlyName(),
 				i, val.ty.FriendlyName(),
 			)
 		}
@@ -49,7 +49,7 @@ func typeCheck(ty Type, values ...Value) (shortCircuit *Value, err error) {
 	}
 
 	if hasUnknown {
-		ret := UnknownVal(ty)
+		ret := UnknownVal(ret)
 		return &ret, nil
 	}
 
@@ -58,8 +58,8 @@ func typeCheck(ty Type, values ...Value) (shortCircuit *Value, err error) {
 
 // mustTypeCheck is a wrapper around typeCheck that immediately panics if
 // any error is returned.
-func mustTypeCheck(ty Type, values ...Value) *Value {
-	shortCircuit, err := typeCheck(ty, values...)
+func mustTypeCheck(required Type, ret Type, values ...Value) *Value {
+	shortCircuit, err := typeCheck(required, ret, values...)
 	if err != nil {
 		panic(err)
 	}

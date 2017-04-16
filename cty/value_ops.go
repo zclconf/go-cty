@@ -262,7 +262,7 @@ func (val Value) RawEquals(other Value) bool {
 // Add returns the sum of the receiver and the given other value. Both values
 // must be numbers; this method will panic if not.
 func (val Value) Add(other Value) Value {
-	if shortCircuit := mustTypeCheck(Number, val, other); shortCircuit != nil {
+	if shortCircuit := mustTypeCheck(Number, Number, val, other); shortCircuit != nil {
 		shortCircuit = forceShortCircuitType(shortCircuit, Number)
 		return *shortCircuit
 	}
@@ -275,7 +275,7 @@ func (val Value) Add(other Value) Value {
 // Subtract returns receiver minus the given other value. Both values must be
 // numbers; this method will panic if not.
 func (val Value) Subtract(other Value) Value {
-	if shortCircuit := mustTypeCheck(Number, val, other); shortCircuit != nil {
+	if shortCircuit := mustTypeCheck(Number, Number, val, other); shortCircuit != nil {
 		shortCircuit = forceShortCircuitType(shortCircuit, Number)
 		return *shortCircuit
 	}
@@ -286,7 +286,7 @@ func (val Value) Subtract(other Value) Value {
 // Negate returns the numeric negative of the receiver, which must be a number.
 // This method will panic when given a value of any other type.
 func (val Value) Negate() Value {
-	if shortCircuit := mustTypeCheck(Number, val); shortCircuit != nil {
+	if shortCircuit := mustTypeCheck(Number, Number, val); shortCircuit != nil {
 		shortCircuit = forceShortCircuitType(shortCircuit, Number)
 		return *shortCircuit
 	}
@@ -298,7 +298,7 @@ func (val Value) Negate() Value {
 // Multiply returns the product of the receiver and the given other value.
 // Both values must be numbers; this method will panic if not.
 func (val Value) Multiply(other Value) Value {
-	if shortCircuit := mustTypeCheck(Number, val, other); shortCircuit != nil {
+	if shortCircuit := mustTypeCheck(Number, Number, val, other); shortCircuit != nil {
 		shortCircuit = forceShortCircuitType(shortCircuit, Number)
 		return *shortCircuit
 	}
@@ -317,7 +317,7 @@ func (val Value) Multiply(other Value) Value {
 // undesirable, in which case the caller should check whether the
 // other value equals zero before calling and raise an error instead.
 func (val Value) Divide(other Value) Value {
-	if shortCircuit := mustTypeCheck(Number, val, other); shortCircuit != nil {
+	if shortCircuit := mustTypeCheck(Number, Number, val, other); shortCircuit != nil {
 		shortCircuit = forceShortCircuitType(shortCircuit, Number)
 		return *shortCircuit
 	}
@@ -343,7 +343,7 @@ func (val Value) Divide(other Value) Value {
 // may wish to disallow such things outright or implement their own modulo
 // if they disagree with the interpretation used here.
 func (val Value) Modulo(other Value) Value {
-	if shortCircuit := mustTypeCheck(Number, val, other); shortCircuit != nil {
+	if shortCircuit := mustTypeCheck(Number, Number, val, other); shortCircuit != nil {
 		shortCircuit = forceShortCircuitType(shortCircuit, Number)
 		return *shortCircuit
 	}
@@ -373,7 +373,7 @@ func (val Value) Modulo(other Value) Value {
 // Absolute returns the absolute (signless) value of the receiver, which must
 // be a number or this method will panic.
 func (val Value) Absolute() Value {
-	if shortCircuit := mustTypeCheck(Number, val); shortCircuit != nil {
+	if shortCircuit := mustTypeCheck(Number, Number, val); shortCircuit != nil {
 		shortCircuit = forceShortCircuitType(shortCircuit, Number)
 		return *shortCircuit
 	}
@@ -562,7 +562,7 @@ func (val Value) ForEachElement(cb ElementIterator) bool {
 // Not returns the logical inverse of the receiver, which must be of type
 // Bool or this method will panic.
 func (val Value) Not() Value {
-	if shortCircuit := mustTypeCheck(Bool, val); shortCircuit != nil {
+	if shortCircuit := mustTypeCheck(Bool, Bool, val); shortCircuit != nil {
 		shortCircuit = forceShortCircuitType(shortCircuit, Bool)
 		return *shortCircuit
 	}
@@ -573,7 +573,7 @@ func (val Value) Not() Value {
 // And returns the result of logical AND with the receiver and the other given
 // value, which must both be of type Bool or this method will panic.
 func (val Value) And(other Value) Value {
-	if shortCircuit := mustTypeCheck(Bool, val, other); shortCircuit != nil {
+	if shortCircuit := mustTypeCheck(Bool, Bool, val, other); shortCircuit != nil {
 		shortCircuit = forceShortCircuitType(shortCircuit, Bool)
 		return *shortCircuit
 	}
@@ -584,7 +584,7 @@ func (val Value) And(other Value) Value {
 // Or returns the result of logical OR with the receiver and the other given
 // value, which must both be of type Bool or this method will panic.
 func (val Value) Or(other Value) Value {
-	if shortCircuit := mustTypeCheck(Bool, val, other); shortCircuit != nil {
+	if shortCircuit := mustTypeCheck(Bool, Bool, val, other); shortCircuit != nil {
 		shortCircuit = forceShortCircuitType(shortCircuit, Bool)
 		return *shortCircuit
 	}
