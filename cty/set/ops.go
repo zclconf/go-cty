@@ -1,5 +1,9 @@
 package set
 
+import (
+	"sort"
+)
+
 // Add inserts the given value into the receiving Set.
 //
 // This mutates the set in-place. This operation is not thread-safe.
@@ -64,7 +68,16 @@ func (s Set) Has(val interface{}) bool {
 // EachValue calls the given callback once for each value in the set, in an
 // undefined order that callers should not depend on.
 func (s Set) EachValue(cb func(interface{})) {
-	for _, bucket := range s.vals {
+	// Sort the bucketIds to ensure that we always traverse in a
+	// consistent order.
+	bucketIds := make([]int, 0, len(s.vals))
+	for id := range s.vals {
+		bucketIds = append(bucketIds, id)
+	}
+	sort.Ints(bucketIds)
+
+	for _, bucketId := range bucketIds {
+		bucket := s.vals[bucketId]
 		for _, val := range bucket {
 			cb(val)
 		}

@@ -642,19 +642,23 @@ func TestValueForEachElement(t *testing.T) {
 				NumberIntVal(2),
 			}),
 			[]call{
-				{NilVal, NumberIntVal(1)},
+				// Ordering is arbitrary but consistent, so future changes
+				// to the set implementation may reorder these.
 				{NilVal, NumberIntVal(2)},
+				{NilVal, NumberIntVal(1)},
 			},
 			false,
 		},
 		{
 			SetVal([]Value{
-				StringVal("hey"),
+				StringVal("hi"),
 				StringVal("stop"),
 				StringVal("hey"),
 			}),
 			[]call{
-				{NilVal, StringVal("hey")},
+				// Ordering is arbitrary but consistent, so future changes
+				// to the set implementation may reorder these.
+				{NilVal, StringVal("hi")},
 				{NilVal, StringVal("stop")},
 			},
 			true,

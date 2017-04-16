@@ -88,7 +88,7 @@ func TestSetHashBytes(t *testing.T) {
 		},
 		{
 			SetVal([]Value{True, True, False}),
-			"[T;F;]",
+			"[F;T;]",
 		},
 		{
 			SetVal([]Value{UnknownVal(Bool), UnknownVal(Bool)}),
