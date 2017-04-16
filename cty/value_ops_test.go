@@ -593,6 +593,43 @@ func TestValueNeg(t *testing.T) {
 	}
 }
 
+func TestValueGetAttr(t *testing.T) {
+	tests := []struct {
+		Object   Value
+		AttrName string
+		Expected Value
+	}{
+		{
+			ObjectVal(map[string]Value{
+				"greeting": StringVal("hello"),
+			}),
+			"greeting",
+			StringVal("hello"),
+		},
+		{
+			UnknownVal(Object(map[string]Type{
+				"greeting": String,
+			})),
+			"greeting",
+			UnknownVal(String),
+		},
+		{
+			DynamicVal,
+			"hello",
+			DynamicVal,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%#v.GetAttr(%q)", test.Object, test.AttrName), func(t *testing.T) {
+			got := test.Object.GetAttr(test.AttrName)
+			if !got.RawEquals(test.Expected) {
+				t.Fatalf("GetAttr returned %#v; want %#v", got, test.Expected)
+			}
+		})
+	}
+}
+
 func TestValueForEachElement(t *testing.T) {
 	type call struct {
 		Key     Value
