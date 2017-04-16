@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"hash/crc32"
 	"math/big"
+	"sort"
 )
 
 // setRules provides a Rules implementation for the ./set package that
@@ -116,7 +117,12 @@ func appendSetHashBytes(val Value, buf *bytes.Buffer) {
 
 	if val.ty.IsObjectType() {
 		buf.WriteRune('<')
+		attrNames := make([]string, 0, len(val.ty.AttributeTypes()))
 		for attrName := range val.ty.AttributeTypes() {
+			attrNames = append(attrNames, attrName)
+		}
+		sort.Strings(attrNames)
+		for _, attrName := range attrNames {
 			appendSetHashBytes(val.GetAttr(attrName), buf)
 			buf.WriteRune(';')
 		}

@@ -103,7 +103,7 @@ func TestSetHashBytes(t *testing.T) {
 				"name": StringVal("ermintrude"),
 				"age":  NumberVal(big.NewFloat(54)),
 			}),
-			`<"ermintrude";54;>`,
+			`<54;"ermintrude";>`,
 		},
 	}
 
