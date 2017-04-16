@@ -1,5 +1,12 @@
 package cty
 
+import (
+	"bytes"
+	"fmt"
+	"hash/crc32"
+	"math/big"
+)
+
 // setRules provides a Rules implementation for the ./set package that
 // respects the equality rules for cty values of the given type.
 //
@@ -12,8 +19,11 @@ type setRules struct {
 }
 
 func (r setRules) Hash(v interface{}) int {
-	// TODO: implement this
-	return 0
+	hashBytes := makeSetHashBytes(Value{
+		ty: r.Type,
+		v:  v,
+	})
+	return int(crc32.ChecksumIEEE(hashBytes))
 }
 
 func (r setRules) Equivalent(v1 interface{}, v2 interface{}) bool {
@@ -33,4 +43,87 @@ func (r setRules) Equivalent(v1 interface{}, v2 interface{}) bool {
 	// as non-equivalent. Two unknown values are not equivalent for the
 	// sake of set membership.
 	return eqv.v == true
+}
+
+func makeSetHashBytes(val Value) []byte {
+	var buf bytes.Buffer
+	appendSetHashBytes(val, &buf)
+	return buf.Bytes()
+}
+
+func appendSetHashBytes(val Value, buf *bytes.Buffer) {
+	// Exactly what bytes we generate here don't matter as long as the following
+	// constraints hold:
+	// - Unknown and null values all generate distinct strings from
+	//   each other and from any normal value of the given type.
+	// - The delimiter used to separate items in a compound structure can
+	//   never appear literally in any of its elements.
+	// Since we don't support hetrogenous lists we don't need to worry about
+	// collisions between values of different types, apart from
+	// PseudoTypeDynamic.
+	// If in practice we *do* get a collision then it's not a big deal because
+	// the Equivalent function will still distinguish values, but set
+	// performance will be best if we are able to produce a distinct string
+	// for each distinct value, unknown values notwithstanding.
+	if !val.IsKnown() {
+		buf.WriteRune('?')
+		return
+	}
+	if val.IsNull() {
+		buf.WriteRune('~')
+		return
+	}
+
+	switch val.ty {
+	case Number:
+		buf.WriteString(val.v.(*big.Float).String())
+		return
+	case Bool:
+		if val.v.(bool) {
+			buf.WriteRune('T')
+		} else {
+			buf.WriteRune('F')
+		}
+		return
+	case String:
+		buf.WriteString(fmt.Sprintf("%q", val.v.(string)))
+		return
+	}
+
+	if val.ty.IsMapType() {
+		buf.WriteRune('{')
+		val.ForEachElement(func(keyVal, elementVal Value) bool {
+			appendSetHashBytes(keyVal, buf)
+			buf.WriteRune(':')
+			appendSetHashBytes(elementVal, buf)
+			buf.WriteRune(';')
+			return false
+		})
+		buf.WriteRune('}')
+		return
+	}
+
+	if val.ty.IsListType() || val.ty.IsSetType() {
+		buf.WriteRune('[')
+		val.ForEachElement(func(keyVal, elementVal Value) bool {
+			appendSetHashBytes(elementVal, buf)
+			buf.WriteRune(';')
+			return false
+		})
+		buf.WriteRune(']')
+		return
+	}
+
+	if val.ty.IsObjectType() {
+		buf.WriteRune('<')
+		for attrName := range val.ty.AttributeTypes() {
+			appendSetHashBytes(val.GetAttr(attrName), buf)
+			buf.WriteRune(';')
+		}
+		buf.WriteRune('>')
+		return
+	}
+
+	// should never get down here
+	panic("unsupported type in set hash")
 }
