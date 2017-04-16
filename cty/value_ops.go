@@ -322,6 +322,49 @@ func (val Value) Divide(other Value) Value {
 	return NumberVal(ret)
 }
 
+// Modulo returns the remainder of an integer division of the receiver and
+// the given other value. Both values must be numbers; this method will panic
+// if not.
+//
+// If the "other" value is exactly zero, this operation will return either
+// PositiveInfinity or NegativeInfinity, depending on the sign of the
+// receiver value. For some use-cases the presence of infinities may be
+// undesirable, in which case the caller should check whether the
+// other value equals zero before calling and raise an error instead.
+//
+// This operation is primarily here for use with nonzero natural numbers.
+// Modulo with "other" as a non-natural number gets somewhat philosophical,
+// and this function takes a position on what that should mean, but callers
+// may wish to disallow such things outright or implement their own modulo
+// if they disagree with the interpretation used here.
+func (val Value) Modulo(other Value) Value {
+	if shortCircuit := mustTypeCheck(Number, val, other); shortCircuit != nil {
+		shortCircuit = forceShortCircuitType(shortCircuit, Number)
+		return *shortCircuit
+	}
+
+	// We cheat a bit here with infinities, just abusing the Multiply operation
+	// to get an infinite result of the correct sign.
+	if val == PositiveInfinity || val == NegativeInfinity || other == PositiveInfinity || other == NegativeInfinity {
+		return val.Multiply(other)
+	}
+
+	if other.RawEquals(Zero) {
+		return val
+	}
+
+	// FIXME: This is a bit clumsy. Should come back later and see if there's a
+	// more straightforward way to do this.
+	rat := val.Divide(other)
+	ratFloorInt := &big.Int{}
+	rat.v.(*big.Float).Int(ratFloorInt)
+	work := (&big.Float{}).SetInt(ratFloorInt)
+	work.Mul(other.v.(*big.Float), work)
+	work.Sub(val.v.(*big.Float), work)
+
+	return NumberVal(work)
+}
+
 // GetAttr returns the value of the given attribute of the receiver, which
 // must be of an object type that has an attribute of the given name.
 // This method will panic if the receiver type is not compatible.

@@ -70,6 +70,9 @@ var True Value
 // False is the falsey value of type Bool
 var False Value
 
+// Zero is a number value representing exactly zero.
+var Zero Value
+
 // PositiveInfinity is a Number value representing positive infinity
 var PositiveInfinity Value
 
@@ -93,6 +96,10 @@ func init() {
 	False = Value{
 		ty: Bool,
 		v:  false,
+	}
+	Zero = Value{
+		ty: Number,
+		v:  big.NewFloat(0),
 	}
 	PositiveInfinity = Value{
 		ty: Number,
