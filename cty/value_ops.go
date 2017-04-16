@@ -205,6 +205,11 @@ func (val Value) Equals(other Value) Value {
 	return BoolVal(result)
 }
 
+// NotEqual is a shorthand for Equals followed by Not.
+func (val Value) NotEqual(other Value) Value {
+	return val.Equals(other).Not()
+}
+
 // True returns true if the receiver is True, false if False, and panics if
 // the receiver is not of type Bool.
 //
