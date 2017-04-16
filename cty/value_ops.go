@@ -486,6 +486,59 @@ func (val Value) Index(key Value) Value {
 	}
 }
 
+// HasIndex returns True if the receiver (which must be a list or map) has
+// an element with the given index key, or False if it does not.
+//
+// The result will be UnknownVal(Bool) if either the collection or the
+// key value are unknown.
+//
+// This method will panic if the receiver is not a collection, but does not
+// impose any panic-causing type constraints on the key.
+func (val Value) HasIndex(key Value) Value {
+	if val.ty == DynamicPseudoType {
+		return UnknownVal(Bool)
+	}
+
+	switch {
+	case val.Type().IsListType():
+		if key.Type() == DynamicPseudoType {
+			return UnknownVal(Bool)
+		}
+
+		if key.Type() != Number {
+			return False
+		}
+		if !key.IsKnown() {
+			return UnknownVal(Bool)
+		}
+
+		index, accuracy := key.v.(*big.Float).Int64()
+		if accuracy != big.Exact || index < 0 {
+			return False
+		}
+
+		return BoolVal(int(index) < len(val.v.([]interface{})) && index >= 0)
+	case val.Type().IsMapType():
+		if key.Type() == DynamicPseudoType {
+			return UnknownVal(Bool)
+		}
+
+		if key.Type() != String {
+			return False
+		}
+		if !key.IsKnown() {
+			return UnknownVal(Bool)
+		}
+
+		keyStr := key.v.(string)
+		_, exists := val.v.(map[string]interface{})[keyStr]
+
+		return BoolVal(exists)
+	default:
+		panic("not a list or map type")
+	}
+}
+
 // ForEachElement executes a given callback function for each element of
 // the receiver, which must be a collection type or this method will panic.
 //

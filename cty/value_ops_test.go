@@ -941,6 +941,114 @@ func TestValueIndex(t *testing.T) {
 	}
 }
 
+func TestValueHasIndex(t *testing.T) {
+	tests := []struct {
+		Collection Value
+		Key        Value
+		Expected   Value
+	}{
+		{
+			ListVal([]Value{StringVal("hello")}),
+			NumberIntVal(0),
+			True,
+		},
+		{
+			ListVal([]Value{StringVal("hello"), StringVal("world")}),
+			NumberIntVal(1),
+			True,
+		},
+		{
+			ListVal([]Value{StringVal("hello"), StringVal("world")}),
+			NumberIntVal(2),
+			False,
+		},
+		{
+			ListVal([]Value{StringVal("hello"), StringVal("world")}),
+			NumberIntVal(-1),
+			False,
+		},
+		{
+			ListVal([]Value{StringVal("hello"), StringVal("world")}),
+			NumberFloatVal(0.5),
+			False,
+		},
+		{
+			ListVal([]Value{StringVal("hello"), StringVal("world")}),
+			StringVal("greeting"),
+			False,
+		},
+		{
+			ListVal([]Value{StringVal("hello"), StringVal("world")}),
+			True,
+			False,
+		},
+		{
+			ListVal([]Value{StringVal("hello")}),
+			UnknownVal(Number),
+			UnknownVal(Bool),
+		},
+		{
+			ListVal([]Value{StringVal("hello")}),
+			DynamicVal,
+			UnknownVal(Bool),
+		},
+		{
+			MapVal(map[string]Value{"greeting": StringVal("hello")}),
+			StringVal("greeting"),
+			True,
+		},
+		{
+			MapVal(map[string]Value{"greeting": StringVal("hello")}),
+			StringVal("grouting"),
+			False,
+		},
+		{
+			MapVal(map[string]Value{"greeting": StringVal("hello")}),
+			StringVal(""),
+			False,
+		},
+		{
+			MapVal(map[string]Value{"greeting": StringVal("hello")}),
+			Zero,
+			False,
+		},
+		{
+			MapVal(map[string]Value{"greeting": StringVal("hello")}),
+			True,
+			False,
+		},
+		{
+			MapVal(map[string]Value{"greeting": StringVal("hello")}),
+			UnknownVal(String),
+			UnknownVal(Bool),
+		},
+		{
+			MapVal(map[string]Value{"greeting": StringVal("hello")}),
+			DynamicVal,
+			UnknownVal(Bool),
+		},
+		{
+			DynamicVal,
+			StringVal("hello"),
+			UnknownVal(Bool),
+		},
+		{
+			DynamicVal,
+			NumberIntVal(0),
+			UnknownVal(Bool),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%#v.HasIndex(%q)", test.Collection, test.Key), func(t *testing.T) {
+			got := test.Collection.HasIndex(test.Key)
+			if !got.RawEquals(test.Expected) {
+				t.Fatalf("HasIndex returned %#v; want %#v", got, test.Expected)
+			}
+		})
+	}
+}
+
 func TestValueForEachElement(t *testing.T) {
 	type call struct {
 		Key     Value
