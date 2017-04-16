@@ -30,7 +30,11 @@ func (val Value) GoString() string {
 
 	switch val.ty {
 	case Bool:
-		return fmt.Sprintf("cty.BoolVal(%#v)", val.v)
+		if val.v.(bool) {
+			return "cty.True"
+		} else {
+			return "cty.False"
+		}
 	case Number:
 		fv := val.v.(*big.Float)
 		// We'll try to use NumberIntVal or NumberFloatVal if we can, since
