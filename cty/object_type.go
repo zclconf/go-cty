@@ -43,7 +43,7 @@ func (t typeObject) Equals(other Type) bool {
 
 		return true
 	}
-	panic("not an object type")
+	return false
 }
 
 func (t typeObject) FriendlyName() string {
