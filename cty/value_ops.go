@@ -258,6 +258,7 @@ func (val Value) RawEquals(other Value) bool {
 // must be numbers; this method will panic if not.
 func (val Value) Add(other Value) Value {
 	if shortCircuit := mustTypeCheck(Number, val, other); shortCircuit != nil {
+		shortCircuit = forceShortCircuitType(shortCircuit, Number)
 		return *shortCircuit
 	}
 
@@ -270,6 +271,7 @@ func (val Value) Add(other Value) Value {
 // numbers; this method will panic if not.
 func (val Value) Subtract(other Value) Value {
 	if shortCircuit := mustTypeCheck(Number, val, other); shortCircuit != nil {
+		shortCircuit = forceShortCircuitType(shortCircuit, Number)
 		return *shortCircuit
 	}
 
@@ -280,6 +282,7 @@ func (val Value) Subtract(other Value) Value {
 // This method will panic when given a value of any other type.
 func (val Value) Negate() Value {
 	if shortCircuit := mustTypeCheck(Number, val); shortCircuit != nil {
+		shortCircuit = forceShortCircuitType(shortCircuit, Number)
 		return *shortCircuit
 	}
 
@@ -291,6 +294,7 @@ func (val Value) Negate() Value {
 // Both values must be numbers; this method will panic if not.
 func (val Value) Multiply(other Value) Value {
 	if shortCircuit := mustTypeCheck(Number, val, other); shortCircuit != nil {
+		shortCircuit = forceShortCircuitType(shortCircuit, Number)
 		return *shortCircuit
 	}
 

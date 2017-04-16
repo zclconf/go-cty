@@ -65,3 +65,35 @@ func mustTypeCheck(ty Type, values ...Value) *Value {
 	}
 	return shortCircuit
 }
+
+// shortCircuitForceType takes the return value from mustTypeCheck and
+// replaces it with an unknown of the given type if the original value was
+// DynamicVal.
+//
+// This is useful for operations that are specified to always return a
+// particular type, since then a dynamic result can safely be "upgrade" to
+// a strongly-typed unknown, which then allows subsequent operations to
+// be actually type-checked.
+//
+// It is safe to use this only if the operation in question is defined as
+// returning either a value of the given type or panicking, since we know
+// then that subsequent operations won't run if the operation panics.
+//
+// If the given short-circuit value is *not* DynamicVal then it must be
+// of the given type, or this function will panic.
+func forceShortCircuitType(shortCircuit *Value, ty Type) *Value {
+	if shortCircuit == nil {
+		return nil
+	}
+
+	if shortCircuit.ty == DynamicPseudoType {
+		ret := UnknownVal(ty)
+		return &ret
+	}
+
+	if !shortCircuit.ty.Equals(ty) {
+		panic("forceShortCircuitType got value of wrong type")
+	}
+
+	return shortCircuit
+}

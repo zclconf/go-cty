@@ -488,12 +488,12 @@ func TestValueAdd(t *testing.T) {
 		{
 			NumberIntVal(1),
 			DynamicVal,
-			DynamicVal,
+			UnknownVal(Number),
 		},
 		{
 			DynamicVal,
 			DynamicVal,
-			DynamicVal,
+			UnknownVal(Number),
 		},
 	}
 
@@ -541,12 +541,12 @@ func TestValueSubtract(t *testing.T) {
 		{
 			NumberIntVal(1),
 			DynamicVal,
-			DynamicVal,
+			UnknownVal(Number),
 		},
 		{
 			DynamicVal,
 			DynamicVal,
-			DynamicVal,
+			UnknownVal(Number),
 		},
 	}
 
@@ -579,7 +579,7 @@ func TestValueNegate(t *testing.T) {
 		},
 		{
 			DynamicVal,
-			DynamicVal,
+			UnknownVal(Number),
 		},
 	}
 
@@ -627,12 +627,12 @@ func TestValueMultiply(t *testing.T) {
 		{
 			NumberIntVal(1),
 			DynamicVal,
-			DynamicVal,
+			UnknownVal(Number),
 		},
 		{
 			DynamicVal,
 			DynamicVal,
-			DynamicVal,
+			UnknownVal(Number),
 		},
 	}
 
