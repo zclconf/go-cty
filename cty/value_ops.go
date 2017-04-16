@@ -291,10 +291,28 @@ func (val Value) Neg() Value {
 // must be of an object type that has an attribute of the given name.
 // This method will panic if the receiver type is not compatible.
 //
+// The method will also panic if the given attribute name is not defined
+// for the value's type. Use the attribute-related methods on Type to
+// check for the validity of an attribute before trying to use it.
+//
 // This method may be called on a value whose type is DynamicPseudoType,
-// in which case the result will also be the DynamicValue.
+// in which case the result will also be DynamicVal.
 func (val Value) GetAttr(name string) Value {
-	panic("GetAttr not yet implemented")
+	if val.ty == DynamicPseudoType {
+		return DynamicVal
+	}
+
+	if !val.ty.IsObjectType() {
+		panic("value is not an object")
+	}
+	if !val.ty.HasAttribute(name) {
+		panic("value has no attribute of that name")
+	}
+
+	return Value{
+		ty: val.ty.AttributeType(name),
+		v:  val.v.(map[string]interface{})[name],
+	}
 }
 
 // Index returns the value of an element of the receiver, which must be
