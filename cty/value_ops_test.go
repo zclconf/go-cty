@@ -1066,3 +1066,172 @@ func TestValueForEachElement(t *testing.T) {
 		})
 	}
 }
+
+func TestValueNot(t *testing.T) {
+	tests := []struct {
+		Receiver Value
+		Expected Value
+	}{
+		{
+			True,
+			False,
+		},
+		{
+			False,
+			True,
+		},
+		{
+			UnknownVal(Bool),
+			UnknownVal(Bool),
+		},
+		{
+			DynamicVal,
+			UnknownVal(Bool),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%#v.Not()", test.Receiver), func(t *testing.T) {
+			got := test.Receiver.Not()
+			if !got.RawEquals(test.Expected) {
+				t.Fatalf("Not returned %#v; want %#v", got, test.Expected)
+			}
+		})
+	}
+}
+
+func TestValueAnd(t *testing.T) {
+	tests := []struct {
+		Receiver Value
+		Other    Value
+		Expected Value
+	}{
+		{
+			False,
+			False,
+			False,
+		},
+		{
+			False,
+			True,
+			False,
+		},
+		{
+			True,
+			False,
+			False,
+		},
+		{
+			True,
+			True,
+			True,
+		},
+		{
+			UnknownVal(Bool),
+			UnknownVal(Bool),
+			UnknownVal(Bool),
+		},
+		{
+			True,
+			UnknownVal(Bool),
+			UnknownVal(Bool),
+		},
+		{
+			UnknownVal(Bool),
+			True,
+			UnknownVal(Bool),
+		},
+		{
+			DynamicVal,
+			DynamicVal,
+			UnknownVal(Bool),
+		},
+		{
+			True,
+			DynamicVal,
+			UnknownVal(Bool),
+		},
+		{
+			DynamicVal,
+			True,
+			UnknownVal(Bool),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%#v.And(%#v)", test.Receiver, test.Other), func(t *testing.T) {
+			got := test.Receiver.And(test.Other)
+			if !got.RawEquals(test.Expected) {
+				t.Fatalf("And returned %#v; want %#v", got, test.Expected)
+			}
+		})
+	}
+}
+
+func TestValueOr(t *testing.T) {
+	tests := []struct {
+		Receiver Value
+		Other    Value
+		Expected Value
+	}{
+		{
+			False,
+			False,
+			False,
+		},
+		{
+			False,
+			True,
+			True,
+		},
+		{
+			True,
+			False,
+			True,
+		},
+		{
+			True,
+			True,
+			True,
+		},
+		{
+			UnknownVal(Bool),
+			UnknownVal(Bool),
+			UnknownVal(Bool),
+		},
+		{
+			True,
+			UnknownVal(Bool),
+			UnknownVal(Bool),
+		},
+		{
+			UnknownVal(Bool),
+			True,
+			UnknownVal(Bool),
+		},
+		{
+			DynamicVal,
+			DynamicVal,
+			UnknownVal(Bool),
+		},
+		{
+			True,
+			DynamicVal,
+			UnknownVal(Bool),
+		},
+		{
+			DynamicVal,
+			True,
+			UnknownVal(Bool),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%#v.Or(%#v)", test.Receiver, test.Other), func(t *testing.T) {
+			got := test.Receiver.Or(test.Other)
+			if !got.RawEquals(test.Expected) {
+				t.Fatalf("Or returned %#v; want %#v", got, test.Expected)
+			}
+		})
+	}
+}

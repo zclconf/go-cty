@@ -553,3 +553,36 @@ func (val Value) ForEachElement(cb ElementIterator) bool {
 		panic("ForEachElement on non-collection type")
 	}
 }
+
+// Not returns the logical inverse of the receiver, which must be of type
+// Bool or this method will panic.
+func (val Value) Not() Value {
+	if shortCircuit := mustTypeCheck(Bool, val); shortCircuit != nil {
+		shortCircuit = forceShortCircuitType(shortCircuit, Bool)
+		return *shortCircuit
+	}
+
+	return BoolVal(!val.v.(bool))
+}
+
+// And returns the result of logical AND with the receiver and the other given
+// value, which must both be of type Bool or this method will panic.
+func (val Value) And(other Value) Value {
+	if shortCircuit := mustTypeCheck(Bool, val, other); shortCircuit != nil {
+		shortCircuit = forceShortCircuitType(shortCircuit, Bool)
+		return *shortCircuit
+	}
+
+	return BoolVal(val.v.(bool) && other.v.(bool))
+}
+
+// Or returns the result of logical OR with the receiver and the other given
+// value, which must both be of type Bool or this method will panic.
+func (val Value) Or(other Value) Value {
+	if shortCircuit := mustTypeCheck(Bool, val, other); shortCircuit != nil {
+		shortCircuit = forceShortCircuitType(shortCircuit, Bool)
+		return *shortCircuit
+	}
+
+	return BoolVal(val.v.(bool) || other.v.(bool))
+}
