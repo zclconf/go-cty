@@ -61,6 +61,10 @@ func (val Value) IsNull() bool {
 //
 // NilVal is *not* a valid error and so no operations may be performed on it.
 // Any attempt to use it will result in a panic.
+//
+// This should not be confused with the idea of a Null value, as returned by
+// NullVal. NilVal is a nil within the *Go* type system, and is invalid in
+// the cty type system. Null values *do* exist in the cty type system.
 var NilVal = Value{
 	ty: Type{typeImpl: nil},
 	v:  nil,
