@@ -329,14 +329,62 @@ func (val Value) GetAttr(name string) Value {
 // number if the collection is a list or a string if it is a map.
 // In the case of a list, the given number must be convertable to int or this
 // method will panic. The key may alternatively be of DynamicPseudoType, in
-// which case the result itself is DynamicValue.
+// which case the result itself is an unknown of the collection's element type.
 //
 // The result is of the receiver collection's element type.
 //
 // This method may be called on a value whose type is DynamicPseudoType,
 // in which case the result will also be the DynamicValue.
 func (val Value) Index(key Value) Value {
-	panic("Index not yet implemented")
+	if val.ty == DynamicPseudoType {
+		return DynamicVal
+	}
+
+	switch {
+	case val.Type().IsListType():
+		elty := val.Type().ElementType()
+		if key.Type() == DynamicPseudoType {
+			return UnknownVal(elty)
+		}
+
+		if key.Type() != Number {
+			panic("element key for list must be number")
+		}
+		if !key.IsKnown() {
+			return UnknownVal(elty)
+		}
+
+		index, accuracy := key.v.(*big.Float).Int64()
+		if accuracy != big.Exact || index < 0 {
+			panic("element key for list must be non-negative integer")
+		}
+
+		return Value{
+			ty: elty,
+			v:  val.v.([]interface{})[index],
+		}
+	case val.Type().IsMapType():
+		elty := val.Type().ElementType()
+		if key.Type() == DynamicPseudoType {
+			return UnknownVal(elty)
+		}
+
+		if key.Type() != String {
+			panic("element key for map must be string")
+		}
+		if !key.IsKnown() {
+			return UnknownVal(elty)
+		}
+
+		keyStr := key.v.(string)
+
+		return Value{
+			ty: elty,
+			v:  val.v.(map[string]interface{})[keyStr],
+		}
+	default:
+		panic("not a list or map type")
+	}
 }
 
 // ForEachElement executes a given callback function for each element of

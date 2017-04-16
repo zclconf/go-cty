@@ -630,6 +630,69 @@ func TestValueGetAttr(t *testing.T) {
 	}
 }
 
+func TestValueIndex(t *testing.T) {
+	tests := []struct {
+		Collection Value
+		Key        Value
+		Expected   Value
+	}{
+		{
+			ListVal([]Value{StringVal("hello")}),
+			NumberIntVal(0),
+			StringVal("hello"),
+		},
+		{
+			ListVal([]Value{StringVal("hello"), StringVal("world")}),
+			NumberIntVal(1),
+			StringVal("world"),
+		},
+		{
+			ListVal([]Value{StringVal("hello")}),
+			UnknownVal(Number),
+			UnknownVal(String),
+		},
+		{
+			ListVal([]Value{StringVal("hello")}),
+			DynamicVal,
+			UnknownVal(String),
+		},
+		{
+			MapVal(map[string]Value{"greeting": StringVal("hello")}),
+			StringVal("greeting"),
+			StringVal("hello"),
+		},
+		{
+			MapVal(map[string]Value{"greeting": True}),
+			UnknownVal(String),
+			UnknownVal(Bool),
+		},
+		{
+			MapVal(map[string]Value{"greeting": True}),
+			DynamicVal,
+			UnknownVal(Bool),
+		},
+		{
+			DynamicVal,
+			StringVal("hello"),
+			DynamicVal,
+		},
+		{
+			DynamicVal,
+			NumberIntVal(0),
+			DynamicVal,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%#v.Index(%q)", test.Collection, test.Key), func(t *testing.T) {
+			got := test.Collection.Index(test.Key)
+			if !got.RawEquals(test.Expected) {
+				t.Fatalf("Index returned %#v; want %#v", got, test.Expected)
+			}
+		})
+	}
+}
+
 func TestValueForEachElement(t *testing.T) {
 	type call struct {
 		Key     Value
