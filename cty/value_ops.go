@@ -591,3 +591,35 @@ func (val Value) Or(other Value) Value {
 
 	return BoolVal(val.v.(bool) || other.v.(bool))
 }
+
+// LessThan returns True if the receiver is less than the other given value,
+// which must both be numbers or this method will panic.
+func (val Value) LessThan(other Value) Value {
+	if shortCircuit := mustTypeCheck(Number, Bool, val, other); shortCircuit != nil {
+		shortCircuit = forceShortCircuitType(shortCircuit, Bool)
+		return *shortCircuit
+	}
+
+	return BoolVal(val.v.(*big.Float).Cmp(other.v.(*big.Float)) < 0)
+}
+
+// GreaterThan returns True if the receiver is greater than the other given
+// value, which must both be numbers or this method will panic.
+func (val Value) GreaterThan(other Value) Value {
+	if shortCircuit := mustTypeCheck(Number, Bool, val, other); shortCircuit != nil {
+		shortCircuit = forceShortCircuitType(shortCircuit, Bool)
+		return *shortCircuit
+	}
+
+	return BoolVal(val.v.(*big.Float).Cmp(other.v.(*big.Float)) > 0)
+}
+
+// LessThanOrEqualTo is equivalent to LessThan and Equal combined with Or.
+func (val Value) LessThanOrEqualTo(other Value) Value {
+	return val.LessThan(other).Or(val.Equals(other))
+}
+
+// GreaterThanOrEqualTo is equivalent to GreaterThan and Equal combined with Or.
+func (val Value) GreaterThanOrEqualTo(other Value) Value {
+	return val.GreaterThan(other).Or(val.Equals(other))
+}

@@ -1235,3 +1235,355 @@ func TestValueOr(t *testing.T) {
 		})
 	}
 }
+
+func TestLessThan(t *testing.T) {
+	tests := []struct {
+		Receiver Value
+		Other    Value
+		Expected Value
+	}{
+		{
+			NumberIntVal(0),
+			NumberIntVal(1),
+			True,
+		},
+		{
+			NumberIntVal(1),
+			NumberIntVal(0),
+			False,
+		},
+		{
+			NumberIntVal(0),
+			NumberIntVal(0),
+			False,
+		},
+		{
+			NumberFloatVal(0.1),
+			NumberFloatVal(0.2),
+			True,
+		},
+		{
+			NumberFloatVal(0.2),
+			NumberFloatVal(0.1),
+			False,
+		},
+		{
+			NumberIntVal(0),
+			NumberFloatVal(0.2),
+			True,
+		},
+		{
+			NumberFloatVal(0.2),
+			NumberIntVal(0),
+			False,
+		},
+		{
+			NumberFloatVal(0.2),
+			NumberFloatVal(0.2),
+			False,
+		},
+		{
+			UnknownVal(Number),
+			UnknownVal(Number),
+			UnknownVal(Bool),
+		},
+		{
+			NumberIntVal(1),
+			UnknownVal(Number),
+			UnknownVal(Bool),
+		},
+		{
+			UnknownVal(Number),
+			NumberIntVal(1),
+			UnknownVal(Bool),
+		},
+		{
+			DynamicVal,
+			DynamicVal,
+			UnknownVal(Bool),
+		},
+		{
+			NumberIntVal(1),
+			DynamicVal,
+			UnknownVal(Bool),
+		},
+		{
+			DynamicVal,
+			NumberIntVal(1),
+			UnknownVal(Bool),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%#v.LessThan(%#v)", test.Receiver, test.Other), func(t *testing.T) {
+			got := test.Receiver.LessThan(test.Other)
+			if !got.RawEquals(test.Expected) {
+				t.Fatalf("LessThan returned %#v; want %#v", got, test.Expected)
+			}
+		})
+	}
+}
+
+func TestGreaterThan(t *testing.T) {
+	tests := []struct {
+		Receiver Value
+		Other    Value
+		Expected Value
+	}{
+		{
+			NumberIntVal(0),
+			NumberIntVal(1),
+			False,
+		},
+		{
+			NumberIntVal(1),
+			NumberIntVal(0),
+			True,
+		},
+		{
+			NumberIntVal(0),
+			NumberIntVal(0),
+			False,
+		},
+		{
+			NumberFloatVal(0.1),
+			NumberFloatVal(0.2),
+			False,
+		},
+		{
+			NumberFloatVal(0.2),
+			NumberFloatVal(0.1),
+			True,
+		},
+		{
+			NumberIntVal(0),
+			NumberFloatVal(0.2),
+			False,
+		},
+		{
+			NumberFloatVal(0.2),
+			NumberIntVal(0),
+			True,
+		},
+		{
+			NumberFloatVal(0.2),
+			NumberFloatVal(0.2),
+			False,
+		},
+		{
+			UnknownVal(Number),
+			UnknownVal(Number),
+			UnknownVal(Bool),
+		},
+		{
+			NumberIntVal(1),
+			UnknownVal(Number),
+			UnknownVal(Bool),
+		},
+		{
+			UnknownVal(Number),
+			NumberIntVal(1),
+			UnknownVal(Bool),
+		},
+		{
+			DynamicVal,
+			DynamicVal,
+			UnknownVal(Bool),
+		},
+		{
+			NumberIntVal(1),
+			DynamicVal,
+			UnknownVal(Bool),
+		},
+		{
+			DynamicVal,
+			NumberIntVal(1),
+			UnknownVal(Bool),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%#v.GreaterThan(%#v)", test.Receiver, test.Other), func(t *testing.T) {
+			got := test.Receiver.GreaterThan(test.Other)
+			if !got.RawEquals(test.Expected) {
+				t.Fatalf("GreaterThan returned %#v; want %#v", got, test.Expected)
+			}
+		})
+	}
+}
+
+func TestLessThanOrEqualTo(t *testing.T) {
+	tests := []struct {
+		Receiver Value
+		Other    Value
+		Expected Value
+	}{
+		{
+			NumberIntVal(0),
+			NumberIntVal(1),
+			True,
+		},
+		{
+			NumberIntVal(1),
+			NumberIntVal(0),
+			False,
+		},
+		{
+			NumberIntVal(0),
+			NumberIntVal(0),
+			True,
+		},
+		{
+			NumberFloatVal(0.1),
+			NumberFloatVal(0.2),
+			True,
+		},
+		{
+			NumberFloatVal(0.2),
+			NumberFloatVal(0.1),
+			False,
+		},
+		{
+			NumberIntVal(0),
+			NumberFloatVal(0.2),
+			True,
+		},
+		{
+			NumberFloatVal(0.2),
+			NumberIntVal(0),
+			False,
+		},
+		{
+			NumberFloatVal(0.2),
+			NumberFloatVal(0.2),
+			True,
+		},
+		{
+			UnknownVal(Number),
+			UnknownVal(Number),
+			UnknownVal(Bool),
+		},
+		{
+			NumberIntVal(1),
+			UnknownVal(Number),
+			UnknownVal(Bool),
+		},
+		{
+			UnknownVal(Number),
+			NumberIntVal(1),
+			UnknownVal(Bool),
+		},
+		{
+			DynamicVal,
+			DynamicVal,
+			UnknownVal(Bool),
+		},
+		{
+			NumberIntVal(1),
+			DynamicVal,
+			UnknownVal(Bool),
+		},
+		{
+			DynamicVal,
+			NumberIntVal(1),
+			UnknownVal(Bool),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%#v.LessThanOrEqualTo(%#v)", test.Receiver, test.Other), func(t *testing.T) {
+			got := test.Receiver.LessThanOrEqualTo(test.Other)
+			if !got.RawEquals(test.Expected) {
+				t.Fatalf("LessThanOrEqualTo returned %#v; want %#v", got, test.Expected)
+			}
+		})
+	}
+}
+
+func TestGreaterThanOrEqualTo(t *testing.T) {
+	tests := []struct {
+		Receiver Value
+		Other    Value
+		Expected Value
+	}{
+		{
+			NumberIntVal(0),
+			NumberIntVal(1),
+			False,
+		},
+		{
+			NumberIntVal(1),
+			NumberIntVal(0),
+			True,
+		},
+		{
+			NumberIntVal(0),
+			NumberIntVal(0),
+			True,
+		},
+		{
+			NumberFloatVal(0.1),
+			NumberFloatVal(0.2),
+			False,
+		},
+		{
+			NumberFloatVal(0.2),
+			NumberFloatVal(0.1),
+			True,
+		},
+		{
+			NumberIntVal(0),
+			NumberFloatVal(0.2),
+			False,
+		},
+		{
+			NumberFloatVal(0.2),
+			NumberIntVal(0),
+			True,
+		},
+		{
+			NumberFloatVal(0.2),
+			NumberFloatVal(0.2),
+			True,
+		},
+		{
+			UnknownVal(Number),
+			UnknownVal(Number),
+			UnknownVal(Bool),
+		},
+		{
+			NumberIntVal(1),
+			UnknownVal(Number),
+			UnknownVal(Bool),
+		},
+		{
+			UnknownVal(Number),
+			NumberIntVal(1),
+			UnknownVal(Bool),
+		},
+		{
+			DynamicVal,
+			DynamicVal,
+			UnknownVal(Bool),
+		},
+		{
+			NumberIntVal(1),
+			DynamicVal,
+			UnknownVal(Bool),
+		},
+		{
+			DynamicVal,
+			NumberIntVal(1),
+			UnknownVal(Bool),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%#v.GreaterThanOrEqualTo(%#v)", test.Receiver, test.Other), func(t *testing.T) {
+			got := test.Receiver.GreaterThanOrEqualTo(test.Other)
+			if !got.RawEquals(test.Expected) {
+				t.Fatalf("GreaterThanOrEqualTo returned %#v; want %#v", got, test.Expected)
+			}
+		})
+	}
+}
