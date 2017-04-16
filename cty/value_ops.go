@@ -287,6 +287,18 @@ func (val Value) Negate() Value {
 	return NumberVal(ret)
 }
 
+// Multiply returns the product of the receiver and the given other value.
+// Both values must be numbers; this method will panic if not.
+func (val Value) Multiply(other Value) Value {
+	if shortCircuit := mustTypeCheck(Number, val, other); shortCircuit != nil {
+		return *shortCircuit
+	}
+
+	ret := new(big.Float)
+	ret.Mul(val.v.(*big.Float), other.v.(*big.Float))
+	return NumberVal(ret)
+}
+
 // GetAttr returns the value of the given attribute of the receiver, which
 // must be of an object type that has an attribute of the given name.
 // This method will panic if the receiver type is not compatible.

@@ -593,6 +593,59 @@ func TestValueNegate(t *testing.T) {
 	}
 }
 
+func TestValueMultiply(t *testing.T) {
+	tests := []struct {
+		LHS      Value
+		RHS      Value
+		Expected Value
+	}{
+		{
+			NumberIntVal(4),
+			NumberIntVal(2),
+			NumberIntVal(8),
+		},
+		{
+			NumberIntVal(1),
+			NumberIntVal(-2),
+			NumberIntVal(-2),
+		},
+		{
+			NumberIntVal(5),
+			NumberFloatVal(0.5),
+			NumberFloatVal(2.5),
+		},
+		{
+			NumberIntVal(1),
+			UnknownVal(Number),
+			UnknownVal(Number),
+		},
+		{
+			UnknownVal(Number),
+			UnknownVal(Number),
+			UnknownVal(Number),
+		},
+		{
+			NumberIntVal(1),
+			DynamicVal,
+			DynamicVal,
+		},
+		{
+			DynamicVal,
+			DynamicVal,
+			DynamicVal,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%#v.Multiply(%#v)", test.LHS, test.RHS), func(t *testing.T) {
+			got := test.LHS.Multiply(test.RHS)
+			if !got.RawEquals(test.Expected) {
+				t.Fatalf("Multiply returned %#v; want %#v", got, test.Expected)
+			}
+		})
+	}
+}
+
 func TestValueGetAttr(t *testing.T) {
 	tests := []struct {
 		Object   Value
