@@ -365,6 +365,18 @@ func (val Value) Modulo(other Value) Value {
 	return NumberVal(work)
 }
 
+// Absolute returns the absolute (signless) value of the receiver, which must
+// be a number or this method will panic.
+func (val Value) Absolute() Value {
+	if shortCircuit := mustTypeCheck(Number, val); shortCircuit != nil {
+		shortCircuit = forceShortCircuitType(shortCircuit, Number)
+		return *shortCircuit
+	}
+
+	ret := (&big.Float{}).Abs(val.v.(*big.Float))
+	return NumberVal(ret)
+}
+
 // GetAttr returns the value of the given attribute of the receiver, which
 // must be of an object type that has an attribute of the given name.
 // This method will panic if the receiver type is not compatible.

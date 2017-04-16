@@ -792,6 +792,55 @@ func TestValueModulo(t *testing.T) {
 	}
 }
 
+func TestValueAbsolute(t *testing.T) {
+	tests := []struct {
+		Receiver Value
+		Expected Value
+	}{
+		{
+			NumberIntVal(1),
+			NumberIntVal(1),
+		},
+		{
+			NumberIntVal(-1),
+			NumberIntVal(1),
+		},
+		{
+			NumberFloatVal(0.5),
+			NumberFloatVal(0.5),
+		},
+		{
+			NumberFloatVal(-0.5),
+			NumberFloatVal(0.5),
+		},
+		{
+			PositiveInfinity,
+			PositiveInfinity,
+		},
+		{
+			NegativeInfinity,
+			PositiveInfinity,
+		},
+		{
+			UnknownVal(Number),
+			UnknownVal(Number),
+		},
+		{
+			DynamicVal,
+			UnknownVal(Number),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%#v.Absolute()", test.Receiver), func(t *testing.T) {
+			got := test.Receiver.Absolute()
+			if !got.RawEquals(test.Expected) {
+				t.Fatalf("Absolute returned %#v; want %#v", got, test.Expected)
+			}
+		})
+	}
+}
+
 func TestValueGetAttr(t *testing.T) {
 	tests := []struct {
 		Object   Value
