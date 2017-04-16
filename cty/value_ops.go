@@ -325,6 +325,10 @@ func (val Value) Index(key Value) Value {
 // be of type String and the value will be of the map's element type.
 // Elements are passed in ascending lexicographical order by key.
 //
+// If the receiver is of a set type, the key passed to the callback will be
+// NilVal and should be disregarded. Elements are passed in an undefined but
+// consistent order.
+//
 // Returns true if the iteration exited early due to the callback function
 // returning true, or false if the loop ran to completion.
 //
@@ -368,6 +372,21 @@ func (val Value) ForEachElement(cb ElementIterator) bool {
 			}
 		}
 		return false
+	case val.ty.IsSetType():
+		ety := val.ty.ElementType()
+
+		rawSet := val.v.(set.Set)
+		stop := false
+		rawSet.EachValue(func(ev interface{}) {
+			if stop {
+				return
+			}
+			stop = cb(NilVal, Value{
+				ty: ety,
+				v:  ev,
+			})
+		})
+		return stop
 	default:
 		panic("ForEachElement on non-collection type")
 	}

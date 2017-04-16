@@ -632,6 +632,34 @@ func TestValueForEachElement(t *testing.T) {
 			true,
 		},
 		{
+			SetValEmpty(String),
+			[]call{},
+			false,
+		},
+		{
+			SetVal([]Value{
+				NumberIntVal(1),
+				NumberIntVal(2),
+			}),
+			[]call{
+				{NilVal, NumberIntVal(1)},
+				{NilVal, NumberIntVal(2)},
+			},
+			false,
+		},
+		{
+			SetVal([]Value{
+				StringVal("hey"),
+				StringVal("stop"),
+				StringVal("hey"),
+			}),
+			[]call{
+				{NilVal, StringVal("hey")},
+				{NilVal, StringVal("stop")},
+			},
+			true,
+		},
+		{
 			MapVal(map[string]Value{
 				"second": NumberIntVal(2),
 				"first":  NumberIntVal(1),
