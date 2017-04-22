@@ -35,6 +35,12 @@ func NumberIntVal(v int64) Value {
 	return NumberVal(new(big.Float).SetInt64(v))
 }
 
+// NumberUIntVal returns a Value of type Number whose internal value is equal
+// to the given unsigned integer.
+func NumberUIntVal(v uint64) Value {
+	return NumberVal(new(big.Float).SetUint64(v))
+}
+
 // NumberFloatVal returns a Value of type Number whose internal value is
 // equal to the given float.
 func NumberFloatVal(v float64) Value {
