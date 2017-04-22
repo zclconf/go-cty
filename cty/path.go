@@ -1,10 +1,8 @@
-package diff
+package cty
 
 import (
 	"errors"
 	"fmt"
-
-	"github.com/apparentlymart/go-cty/cty"
 )
 
 // A Path is a sequence of operations to locate a nested value within a
@@ -14,7 +12,7 @@ import (
 // taking a single step down into a data structure.
 //
 // Path has some convenience methods for gradually constructing a path,
-// but callers can also feel free to just produce a slice of manually PathStep
+// but callers can also feel free to just produce a slice of PathStep manually
 // and convert to this type, which may be more appropriate in environments
 // where memory pressure is a concern.
 type Path []PathStep
@@ -24,7 +22,7 @@ type Path []PathStep
 // permitted implementations are those within this package.
 type PathStep interface {
 	pathStepSigil() pathStepImpl
-	Apply(cty.Value) (cty.Value, error)
+	Apply(Value) (Value, error)
 }
 
 // embed pathImpl into a struct to declare it a PathStep implementation
@@ -40,7 +38,7 @@ func (p pathStepImpl) pathStepSigil() pathStepImpl {
 // This is provided as a convenient way to construct paths, but each call
 // will create garbage so it should not be used where memory pressure is a
 // concern.
-func (p Path) Index(v cty.Value) Path {
+func (p Path) Index(v Value) Path {
 	ret := make(Path, len(p)+1)
 	copy(ret, p)
 	ret[len(p)] = IndexStep{
@@ -67,12 +65,12 @@ func (p Path) GetAttr(name string) Path {
 // Apply applies each of the steps in turn to successive values starting with
 // the given value, and returns the result. If any step returns an error,
 // the whole operation returns an error.
-func (p Path) Apply(val cty.Value) (cty.Value, error) {
+func (p Path) Apply(val Value) (Value, error) {
 	var err error
 	for i, step := range p {
 		val, err = step.Apply(val)
 		if err != nil {
-			return cty.NilVal, fmt.Errorf("at step %d: %s", i, err)
+			return NilVal, fmt.Errorf("at step %d: %s", i, err)
 		}
 	}
 	return val, nil
@@ -91,7 +89,7 @@ func (p Path) Apply(val cty.Value) (cty.Value, error) {
 // If the path has *no* steps then the returned PathStep will be nil,
 // representing that any operation should be applied directly to the
 // given value.
-func (p Path) LastStep(val cty.Value) (cty.Value, PathStep, error) {
+func (p Path) LastStep(val Value) (Value, PathStep, error) {
 	var err error
 
 	if len(p) == 0 {
@@ -101,7 +99,7 @@ func (p Path) LastStep(val cty.Value) (cty.Value, PathStep, error) {
 	journey := p[:len(p)-1]
 	val, err = journey.Apply(val)
 	if err != nil {
-		return cty.NilVal, nil, err
+		return NilVal, nil, err
 	}
 	return val, p[len(p)-1], nil
 }
@@ -110,23 +108,23 @@ func (p Path) LastStep(val cty.Value) (cty.Value, PathStep, error) {
 // to a value, which must be of either a list or map type.
 type IndexStep struct {
 	pathStepImpl
-	Key cty.Value
+	Key Value
 }
 
 // Apply returns the value resulting from indexing the given value with
 // our key value.
-func (s IndexStep) Apply(val cty.Value) (cty.Value, error) {
+func (s IndexStep) Apply(val Value) (Value, error) {
 	switch s.Key.Type() {
-	case cty.Number:
+	case Number:
 		if !val.Type().IsListType() {
-			return cty.NilVal, errors.New("not a list type")
+			return NilVal, errors.New("not a list type")
 		}
-	case cty.String:
+	case String:
 		if !val.Type().IsMapType() {
-			return cty.NilVal, errors.New("not a map type")
+			return NilVal, errors.New("not a map type")
 		}
 	default:
-		return cty.NilVal, errors.New("key value not number or string")
+		return NilVal, errors.New("key value not number or string")
 	}
 
 	return val.Index(s.Key), nil
@@ -141,13 +139,13 @@ type GetAttrStep struct {
 
 // Apply returns the value of our named attribute from the given value, which
 // must be of an object type that has a value of that name.
-func (s GetAttrStep) Apply(val cty.Value) (cty.Value, error) {
+func (s GetAttrStep) Apply(val Value) (Value, error) {
 	if !val.Type().IsObjectType() {
-		return cty.NilVal, errors.New("not an object type")
+		return NilVal, errors.New("not an object type")
 	}
 
 	if !val.Type().HasAttribute(s.Name) {
-		return cty.NilVal, fmt.Errorf("object has no attribute %q", s.Name)
+		return NilVal, fmt.Errorf("object has no attribute %q", s.Name)
 	}
 
 	return val.GetAttr(s.Name), nil

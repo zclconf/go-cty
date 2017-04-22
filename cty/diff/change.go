@@ -1,6 +1,8 @@
 package diff
 
-import "github.com/apparentlymart/go-cty/cty"
+import (
+	"github.com/apparentlymart/go-cty/cty"
+)
 
 // Change is an abstract type representing a single change operation as
 // part of a Diff.
@@ -25,7 +27,7 @@ func (c changeImpl) changeSigil() changeImpl {
 // with OldValue set to a null value of the appropriate type.
 type ReplaceChange struct {
 	changeImpl
-	Path     Path
+	Path     cty.Path
 	OldValue cty.Value
 	NewValue cty.Value
 }
@@ -41,7 +43,7 @@ type ReplaceChange struct {
 // avoid such complexity.
 type DeleteChange struct {
 	changeImpl
-	Path     Path
+	Path     cty.Path
 	OldValue cty.Value
 }
 
@@ -52,7 +54,7 @@ type DeleteChange struct {
 // and BeforeValue should be a null of the appropriate type.
 type InsertChange struct {
 	changeImpl
-	Path        Path
+	Path        cty.Path
 	NewValue    cty.Value
 	BeforeValue cty.Value
 }
@@ -61,7 +63,7 @@ type InsertChange struct {
 // a set. The Path is to the set itself, and NewValue is the value to insert.
 type AddChange struct {
 	changeImpl
-	Path     Path
+	Path     cty.Path
 	NewValue cty.Value
 }
 
@@ -76,7 +78,7 @@ type AddChange struct {
 // unknowns in the source value when creating a diff.
 type RemoveChange struct {
 	changeImpl
-	Path     Path
+	Path     cty.Path
 	OldValue cty.Value
 }
 
@@ -88,6 +90,6 @@ type RemoveChange struct {
 // conflicts can be detected.
 type Context struct {
 	changeImpl
-	Path      Path
+	Path      cty.Path
 	WantValue cty.Value
 }

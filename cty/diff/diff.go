@@ -41,7 +41,7 @@ func (d Diff) Apply(source cty.Value) (cty.Value, error) {
 }
 
 // Replace returns a copy of the receiver with a ReplaceChange appended.
-func (d Diff) Replace(path Path, old, new cty.Value) Diff {
+func (d Diff) Replace(path cty.Path, old, new cty.Value) Diff {
 	return d.append(ReplaceChange{
 		Path:     path,
 		OldValue: old,
@@ -50,7 +50,7 @@ func (d Diff) Replace(path Path, old, new cty.Value) Diff {
 }
 
 // Delete returns a copy of the receiver with a DeleteChange appended.
-func (d Diff) Delete(path Path, old cty.Value) Diff {
+func (d Diff) Delete(path cty.Path, old cty.Value) Diff {
 	return d.append(DeleteChange{
 		Path:     path,
 		OldValue: old,
@@ -58,7 +58,7 @@ func (d Diff) Delete(path Path, old cty.Value) Diff {
 }
 
 // Insert returns a copy of the receiver with a DeleteChange appended.
-func (d Diff) Insert(path Path, new, before cty.Value) Diff {
+func (d Diff) Insert(path cty.Path, new, before cty.Value) Diff {
 	return d.append(InsertChange{
 		Path:        path,
 		NewValue:    new,
@@ -67,7 +67,7 @@ func (d Diff) Insert(path Path, new, before cty.Value) Diff {
 }
 
 // Add returns a copy of the receiver with an AddChange appended.
-func (d Diff) Add(path Path, new cty.Value) Diff {
+func (d Diff) Add(path cty.Path, new cty.Value) Diff {
 	return d.append(AddChange{
 		Path:     path,
 		NewValue: new,
@@ -75,7 +75,7 @@ func (d Diff) Add(path Path, new cty.Value) Diff {
 }
 
 // Remove returns a copy of the receiver with a RemoveChange appended.
-func (d Diff) Remove(path Path, old cty.Value) Diff {
+func (d Diff) Remove(path cty.Path, old cty.Value) Diff {
 	return d.append(RemoveChange{
 		Path:     path,
 		OldValue: old,
