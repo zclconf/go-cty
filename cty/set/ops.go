@@ -97,6 +97,15 @@ func (s Set) Values() []interface{} {
 	return ret
 }
 
+// Length returns the number of values in the set.
+func (s Set) Length() int {
+	var count int
+	for _, bucket := range s.vals {
+		count = count + len(bucket)
+	}
+	return count
+}
+
 // Union returns a new set that contains all of the members of both the
 // receiving set and the given set. Both sets must have the same rules, or
 // else this function will panic.

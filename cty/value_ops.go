@@ -539,6 +539,54 @@ func (val Value) HasIndex(key Value) Value {
 	}
 }
 
+// Length returns the length of the receiver, which must be a collection type,
+// as a number value. If the receiver is not a collection type then this
+// method will panic.
+//
+// If the receiver is unknown then the result is also unknown.
+//
+// If the receiver is null then this function will panic.
+//
+// Note that Length is not supported for strings. To determine the length
+// of a string, call AsString and take the length of the native Go string
+// that is returned.
+func (val Value) Length() Value {
+	if !val.IsKnown() {
+		return UnknownVal(Number)
+	}
+
+	return NumberIntVal(int64(val.LengthInt()))
+}
+
+// LengthInt is like Length except it returns an int. It has the same behavior
+// as Length except that it will panic if the receiver is unknown.
+//
+// This is an integration method provided for the convenience of code bridging
+// into Go's type system.
+func (val Value) LengthInt() int {
+	if !val.IsKnown() {
+		panic("value is not known")
+	}
+	if val.IsNull() {
+		panic("value is null")
+	}
+
+	switch {
+
+	case val.ty.IsListType():
+		return len(val.v.([]interface{}))
+
+	case val.ty.IsSetType():
+		return val.v.(set.Set).Length()
+
+	case val.ty.IsMapType():
+		return len(val.v.(map[string]interface{}))
+
+	default:
+		panic("value is not a collection")
+	}
+}
+
 // ForEachElement executes a given callback function for each element of
 // the receiver, which must be a collection type or this method will panic.
 //
