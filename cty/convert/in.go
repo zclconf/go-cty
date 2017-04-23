@@ -17,10 +17,11 @@ import (
 // conversions, such as populating a set from a slice rather than having to
 // first explicitly instantiate a set.Set.
 //
-// Since ToCtyValue is working with both Go values and cty values, its error
-// messages will often include Go terminology details and are thus not
-// appropriate for display to end-users. In most cases an error returned from
-// ToCtyValue represents a bug in the calling program.
+// The audience of this function is assumed to be the developers of Go code
+// that is integrating with cty, and thus the error messages it returns are
+// presented from Go's perspective. These messages are thus not appropriate
+// for display to end-users. An error returned from ToCtyValue represents a
+// bug in the calling program, not user error.
 func ToCtyValue(val interface{}, ty cty.Type) (cty.Value, error) {
 	// 'path' starts off as empty but will grow for each level of recursive
 	// call we make, so by the time toCtyValue returns it is likely to have
