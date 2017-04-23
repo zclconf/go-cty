@@ -54,7 +54,11 @@ func fromCtyValue(val cty.Value, target reflect.Value, path cty.Path) error {
 		return nil
 	}
 
-	if val.IsNull() {
+	// Lists and maps can be nil without indirection, but everything else
+	// requires a pointer and we set it immediately to nil.
+	// (fromCtyList and fromCtyMap must therefore deal with val.IsNull,
+	// while other types can assume no nulls after this point.)
+	if val.IsNull() && !val.Type().IsListType() && !val.Type().IsMapType() {
 		target = fromCtyPopulatePtr(target, true)
 		if target.Kind() != reflect.Ptr {
 			return errorf(path, "null value is not allowed")
@@ -265,18 +269,196 @@ func fromCtyString(val cty.Value, target reflect.Value, path cty.Path) error {
 }
 
 func fromCtyList(val cty.Value, target reflect.Value, path cty.Path) error {
-	panic("decode from list not yet supported")
-	return nil
+	switch target.Kind() {
+
+	case reflect.Slice:
+		if val.IsNull() {
+			target.Set(reflect.Zero(target.Type()))
+			return nil
+		}
+
+		length := val.LengthInt()
+		tv := reflect.MakeSlice(target.Type(), length, length)
+
+		path = append(path, nil)
+
+		i := 0
+		var err error
+		val.ForEachElement(func(key cty.Value, val cty.Value) bool {
+			path[len(path)-1] = &cty.IndexStep{
+				Key: cty.NumberIntVal(int64(i)),
+			}
+
+			targetElem := tv.Index(i)
+			err = fromCtyValue(val, targetElem, path)
+			if err != nil {
+				return true
+			}
+
+			i++
+			return false
+		})
+		if err != nil {
+			return err
+		}
+
+		path = path[:len(path)-1]
+
+		target.Set(tv)
+		return nil
+
+	case reflect.Array:
+		if val.IsNull() {
+			return errorf(path, "null value is not allowed")
+		}
+
+		length := val.LengthInt()
+		if length != target.Len() {
+			return errorf(path, "must be a list of length %d", target.Len())
+		}
+
+		path = append(path, nil)
+
+		i := 0
+		var err error
+		val.ForEachElement(func(key cty.Value, val cty.Value) bool {
+			path[len(path)-1] = &cty.IndexStep{
+				Key: cty.NumberIntVal(int64(i)),
+			}
+
+			targetElem := target.Index(i)
+			err = fromCtyValue(val, targetElem, path)
+			if err != nil {
+				return true
+			}
+
+			i++
+			return false
+		})
+		if err != nil {
+			return err
+		}
+
+		path = path[:len(path)-1]
+
+		return nil
+
+	default:
+		return likelyRequiredTypesError(path, target)
+
+	}
 }
 
 func fromCtyMap(val cty.Value, target reflect.Value, path cty.Path) error {
-	panic("decode from map not yet supported")
-	return nil
+
+	switch target.Kind() {
+
+	case reflect.Map:
+		if val.IsNull() {
+			target.Set(reflect.Zero(target.Type()))
+			return nil
+		}
+
+		tv := reflect.MakeMap(target.Type())
+		et := target.Type().Elem()
+
+		path = append(path, nil)
+
+		var err error
+		val.ForEachElement(func(key cty.Value, val cty.Value) bool {
+			path[len(path)-1] = &cty.IndexStep{
+				Key: key,
+			}
+
+			ks := key.AsString()
+
+			targetElem := reflect.New(et)
+			err = fromCtyValue(val, targetElem, path)
+
+			tv.SetMapIndex(reflect.ValueOf(ks), targetElem.Elem())
+
+			return err != nil
+		})
+		if err != nil {
+			return err
+		}
+
+		path = path[:len(path)-1]
+
+		target.Set(tv)
+		return nil
+
+	default:
+		return likelyRequiredTypesError(path, target)
+
+	}
 }
 
 func fromCtySet(val cty.Value, target reflect.Value, path cty.Path) error {
-	panic("decode from set not yet supported")
-	return nil
+	switch target.Kind() {
+
+	case reflect.Slice:
+		if val.IsNull() {
+			target.Set(reflect.Zero(target.Type()))
+			return nil
+		}
+
+		length := val.LengthInt()
+		tv := reflect.MakeSlice(target.Type(), length, length)
+
+		i := 0
+		var err error
+		val.ForEachElement(func(key cty.Value, val cty.Value) bool {
+			targetElem := tv.Index(i)
+			err = fromCtyValue(val, targetElem, path)
+			if err != nil {
+				return true
+			}
+
+			i++
+			return false
+		})
+		if err != nil {
+			return err
+		}
+
+		target.Set(tv)
+		return nil
+
+	case reflect.Array:
+		if val.IsNull() {
+			return errorf(path, "null value is not allowed")
+		}
+
+		length := val.LengthInt()
+		if length != target.Len() {
+			return errorf(path, "must be a set of length %d", target.Len())
+		}
+
+		i := 0
+		var err error
+		val.ForEachElement(func(key cty.Value, val cty.Value) bool {
+			targetElem := target.Index(i)
+			err = fromCtyValue(val, targetElem, path)
+			if err != nil {
+				return true
+			}
+
+			i++
+			return false
+		})
+		if err != nil {
+			return err
+		}
+
+		return nil
+
+	// TODO: decode into set.Set instance
+
+	default:
+		return likelyRequiredTypesError(path, target)
+
+	}
 }
 
 func fromCtyObject(val cty.Value, target reflect.Value, path cty.Path) error {

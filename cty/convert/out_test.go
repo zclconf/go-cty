@@ -132,6 +132,78 @@ func TestOut(t *testing.T) {
 			Want:       big.NewInt(5),
 		},
 
+		// Lists
+		{
+			CtyValue:   cty.ListValEmpty(cty.Number),
+			TargetType: reflect.TypeOf(([]int)(nil)),
+			Want:       []int{},
+		},
+		{
+			CtyValue:   cty.ListVal([]cty.Value{cty.NumberIntVal(1), cty.NumberIntVal(5)}),
+			TargetType: reflect.TypeOf(([]int)(nil)),
+			Want:       []int{1, 5},
+		},
+		{
+			CtyValue:   cty.NullVal(cty.List(cty.Number)),
+			TargetType: reflect.TypeOf(([]int)(nil)),
+			Want:       ([]int)(nil),
+		},
+		{
+			CtyValue:   cty.ListVal([]cty.Value{cty.NumberIntVal(1), cty.NumberIntVal(5)}),
+			TargetType: reflect.ArrayOf(2, reflect.TypeOf(0)),
+			Want:       [2]int{1, 5},
+		},
+		{
+			CtyValue:   cty.ListValEmpty(cty.Number),
+			TargetType: reflect.ArrayOf(0, reflect.TypeOf(0)),
+			Want:       [0]int{},
+		},
+		{
+			CtyValue:   cty.ListValEmpty(cty.Number),
+			TargetType: reflect.PtrTo(reflect.ArrayOf(0, reflect.TypeOf(0))),
+			Want:       testOutAssertPtrVal([0]int{}),
+		},
+
+		// Maps
+		{
+			CtyValue:   cty.MapValEmpty(cty.Number),
+			TargetType: reflect.TypeOf((map[string]int)(nil)),
+			Want:       map[string]int{},
+		},
+		{
+			CtyValue: cty.MapVal(map[string]cty.Value{
+				"one":  cty.NumberIntVal(1),
+				"five": cty.NumberIntVal(5),
+			}),
+			TargetType: reflect.TypeOf(map[string]int{}),
+			Want: map[string]int{
+				"one":  1,
+				"five": 5,
+			},
+		},
+		{
+			CtyValue:   cty.NullVal(cty.Map(cty.Number)),
+			TargetType: reflect.TypeOf((map[string]int)(nil)),
+			Want:       (map[string]int)(nil),
+		},
+
+		// Sets
+		{
+			CtyValue:   cty.SetValEmpty(cty.Number),
+			TargetType: reflect.TypeOf(([]int)(nil)),
+			Want:       []int{},
+		},
+		{
+			CtyValue:   cty.SetVal([]cty.Value{cty.NumberIntVal(1), cty.NumberIntVal(5)}),
+			TargetType: reflect.TypeOf(([]int)(nil)),
+			Want:       []int{1, 5},
+		},
+		{
+			CtyValue:   cty.SetVal([]cty.Value{cty.NumberIntVal(1), cty.NumberIntVal(5)}),
+			TargetType: reflect.TypeOf([2]int{}),
+			Want:       [2]int{1, 5},
+		},
+
 		// Passthrough
 		{
 			CtyValue:   cty.NumberIntVal(2),
