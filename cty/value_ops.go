@@ -680,3 +680,41 @@ func (val Value) LessThanOrEqualTo(other Value) Value {
 func (val Value) GreaterThanOrEqualTo(other Value) Value {
 	return val.GreaterThan(other).Or(val.Equals(other))
 }
+
+// AsString returns the native string from a non-null, non-unknown cty.String
+// value, or panics if called on any other value.
+func (val Value) AsString() string {
+	if val.ty != String {
+		panic("not a string")
+	}
+	if val.IsNull() {
+		panic("value is null")
+	}
+	if !val.IsKnown() {
+		panic("value is unknown")
+	}
+
+	return val.v.(string)
+}
+
+// AsBigFloat returns a big.Float representation of a non-null, non-unknown
+// cty.Number value, or panics if called on any other value.
+//
+// For more convenient conversions to other native numeric types, use the
+// "convert" package.
+func (val Value) AsBigFloat() *big.Float {
+	if val.ty != Number {
+		panic("not a number")
+	}
+	if val.IsNull() {
+		panic("value is null")
+	}
+	if !val.IsKnown() {
+		panic("value is unknown")
+	}
+
+	// Copy the float so that callers can't mutate our internal state
+	ret := *(val.v.(*big.Float))
+
+	return &ret
+}
