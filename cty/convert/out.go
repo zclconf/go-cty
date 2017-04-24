@@ -56,8 +56,8 @@ func fromCtyValue(val cty.Value, target reflect.Value, path cty.Path) error {
 
 	// Lists and maps can be nil without indirection, but everything else
 	// requires a pointer and we set it immediately to nil.
-	// (fromCtyList and fromCtyMap must therefore deal with val.IsNull,
-	// while other types can assume no nulls after this point.)
+	// (fromCtyList and fromCtyMap must therefore deal with val.IsNull, while
+	// other types can assume no nulls after this point.)
 	if val.IsNull() && !val.Type().IsListType() && !val.Type().IsMapType() {
 		target = fromCtyPopulatePtr(target, true)
 		if target.Kind() != reflect.Ptr {
@@ -462,8 +462,57 @@ func fromCtySet(val cty.Value, target reflect.Value, path cty.Path) error {
 }
 
 func fromCtyObject(val cty.Value, target reflect.Value, path cty.Path) error {
-	panic("decode from object not yet supported")
-	return nil
+
+	switch target.Kind() {
+
+	case reflect.Struct:
+
+		attrTypes := val.Type().AttributeTypes()
+		targetFields := structTagIndices(target.Type())
+
+		path = append(path, nil)
+
+		for k, i := range targetFields {
+			if _, exists := attrTypes[k]; !exists {
+				// If the field in question isn't able to represent nil,
+				// that's an error.
+				fk := target.Field(i).Kind()
+				switch fk {
+				case reflect.Ptr, reflect.Slice, reflect.Map, reflect.Interface:
+					// okay
+				default:
+					return errorf(path, "missing required attribute %q", k)
+				}
+			}
+		}
+
+		for k := range attrTypes {
+			path[len(path)-1] = &cty.GetAttrStep{
+				Name: k,
+			}
+
+			fieldIdx, exists := targetFields[k]
+			if !exists {
+				return errorf(path, "unsupported attribute %q", k)
+			}
+
+			ev := val.GetAttr(k)
+
+			targetField := target.Field(fieldIdx)
+			err := fromCtyValue(ev, targetField, path)
+			if err != nil {
+				return err
+			}
+		}
+
+		path = path[:len(path)-1]
+
+		return nil
+
+	default:
+		return likelyRequiredTypesError(path, target)
+
+	}
 }
 
 func fromCtyDynamic(val cty.Value, target reflect.Value, path cty.Path) error {

@@ -388,6 +388,10 @@ func ptrToString(val string) *string {
 	return &val
 }
 
+func ptrToInt(val int) *int {
+	return &val
+}
+
 func ptrToPtrToString(val string) **string {
 	pval := &val
 	return &pval

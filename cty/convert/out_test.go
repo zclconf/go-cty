@@ -204,6 +204,33 @@ func TestOut(t *testing.T) {
 			Want:       [2]int{1, 5},
 		},
 
+		// Objects
+		{
+			CtyValue:   cty.EmptyObjectVal,
+			TargetType: reflect.TypeOf(struct{}{}),
+			Want:       struct{}{},
+		},
+		{
+			CtyValue: cty.ObjectVal(map[string]cty.Value{
+				"name": cty.StringVal("Stephen"),
+			}),
+			TargetType: reflect.TypeOf(testStruct{}),
+			Want: testStruct{
+				Name: "Stephen",
+			},
+		},
+		{
+			CtyValue: cty.ObjectVal(map[string]cty.Value{
+				"name":   cty.StringVal("Stephen"),
+				"number": cty.NumberIntVal(12),
+			}),
+			TargetType: reflect.TypeOf(testStruct{}),
+			Want: testStruct{
+				Name:   "Stephen",
+				Number: ptrToInt(12),
+			},
+		},
+
 		// Passthrough
 		{
 			CtyValue:   cty.NumberIntVal(2),
@@ -289,4 +316,9 @@ func testOutAssertPtrVal(want interface{}) testOutAssertFunc {
 
 func testOutWrongResult(ctyValue cty.Value, targetType reflect.Type, got interface{}, want interface{}, t *testing.T) {
 	t.Errorf("wrong result\ninput:       %#v\ntarget type: %s\ngot:         %#v\nwant:        %#v", ctyValue, targetType, got, want)
+}
+
+type testStruct struct {
+	Name   string `cty:"name"`
+	Number *int   `cty:"number"`
 }
