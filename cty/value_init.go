@@ -3,6 +3,7 @@ package cty
 import (
 	"fmt"
 	"math/big"
+	"reflect"
 
 	"golang.org/x/text/unicode/norm"
 
@@ -201,5 +202,33 @@ func SetValEmpty(element Type) Value {
 	return Value{
 		ty: Set(element),
 		v:  set.NewSet(setRules{element}),
+	}
+}
+
+// CapsuleVal creates a value of the given capsule type using the given
+// wrapVal, which must be a pointer to a value of the capsule type's native
+// type.
+//
+// This function will panic if the given type is not a capsule type, if
+// the given wrapVal is not compatible with the given capsule type, or if
+// wrapVal is not a pointer.
+func CapsuleVal(ty Type, wrapVal interface{}) Value {
+	if !ty.IsCapsuleType() {
+		panic("not a capsule type")
+	}
+
+	wv := reflect.ValueOf(wrapVal)
+	if wv.Kind() != reflect.Ptr {
+		panic("wrapVal is not a pointer")
+	}
+
+	it := ty.typeImpl.(*capsuleType).goType
+	if !wv.Type().Elem().AssignableTo(it) {
+		panic("wrapVal target is not compatible with the given capsule type")
+	}
+
+	return Value{
+		ty: ty,
+		v:  wrapVal,
 	}
 }

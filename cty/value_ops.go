@@ -58,6 +58,8 @@ func (val Value) GoString() string {
 		} else {
 			return fmt.Sprintf("cty.SetVal(%#v)", vals)
 		}
+	case val.ty.IsCapsuleType():
+		return fmt.Sprintf("cty.CapsuleVal(%#v, %#v)", val.ty, val.v)
 	}
 
 	// Default exposes implementation details, so should actually cover
@@ -200,6 +202,11 @@ func (val Value) Equals(other Value) Value {
 				}
 			}
 		}
+	case ty.IsCapsuleType():
+		// A capsule type's encapsulated value is a pointer to a value of its
+		// native type, so we can just compare these to get the identity test
+		// we need.
+		return BoolVal(val.v == other.v)
 
 	default:
 		// should never happen

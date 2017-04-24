@@ -7,6 +7,10 @@ import (
 )
 
 func TestValueEquals(t *testing.T) {
+	capsuleA := CapsuleVal(capsuleTestType1, &capsuleTestType1Native{"capsuleA"})
+	capsuleB := CapsuleVal(capsuleTestType1, &capsuleTestType1Native{"capsuleB"})
+	capsuleC := CapsuleVal(capsuleTestType2, &capsuleTestType2Native{"capsuleC"})
+
 	tests := []struct {
 		LHS      Value
 		RHS      Value
@@ -375,6 +379,33 @@ func TestValueEquals(t *testing.T) {
 				NumberIntVal(2),
 			}),
 			BoolVal(false),
+		},
+
+		// Capsules
+		{
+			capsuleA,
+			capsuleA,
+			True,
+		},
+		{
+			capsuleA,
+			capsuleB,
+			False,
+		},
+		{
+			capsuleA,
+			capsuleC,
+			False,
+		},
+		{
+			capsuleA,
+			UnknownVal(capsuleTestType1), // same type
+			UnknownVal(Bool),
+		},
+		{
+			capsuleA,
+			UnknownVal(capsuleTestType2), // different type
+			False,
 		},
 
 		// Unknowns and Dynamics
