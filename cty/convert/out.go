@@ -77,13 +77,6 @@ func fromCtyValue(val cty.Value, target reflect.Value, path cty.Path) error {
 		return errorf(path, "value must be known")
 	}
 
-	// Converting into interface{} is allowed, in which case we use a default
-	// set of conversions that are non-lossy but may not be convienient to
-	// the caller.
-	if target.Kind() == reflect.Interface && emptyInterfaceType.AssignableTo(target.Type()) {
-		return fromCtyDynamic(val, target, path)
-	}
-
 	switch ty {
 	case cty.Bool:
 		return fromCtyBool(val, target, path)
@@ -516,11 +509,6 @@ func fromCtyObject(val cty.Value, target reflect.Value, path cty.Path) error {
 		return likelyRequiredTypesError(path, target)
 
 	}
-}
-
-func fromCtyDynamic(val cty.Value, target reflect.Value, path cty.Path) error {
-	// TODO: implement this
-	panic("decode into interface{} not yet supported")
 }
 
 // fromCtyPopulatePtr recognizes when target is a pointer type and allocates
