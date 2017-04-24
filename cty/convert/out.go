@@ -16,7 +16,10 @@ import (
 // given, and thus the error messages it generates are (unlike with ToCtyValue)
 // presented in cty terminology that is generally appropriate to return to
 // end-users in applications where cty data structures are built from
-// user-provided configuration.
+// user-provided configuration. In particular this means that if incorrect
+// target types are provided by the calling application the resulting error
+// messages are likely to be confusing, since we assume that the given target
+// type is correct and the cty.Value is where the error lies.
 //
 // If an error is returned, the target data structure may have been partially
 // populated, but the degree to which this is true is an implementation
