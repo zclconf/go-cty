@@ -75,3 +75,15 @@ func (t Type) IsCapsuleType() bool {
 	_, ok := t.typeImpl.(*capsuleType)
 	return ok
 }
+
+// EncapsulatedType returns the encapsulated native type of a capsule type,
+// or panics if the receiver is not a Capsule type.
+//
+// Is IsCapsuleType to determine if this method is safe to call.
+func (t Type) EncapsulatedType() reflect.Type {
+	impl, ok := t.typeImpl.(*capsuleType)
+	if !ok {
+		panic("not a capsule type")
+	}
+	return impl.goType
+}

@@ -773,3 +773,17 @@ func (val Value) AsBigFloat() *big.Float {
 
 	return &ret
 }
+
+// EncapsulatedValue returns the native value encapsulated in a non-null,
+// non-unknown capsule-typed value, or panics if called on any other value.
+//
+// The result is the same pointer that was passed to CapsuleVal to create
+// the value. Since cty considers values to be immutable, it is strongly
+// recommended to treat the encapsulated value itself as immutable too.
+func (val Value) EncapsulatedValue() interface{} {
+	if !val.Type().IsCapsuleType() {
+		panic("not a capsule-typed value")
+	}
+
+	return val.v
+}
