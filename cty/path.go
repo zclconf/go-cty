@@ -142,6 +142,42 @@ func (s IndexStep) Apply(val Value) (Value, error) {
 	return val.Index(s.Key), nil
 }
 
+// SetElemStep is a Step implementation representing an element from a set.
+//
+// SetElemStep is a strange case because set elements are addressed by their
+// own value, and so sometimes it's necessary to describe in a path
+// a value that isn't yet known. In that case, the Value will be an unknown
+// value of the set's element type.
+//
+// The Value will also be unknown if describing the path through a Type
+// rather than a Value, similarly to IndexStep.
+type SetElemStep struct {
+	pathStepImpl
+	Value Value
+}
+
+// Apply returns the value resulting from indexing the given value with
+// our key value.
+func (s SetElemStep) Apply(val Value) (Value, error) {
+	if !val.Type().IsSetType() {
+		return NilVal, errors.New("not a set type")
+	}
+
+	if !val.Type().ElementType().Equals(s.Value.Type()) {
+		return NilVal, errors.New("incorrect set element type")
+	}
+
+	has := val.HasIndex(val)
+	if !has.IsKnown() {
+		return UnknownVal(s.Value.Type()), nil
+	}
+	if !has.True() {
+		return NilVal, errors.New("missing set element")
+	}
+
+	return val, nil
+}
+
 // GetAttrStep is a Step implementation representing retrieving an attribute
 // from a value, which must be of an object type.
 type GetAttrStep struct {
