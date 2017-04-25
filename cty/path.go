@@ -106,6 +106,10 @@ func (p Path) LastStep(val Value) (Value, PathStep, error) {
 
 // IndexStep is a Step implementation representing applying the index operation
 // to a value, which must be of either a list or map type.
+//
+// When describing a path through a *type* rather than a concrete value,
+// the Key may be an unknown value, indicating that the step applies to
+// *any* key of the given type.
 type IndexStep struct {
 	pathStepImpl
 	Key Value
@@ -125,6 +129,14 @@ func (s IndexStep) Apply(val Value) (Value, error) {
 		}
 	default:
 		return NilVal, errors.New("key value not number or string")
+	}
+
+	has := val.HasIndex(s.Key)
+	if !has.IsKnown() {
+		return UnknownVal(val.Type().ElementType()), nil
+	}
+	if !has.True() {
+		return NilVal, errors.New("value does not have given index key")
 	}
 
 	return val.Index(s.Key), nil
