@@ -53,6 +53,8 @@ func toCtyValue(val reflect.Value, ty cty.Type, path cty.Path) (cty.Value, error
 		return toCtySet(val, ty.ElementType(), path)
 	case ty.IsObjectType():
 		return toCtyObject(val, ty.AttributeTypes(), path)
+	case ty.IsCapsuleType():
+		return toCtyCapsule(val, ty, path)
 	}
 
 	// We should never fall out here
@@ -374,6 +376,26 @@ func toCtyObject(val reflect.Value, attrTypes map[string]cty.Type, path cty.Path
 		return cty.NilVal, errorf(path, "can't convert Go %s to %#v", val.Kind(), cty.Object(attrTypes))
 
 	}
+}
+
+func toCtyCapsule(val reflect.Value, capsuleType cty.Type, path cty.Path) (cty.Value, error) {
+	if val = toCtyUnwrapPointer(val); !val.IsValid() {
+		return cty.NullVal(capsuleType), nil
+	}
+
+	if val.Kind() != reflect.Ptr {
+		if !val.CanAddr() {
+			return cty.NilVal, errorf(path, "source value for capsule %#v must be addressable", capsuleType)
+		}
+
+		val = val.Addr()
+	}
+
+	if !val.Type().Elem().AssignableTo(capsuleType.EncapsulatedType()) {
+		return cty.NilVal, errorf(path, "value of type %T not compatible with capsule %#v", val.Interface(), capsuleType)
+	}
+
+	return cty.CapsuleVal(capsuleType, val.Interface()), nil
 }
 
 func toCtyDynamic(val reflect.Value, path cty.Path) (cty.Value, error) {

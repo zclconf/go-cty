@@ -3,6 +3,7 @@ package convert
 import (
 	"fmt"
 	"math/big"
+	"reflect"
 	"testing"
 
 	"github.com/apparentlymart/go-cty/cty"
@@ -10,6 +11,8 @@ import (
 )
 
 func TestIn(t *testing.T) {
+	capsuleANative := &capsuleType1Native{"capsuleA"}
+
 	tests := []struct {
 		GoValue interface{}
 		Type    cty.Type
@@ -344,6 +347,13 @@ func TestIn(t *testing.T) {
 			}),
 		},
 
+		// Capsules
+		{
+			GoValue: capsuleANative,
+			Type:    capsuleType1,
+			Want:    cty.CapsuleVal(capsuleType1, capsuleANative),
+		},
+
 		// Dynamic
 		{
 			GoValue: cty.NumberIntVal(2),
@@ -406,3 +416,9 @@ func (r testSetRules) Hash(v interface{}) int {
 func (r testSetRules) Equivalent(v1 interface{}, v2 interface{}) bool {
 	return v1 == v2
 }
+
+type capsuleType1Native struct {
+	name string
+}
+
+var capsuleType1 = cty.Capsule("capsule type 1", reflect.TypeOf(capsuleType1Native{}))

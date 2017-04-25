@@ -10,6 +10,8 @@ import (
 )
 
 func TestOut(t *testing.T) {
+	capsuleANative := &capsuleType1Native{"capsuleA"}
+
 	tests := []struct {
 		CtyValue   cty.Value
 		TargetType reflect.Type
@@ -229,6 +231,18 @@ func TestOut(t *testing.T) {
 				Name:   "Stephen",
 				Number: ptrToInt(12),
 			},
+		},
+
+		// Capsules
+		{
+			CtyValue:   cty.CapsuleVal(capsuleType1, capsuleANative),
+			TargetType: reflect.TypeOf(capsuleType1Native{}),
+			Want:       capsuleType1Native{"capsuleA"},
+		},
+		{
+			CtyValue:   cty.CapsuleVal(capsuleType1, capsuleANative),
+			TargetType: reflect.PtrTo(reflect.TypeOf(capsuleType1Native{})),
+			Want:       capsuleANative, // should recover original pointer
 		},
 
 		// Passthrough

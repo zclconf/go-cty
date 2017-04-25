@@ -59,9 +59,11 @@ func fromCtyValue(val cty.Value, target reflect.Value, path cty.Path) error {
 
 	// Lists and maps can be nil without indirection, but everything else
 	// requires a pointer and we set it immediately to nil.
+	// We also make an exception for capsule types because we want to handle
+	// pointers specially for these.
 	// (fromCtyList and fromCtyMap must therefore deal with val.IsNull, while
 	// other types can assume no nulls after this point.)
-	if val.IsNull() && !val.Type().IsListType() && !val.Type().IsMapType() {
+	if val.IsNull() && !val.Type().IsListType() && !val.Type().IsMapType() && !val.Type().IsCapsuleType() {
 		target = fromCtyPopulatePtr(target, true)
 		if target.Kind() != reflect.Ptr {
 			return errorf(path, "null value is not allowed")
@@ -95,6 +97,8 @@ func fromCtyValue(val cty.Value, target reflect.Value, path cty.Path) error {
 		return fromCtySet(val, target, path)
 	case ty.IsObjectType():
 		return fromCtyObject(val, target, path)
+	case ty.IsCapsuleType():
+		return fromCtyCapsule(val, target, path)
 	}
 
 	// We should never fall out here; reaching here indicates a bug in this
@@ -509,6 +513,62 @@ func fromCtyObject(val cty.Value, target reflect.Value, path cty.Path) error {
 		return likelyRequiredTypesError(path, target)
 
 	}
+}
+
+func fromCtyCapsule(val cty.Value, target reflect.Value, path cty.Path) error {
+
+	if target.Kind() == reflect.Ptr {
+		// Walk through indirection until we get to the last pointer,
+		// which we might set to null below.
+		target = fromCtyPopulatePtr(target, true)
+
+		if val.IsNull() {
+			target.Set(reflect.Zero(target.Type()))
+			return nil
+		}
+
+		// Since a capsule contains a pointer to an object, we'll preserve
+		// that pointer on the way out and thus allow the caller to recover
+		// the original object, rather than a copy of it.
+
+		eType := val.Type().EncapsulatedType()
+
+		if !eType.AssignableTo(target.Elem().Type()) {
+			// Our interface contract promises that we won't expose Go
+			// implementation details in error messages, so we need to keep
+			// this vague. This can only arise if a calling application has
+			// more than one capsule type in play and a user mixes them up.
+			return errorf(path, "incorrect type %s", val.Type().FriendlyName())
+		}
+
+		target.Set(reflect.ValueOf(val.EncapsulatedValue()))
+
+		return nil
+	} else {
+		if val.IsNull() {
+			return errorf(path, "null value is not allowed")
+		}
+
+		// If our target isn't a pointer then we will attempt to copy
+		// the encapsulated value into it.
+
+		eType := val.Type().EncapsulatedType()
+
+		if !eType.AssignableTo(target.Type()) {
+			// Our interface contract promises that we won't expose Go
+			// implementation details in error messages, so we need to keep
+			// this vague. This can only arise if a calling application has
+			// more than one capsule type in play and a user mixes them up.
+			return errorf(path, "incorrect type %s", val.Type().FriendlyName())
+		}
+
+		// We know that EncapsulatedValue is always a pointer, so we
+		// can safely call .Elem on its reflect.Value.
+		target.Set(reflect.ValueOf(val.EncapsulatedValue()).Elem())
+
+		return nil
+	}
+
 }
 
 // fromCtyPopulatePtr recognizes when target is a pointer type and allocates
