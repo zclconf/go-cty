@@ -281,7 +281,7 @@ func fromCtyList(val cty.Value, target reflect.Value, path cty.Path) error {
 		i := 0
 		var err error
 		val.ForEachElement(func(key cty.Value, val cty.Value) bool {
-			path[len(path)-1] = &cty.IndexStep{
+			path[len(path)-1] = cty.IndexStep{
 				Key: cty.NumberIntVal(int64(i)),
 			}
 
@@ -318,7 +318,7 @@ func fromCtyList(val cty.Value, target reflect.Value, path cty.Path) error {
 		i := 0
 		var err error
 		val.ForEachElement(func(key cty.Value, val cty.Value) bool {
-			path[len(path)-1] = &cty.IndexStep{
+			path[len(path)-1] = cty.IndexStep{
 				Key: cty.NumberIntVal(int64(i)),
 			}
 
@@ -362,7 +362,7 @@ func fromCtyMap(val cty.Value, target reflect.Value, path cty.Path) error {
 
 		var err error
 		val.ForEachElement(func(key cty.Value, val cty.Value) bool {
-			path[len(path)-1] = &cty.IndexStep{
+			path[len(path)-1] = cty.IndexStep{
 				Key: key,
 			}
 
@@ -483,7 +483,7 @@ func fromCtyObject(val cty.Value, target reflect.Value, path cty.Path) error {
 		}
 
 		for k := range attrTypes {
-			path[len(path)-1] = &cty.GetAttrStep{
+			path[len(path)-1] = cty.GetAttrStep{
 				Name: k,
 			}
 
