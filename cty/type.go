@@ -43,3 +43,8 @@ func (t Type) Equals(other Type) bool {
 func (t Type) FriendlyName() string {
 	return t.typeImpl.FriendlyName()
 }
+
+// NilType is an invalid type used when a function is returning an error
+// and has no useful type to return. It should not be used and any methods
+// called on it will panic.
+var NilType = Type{}
