@@ -28,4 +28,11 @@ type Parameter struct {
 	// an unkonwn value without calling the implementation function, thus
 	// freeing the function implementer from dealing with this case.
 	AllowUnknown bool
+
+	// If AllowDynamicType is set then DynamicVal may be passed into this
+	// argument's slot in the implementation function. If not set, any
+	// dynamic values will cause the function to immediately return
+	// DynamicVal value without calling the implementation function, thus
+	// freeing the function implementer from dealing with this case.
+	AllowDynamicType bool
 }

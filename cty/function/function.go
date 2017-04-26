@@ -1,15 +1,14 @@
 package function
 
 import (
+	"fmt"
+
 	"github.com/apparentlymart/go-cty/cty"
 )
 
 // Function represents a function. This is the main type in this package.
 type Function struct {
-	params   []Parameter
-	varParam *Parameter
-	typeFunc TypeFunc
-	implFunc ImplFunc
+	spec *Spec
 }
 
 // Spec is the specification of a function, used to instantiate
@@ -35,12 +34,6 @@ type Spec struct {
 	//
 	// Use StaticReturnType if the function's return type does not vary
 	// depending on its arguments.
-	//
-	// Type may be nil, in which case the ImplFunc given in Impl is instead
-	// used to determine the result type. This is appropriate only for
-	// functions whose implementation is not significantly more expensive
-	// than the type check would be, but can avoid the need to write a separate
-	// type checking function in that case.
 	Type TypeFunc
 
 	// Impl is the ImplFunc that implements the function's behavior.
@@ -55,19 +48,13 @@ type Spec struct {
 
 // New creates a new function with the given specification.
 //
-// After passing a Spec to this function, the caller must not make any further
-// modifications to it.
+// After passing a Spec to this function, the caller must no longer read from
+// or mutate it.
 func New(spec *Spec) Function {
-	typeFunc := spec.Type
-	if typeFunc == nil {
-		typeFunc = defaultTypeFunc(spec.Impl)
+	f := Function{
+		spec: spec,
 	}
-	return Function{
-		params:   spec.Params,
-		varParam: spec.VarParam,
-		typeFunc: typeFunc,
-		implFunc: spec.Impl,
-	}
+	return f
 }
 
 // TypeFunc is a callback type for determining the return type of a function
@@ -97,14 +84,160 @@ func StaticReturnType(ty cty.Type) TypeFunc {
 	}
 }
 
-// defaultTypeFunc wraps an implementation func and returns the type of
-// the value it returns.
-func defaultTypeFunc(implFunc ImplFunc) TypeFunc {
-	return func(args []cty.Value) (cty.Type, error) {
-		val, err := implFunc(args)
-		if err != nil {
-			return cty.Type{}, err
+// ReturnType returns the return type of a function given a set of candidate
+// argument types, or returns an error if the given types are unacceptable.
+//
+// If the caller already knows values for at least some of the arguments
+// it can be better to call ReturnTypeForValues, since certain functions may
+// determine their return types from their values and return DynamicVal if
+// the values are unknown.
+func (f Function) ReturnType(argTypes []cty.Type) (cty.Type, error) {
+	vals := make([]cty.Value, len(argTypes))
+	for i, ty := range argTypes {
+		vals[i] = cty.UnknownVal(ty)
+	}
+	return f.ReturnTypeForValues(vals)
+}
+
+// ReturnTypeForValues is similar to ReturnType but can be used if the caller
+// already knows the values of some or all of the arguments, in which case
+// the function may be able to determine a more definite result if its
+// return type depends on the argument *values*.
+//
+// For any arguments whose values are not known, pass an Unknown value of
+// the appropriate type.
+func (f Function) ReturnTypeForValues(args []cty.Value) (cty.Type, error) {
+	var posArgs []cty.Value
+	var varArgs []cty.Value
+
+	if f.spec.VarParam == nil {
+		if len(args) != len(f.spec.Params) {
+			return cty.Type{}, fmt.Errorf(
+				"wrong number of arguments (%d required; %d given)",
+				len(f.spec.Params), len(args),
+			)
 		}
-		return val.Type(), nil
+
+		posArgs = args
+		varArgs = nil
+	} else {
+		if len(args) < len(f.spec.Params) {
+			return cty.Type{}, fmt.Errorf(
+				"wrong number of arguments (at least %d required; %d given)",
+				len(f.spec.Params), len(args),
+			)
+		}
+
+		posArgs = args[0:len(f.spec.Params)]
+		varArgs = args[len(f.spec.Params):]
+	}
+
+	for i, spec := range f.spec.Params {
+		val := posArgs[i]
+
+		if val.IsNull() && !spec.AllowNull {
+			return cty.Type{}, argErrorf(i, "must not be null")
+		}
+
+		// AllowUnknown is ignored for type-checking, since we expect to be
+		// able to type check with unknown values. We *do* still need to deal
+		// with DynamicPseudoType here though, since the Type function might
+		// not be ready to deal with that.
+
+		if val.Type() == cty.DynamicPseudoType {
+			if !spec.AllowDynamicType {
+				return cty.DynamicPseudoType, nil
+			}
+		} else if errs := val.Type().TestConformance(spec.Type); errs != nil {
+			// For now we'll just return the first error in the set, since
+			// we don't have a good way to return the whole list here.
+			// Would be good to do something better at some point...
+			return cty.Type{}, argError(i, errs[0])
+		}
+	}
+
+	if varArgs != nil {
+		spec := f.spec.VarParam
+		for i, val := range varArgs {
+			realI := i + len(posArgs)
+
+			if val.IsNull() && !spec.AllowNull {
+				return cty.Type{}, argErrorf(realI, "must not be null")
+			}
+
+			if val.Type() == cty.DynamicPseudoType && !spec.AllowDynamicType {
+				return cty.DynamicPseudoType, nil
+			}
+
+			if errs := val.Type().TestConformance(spec.Type); errs != nil {
+				// For now we'll just return the first error in the set, since
+				// we don't have a good way to return the whole list here.
+				// Would be good to do something better at some point...
+				return cty.Type{}, argError(i, errs[0])
+			}
+		}
+	}
+
+	return f.spec.Type(args)
+}
+
+// Call actually calls the function with the given arguments, which must
+// conform to the function's parameter specification or an error will be
+// returned.
+func (f Function) Call(args []cty.Value) (cty.Value, error) {
+	expectedType, err := f.ReturnTypeForValues(args)
+	if err != nil {
+		return cty.NilVal, err
+	}
+
+	// Type checking already dealt with most situations relating to our
+	// parameter specification, but we still need to deal with unknown
+	// values.
+	posArgs := args[:len(f.spec.Params)]
+	varArgs := args[len(f.spec.Params):]
+
+	for i, spec := range f.spec.Params {
+		val := posArgs[i]
+
+		if !val.IsKnown() && !spec.AllowUnknown {
+			return cty.UnknownVal(expectedType), nil
+		}
+	}
+
+	if f.spec.VarParam != nil {
+		spec := f.spec.VarParam
+		for _, val := range varArgs {
+			if !val.IsKnown() && !spec.AllowUnknown {
+				return cty.UnknownVal(expectedType), nil
+			}
+		}
+	}
+
+	retVal, err := f.spec.Impl(args)
+	if err != nil {
+		return cty.NilVal, err
+	}
+
+	// Returned value must conform to what the Type function expected, to
+	// protect callers from having to deal with inconsistencies.
+	if errs := retVal.Type().TestConformance(expectedType); errs != nil {
+		panic(fmt.Errorf(
+			"returned value %#v does not conform to expected return type %#v: %s",
+			retVal, expectedType, errs[0],
+		))
+	}
+
+	return retVal, nil
+}
+
+// ProxyFunc the type returned by the method Function.Proxy.
+type ProxyFunc func(args ...cty.Value) (cty.Value, error)
+
+// Proxy returns a function that can be called with cty.Value arguments
+// to run the function. This is provided as a convenience for when using
+// a function directly within Go code.
+func (f Function) Proxy() ProxyFunc {
+	return func(args ...cty.Value) (cty.Value, error) {
+		return f.Call(args)
 	}
 }
