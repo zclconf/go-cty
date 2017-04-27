@@ -460,6 +460,10 @@ func (val Value) Index(key Value) Value {
 			return UnknownVal(elty)
 		}
 
+		if !val.IsKnown() {
+			return UnknownVal(elty)
+		}
+
 		index, accuracy := key.v.(*big.Float).Int64()
 		if accuracy != big.Exact || index < 0 {
 			panic("element key for list must be non-negative integer")
@@ -479,6 +483,10 @@ func (val Value) Index(key Value) Value {
 			panic("element key for map must be string")
 		}
 		if !key.IsKnown() {
+			return UnknownVal(elty)
+		}
+
+		if !val.IsKnown() {
 			return UnknownVal(elty)
 		}
 

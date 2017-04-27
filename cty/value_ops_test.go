@@ -936,6 +936,11 @@ func TestValueIndex(t *testing.T) {
 			UnknownVal(String),
 		},
 		{
+			UnknownVal(List(String)),
+			NumberIntVal(0),
+			UnknownVal(String),
+		},
+		{
 			MapVal(map[string]Value{"greeting": StringVal("hello")}),
 			StringVal("greeting"),
 			StringVal("hello"),
@@ -949,6 +954,11 @@ func TestValueIndex(t *testing.T) {
 			MapVal(map[string]Value{"greeting": True}),
 			DynamicVal,
 			UnknownVal(Bool),
+		},
+		{
+			UnknownVal(Map(String)),
+			StringVal("greeting"),
+			UnknownVal(String),
 		},
 		{
 			DynamicVal,
