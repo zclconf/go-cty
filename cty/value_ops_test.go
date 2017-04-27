@@ -1034,6 +1034,16 @@ func TestValueHasIndex(t *testing.T) {
 			UnknownVal(Bool),
 		},
 		{
+			UnknownVal(List(String)),
+			NumberIntVal(0),
+			UnknownVal(Bool),
+		},
+		{
+			UnknownVal(List(String)),
+			StringVal("hello"),
+			False,
+		},
+		{
 			MapVal(map[string]Value{"greeting": StringVal("hello")}),
 			StringVal("greeting"),
 			True,
@@ -1069,6 +1079,15 @@ func TestValueHasIndex(t *testing.T) {
 			UnknownVal(Bool),
 		},
 		{
+			UnknownVal(Map(String)),
+			StringVal("hello"),
+			UnknownVal(Bool),
+		},
+		{
+			UnknownVal(Map(String)),
+			NumberIntVal(0),
+			False,
+		},
 			DynamicVal,
 			StringVal("hello"),
 			UnknownVal(Bool),

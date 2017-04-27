@@ -526,6 +526,9 @@ func (val Value) HasIndex(key Value) Value {
 		if !key.IsKnown() {
 			return UnknownVal(Bool)
 		}
+		if !val.IsKnown() {
+			return UnknownVal(Bool)
+		}
 
 		index, accuracy := key.v.(*big.Float).Int64()
 		if accuracy != big.Exact || index < 0 {
@@ -542,6 +545,9 @@ func (val Value) HasIndex(key Value) Value {
 			return False
 		}
 		if !key.IsKnown() {
+			return UnknownVal(Bool)
+		}
+		if !val.IsKnown() {
 			return UnknownVal(Bool)
 		}
 
