@@ -80,6 +80,23 @@ func ObjectVal(attrs map[string]Value) Value {
 	}
 }
 
+// TupleVal returns a Value of a tuple type whose element types are
+// defined by the value types in the given slice.
+func TupleVal(elems []Value) Value {
+	elemTypes := make([]Type, len(elems))
+	elemVals := make([]interface{}, len(elems))
+
+	for i, val := range elems {
+		elemTypes[i] = val.ty
+		elemVals[i] = val.v
+	}
+
+	return Value{
+		ty: Tuple(elemTypes),
+		v:  elemVals,
+	}
+}
+
 // ListVal returns a Value of list type whose element type is defined by
 // the types of the given values, which must be homogenous.
 //

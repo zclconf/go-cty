@@ -157,6 +157,88 @@ func TestValueEquals(t *testing.T) {
 			BoolVal(false),
 		},
 
+		// Tuples
+		{
+			EmptyTupleVal,
+			EmptyTupleVal,
+			BoolVal(true),
+		},
+		{
+			TupleVal([]Value{NumberIntVal(1)}),
+			TupleVal([]Value{NumberIntVal(1)}),
+			BoolVal(true),
+		},
+		{
+			TupleVal([]Value{NumberIntVal(1)}),
+			TupleVal([]Value{NumberIntVal(2)}),
+			BoolVal(false),
+		},
+		{
+			TupleVal([]Value{StringVal("hi")}),
+			TupleVal([]Value{NumberIntVal(1)}),
+			BoolVal(false),
+		},
+		{
+			TupleVal([]Value{NumberIntVal(1)}),
+			TupleVal([]Value{NumberIntVal(1), NumberIntVal(2)}),
+			BoolVal(false),
+		},
+		{
+			TupleVal([]Value{NumberIntVal(1), NumberIntVal(2)}),
+			TupleVal([]Value{NumberIntVal(1)}),
+			BoolVal(false),
+		},
+		{
+			TupleVal([]Value{NumberIntVal(1), NumberIntVal(2)}),
+			TupleVal([]Value{NumberIntVal(1), NumberIntVal(2)}),
+			BoolVal(true),
+		},
+		{
+			TupleVal([]Value{UnknownVal(Number)}),
+			TupleVal([]Value{NumberIntVal(1)}),
+			UnknownVal(Bool),
+		},
+		{
+			TupleVal([]Value{UnknownVal(Number)}),
+			TupleVal([]Value{UnknownVal(Number)}),
+			UnknownVal(Bool),
+		},
+		{
+			TupleVal([]Value{NumberIntVal(1)}),
+			TupleVal([]Value{UnknownVal(Number)}),
+			UnknownVal(Bool),
+		},
+		{
+			TupleVal([]Value{NumberIntVal(1)}),
+			TupleVal([]Value{DynamicVal}),
+			UnknownVal(Bool),
+		},
+		{
+			TupleVal([]Value{DynamicVal}),
+			TupleVal([]Value{NumberIntVal(1)}),
+			UnknownVal(Bool),
+		},
+		{
+			TupleVal([]Value{NumberIntVal(1)}),
+			UnknownVal(Tuple([]Type{Number})),
+			UnknownVal(Bool),
+		},
+		{
+			UnknownVal(Tuple([]Type{Number})),
+			TupleVal([]Value{NumberIntVal(1)}),
+			UnknownVal(Bool),
+		},
+		{
+			DynamicVal,
+			TupleVal([]Value{NumberIntVal(1)}),
+			UnknownVal(Bool),
+		},
+		{
+			TupleVal([]Value{NumberIntVal(1)}),
+			DynamicVal,
+			UnknownVal(Bool),
+		},
+
 		// Lists
 		{
 			ListValEmpty(Number),
@@ -970,6 +1052,51 @@ func TestValueIndex(t *testing.T) {
 			NumberIntVal(0),
 			DynamicVal,
 		},
+		{
+			TupleVal([]Value{StringVal("hello")}),
+			NumberIntVal(0),
+			StringVal("hello"),
+		},
+		{
+			TupleVal([]Value{StringVal("hello"), NumberIntVal(5)}),
+			NumberIntVal(0),
+			StringVal("hello"),
+		},
+		{
+			TupleVal([]Value{StringVal("hello"), NumberIntVal(5)}),
+			NumberIntVal(1),
+			NumberIntVal(5),
+		},
+		{
+			TupleVal([]Value{StringVal("hello"), DynamicVal}),
+			NumberIntVal(0),
+			StringVal("hello"),
+		},
+		{
+			TupleVal([]Value{StringVal("hello"), DynamicVal}),
+			NumberIntVal(1),
+			DynamicVal,
+		},
+		{
+			TupleVal([]Value{StringVal("hello"), UnknownVal(Number)}),
+			NumberIntVal(0),
+			StringVal("hello"),
+		},
+		{
+			TupleVal([]Value{StringVal("hello"), UnknownVal(Number)}),
+			NumberIntVal(1),
+			UnknownVal(Number),
+		},
+		{
+			TupleVal([]Value{StringVal("hello"), UnknownVal(Number)}),
+			UnknownVal(Number),
+			DynamicVal,
+		},
+		{
+			UnknownVal(Tuple([]Type{String})),
+			NumberIntVal(0),
+			UnknownVal(String),
+		},
 	}
 
 	for _, test := range tests {
@@ -1088,6 +1215,57 @@ func TestValueHasIndex(t *testing.T) {
 			NumberIntVal(0),
 			False,
 		},
+		{
+			TupleVal([]Value{StringVal("hello")}),
+			NumberIntVal(0),
+			True,
+		},
+		{
+			TupleVal([]Value{StringVal("hello"), StringVal("world")}),
+			NumberIntVal(1),
+			True,
+		},
+		{
+			TupleVal([]Value{StringVal("hello"), StringVal("world")}),
+			NumberIntVal(2),
+			False,
+		},
+		{
+			TupleVal([]Value{StringVal("hello"), StringVal("world")}),
+			NumberIntVal(-1),
+			False,
+		},
+		{
+			TupleVal([]Value{StringVal("hello"), StringVal("world")}),
+			NumberFloatVal(0.5),
+			False,
+		},
+		{
+			TupleVal([]Value{StringVal("hello"), StringVal("world")}),
+			StringVal("greeting"),
+			False,
+		},
+		{
+			TupleVal([]Value{StringVal("hello"), StringVal("world")}),
+			True,
+			False,
+		},
+		{
+			TupleVal([]Value{StringVal("hello")}),
+			UnknownVal(Number),
+			UnknownVal(Bool),
+		},
+		{
+			UnknownVal(Tuple([]Type{String})),
+			NumberIntVal(0),
+			True,
+		},
+		{
+			TupleVal([]Value{StringVal("hello")}),
+			DynamicVal,
+			UnknownVal(Bool),
+		},
+		{
 			DynamicVal,
 			StringVal("hello"),
 			UnknownVal(Bool),
@@ -1199,6 +1377,34 @@ func TestValueForEachElement(t *testing.T) {
 			[]call{
 				{StringVal("item0"), StringVal("value0")},
 				{StringVal("item1"), StringVal("stop")},
+			},
+			true,
+		},
+		{
+			EmptyTupleVal,
+			[]call{},
+			false,
+		},
+		{
+			TupleVal([]Value{
+				StringVal("hello"),
+				NumberIntVal(2),
+			}),
+			[]call{
+				{NumberIntVal(0), StringVal("hello")},
+				{NumberIntVal(1), NumberIntVal(2)},
+			},
+			false,
+		},
+		{
+			TupleVal([]Value{
+				NumberIntVal(5),
+				StringVal("stop"),
+				True,
+			}),
+			[]call{
+				{NumberIntVal(0), NumberIntVal(5)},
+				{NumberIntVal(1), StringVal("stop")},
 			},
 			true,
 		},

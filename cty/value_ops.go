@@ -127,6 +127,27 @@ func (val Value) Equals(other Value) Value {
 				break
 			}
 		}
+	case ty.IsTupleType():
+		tty := ty.typeImpl.(typeTuple)
+		result = true
+		for i, ety := range tty.elemTypes {
+			lhs := Value{
+				ty: ety,
+				v:  val.v.([]interface{})[i],
+			}
+			rhs := Value{
+				ty: ety,
+				v:  other.v.([]interface{})[i],
+			}
+			eq := lhs.Equals(rhs)
+			if !eq.IsKnown() {
+				return UnknownVal(Bool)
+			}
+			if eq.False() {
+				result = false
+				break
+			}
+		}
 	case ty.IsListType():
 		ety := ty.typeImpl.(typeList).elementType
 		if len(val.v.([]interface{})) == len(other.v.([]interface{})) {
@@ -427,17 +448,19 @@ func (val Value) GetAttr(name string) Value {
 	}
 }
 
-// Index returns the value of an element of the receiver, which must be
-// either a map or a list. This method will panic if the receiver type is
-// not compatible.
+// Index returns the value of an element of the receiver, which must have
+// either a list, map or tuple type. This method will panic if the receiver
+// type is not compatible.
 //
 // The key value must be the correct type for the receving collection: a
-// number if the collection is a list or a string if it is a map.
-// In the case of a list, the given number must be convertable to int or this
-// method will panic. The key may alternatively be of DynamicPseudoType, in
-// which case the result itself is an unknown of the collection's element type.
+// number if the collection is a list or tuple, or a string if it is a map.
+// In the case of a list or tuple, the given number must be convertable to int
+// or this method will panic. The key may alternatively be of
+// DynamicPseudoType, in which case the result itself is an unknown of the
+// collection's element type.
 //
-// The result is of the receiver collection's element type.
+// The result is of the receiver collection's element type, or in the case
+// of a tuple the type of the specific element index requested.
 //
 // This method may be called on a value whose type is DynamicPseudoType,
 // in which case the result will also be the DynamicValue.
@@ -496,18 +519,45 @@ func (val Value) Index(key Value) Value {
 			ty: elty,
 			v:  val.v.(map[string]interface{})[keyStr],
 		}
+	case val.Type().IsTupleType():
+		if key.Type() == DynamicPseudoType {
+			return DynamicVal
+		}
+
+		if key.Type() != Number {
+			panic("element key for tuple must be number")
+		}
+		if !key.IsKnown() {
+			return DynamicVal
+		}
+
+		index, accuracy := key.v.(*big.Float).Int64()
+		if accuracy != big.Exact || index < 0 {
+			panic("element key for list must be non-negative integer")
+		}
+
+		eltys := val.Type().TupleElementTypes()
+
+		if !val.IsKnown() {
+			return UnknownVal(eltys[index])
+		}
+
+		return Value{
+			ty: eltys[index],
+			v:  val.v.([]interface{})[index],
+		}
 	default:
-		panic("not a list or map type")
+		panic("not a list, map, or tuple type")
 	}
 }
 
-// HasIndex returns True if the receiver (which must be a list or map) has
-// an element with the given index key, or False if it does not.
+// HasIndex returns True if the receiver (which must be supported for Index)
+// has an element with the given index key, or False if it does not.
 //
 // The result will be UnknownVal(Bool) if either the collection or the
 // key value are unknown.
 //
-// This method will panic if the receiver is not a collection, but does not
+// This method will panic if the receiver is not indexable, but does not
 // impose any panic-causing type constraints on the key.
 func (val Value) HasIndex(key Value) Value {
 	if val.ty == DynamicPseudoType {
@@ -555,14 +605,33 @@ func (val Value) HasIndex(key Value) Value {
 		_, exists := val.v.(map[string]interface{})[keyStr]
 
 		return BoolVal(exists)
+	case val.Type().IsTupleType():
+		if key.Type() == DynamicPseudoType {
+			return UnknownVal(Bool)
+		}
+
+		if key.Type() != Number {
+			return False
+		}
+		if !key.IsKnown() {
+			return UnknownVal(Bool)
+		}
+
+		index, accuracy := key.v.(*big.Float).Int64()
+		if accuracy != big.Exact || index < 0 {
+			return False
+		}
+
+		length := val.Type().Length()
+		return BoolVal(int(index) < length && index >= 0)
 	default:
-		panic("not a list or map type")
+		panic("not a list, map, or tuple type")
 	}
 }
 
-// Length returns the length of the receiver, which must be a collection type,
-// as a number value. If the receiver is not a collection type then this
-// method will panic.
+// Length returns the length of the receiver, which must be a collection type
+// or tuple type, as a number value. If the receiver is not a compatible type
+// then this method will panic.
 //
 // If the receiver is unknown then the result is also unknown.
 //
@@ -572,6 +641,11 @@ func (val Value) HasIndex(key Value) Value {
 // of a string, call AsString and take the length of the native Go string
 // that is returned.
 func (val Value) Length() Value {
+	if val.Type().IsTupleType() {
+		// For tuples, we can return the length even if the value is not known.
+		return NumberIntVal(int64(val.Type().Length()))
+	}
+
 	if !val.IsKnown() {
 		return UnknownVal(Number)
 	}
@@ -585,6 +659,10 @@ func (val Value) Length() Value {
 // This is an integration method provided for the convenience of code bridging
 // into Go's type system.
 func (val Value) LengthInt() int {
+	if val.Type().IsTupleType() {
+		// For tuples, we can return the length even if the value is not known.
+		return val.Type().Length()
+	}
 	if !val.IsKnown() {
 		panic("value is not known")
 	}
@@ -609,7 +687,8 @@ func (val Value) LengthInt() int {
 }
 
 // ForEachElement executes a given callback function for each element of
-// the receiver, which must be a collection type or this method will panic.
+// the receiver, which must be a collection type or tuple type, or this method
+// will panic.
 //
 // If the receiver is of a list type, the key passed to to the callback
 // will be of type Number and the value will be of the list's element type.
@@ -621,6 +700,10 @@ func (val Value) LengthInt() int {
 // If the receiver is of a set type, the key passed to the callback will be
 // NilVal and should be disregarded. Elements are passed in an undefined but
 // consistent order.
+//
+// If the receiver is of a tuple type, the key passed to to the callback
+// will be of type Number and the value will be of the corresponding element's
+// type.
 //
 // Returns true if the iteration exited early due to the callback function
 // returning true, or false if the loop ran to completion.
@@ -680,8 +763,22 @@ func (val Value) ForEachElement(cb ElementIterator) bool {
 			})
 		})
 		return stop
+	case val.ty.IsTupleType():
+		etys := val.ty.TupleElementTypes()
+
+		for i, rawVal := range val.v.([]interface{}) {
+			ety := etys[i]
+			stop := cb(NumberIntVal(int64(i)), Value{
+				ty: ety,
+				v:  rawVal,
+			})
+			if stop {
+				return true
+			}
+		}
+		return false
 	default:
-		panic("ForEachElement on non-collection type")
+		panic("ForEachElement on non-collection, non-tuple type")
 	}
 }
 
