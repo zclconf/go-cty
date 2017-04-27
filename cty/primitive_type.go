@@ -117,6 +117,6 @@ func init() {
 // without panic, which is not a guarantee that holds for all types. Primitive
 // types can therefore also be used in switch statements.
 func (t Type) IsPrimitiveType() bool {
-	_, ok := t.typeImpl.(*primitiveType)
+	_, ok := t.typeImpl.(primitiveType)
 	return ok
 }
