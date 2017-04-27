@@ -9,7 +9,7 @@ type typeObject struct {
 	attrTypes map[string]Type
 }
 
-// Object creates a map type with the given attribute types.
+// Object creates an object type with the given attribute types.
 //
 // After a map is passed to this function the caller must no longer access it,
 // since ownership is transferred to this library.
@@ -109,7 +109,7 @@ func (t Type) AttributeType(name string) Type {
 		}
 		return aty
 	}
-	panic("HasAttribute on non-object Type")
+	panic("AttributeType on non-object Type")
 }
 
 // AttributeTypes returns a map from attribute names to their associated
@@ -124,5 +124,5 @@ func (t Type) AttributeTypes() map[string]Type {
 	if ot, ok := t.typeImpl.(typeObject); ok {
 		return ot.attrTypes
 	}
-	panic("HasAttribute on non-object Type")
+	panic("AttributeTypes on non-object Type")
 }
