@@ -74,7 +74,7 @@ func (val Value) GoString() string {
 // as dynamic if either of the given values are. Use RawEquals to compare
 // if two values are equal *ignoring* the short-circuit rules.
 func (val Value) Equals(other Value) Value {
-	if val.ty == DynamicPseudoType || other.ty == DynamicPseudoType {
+	if val.ty.HasDynamicTypes() || other.ty.HasDynamicTypes() {
 		return UnknownVal(Bool)
 	}
 

@@ -48,3 +48,38 @@ func (t Type) FriendlyName() string {
 // and has no useful type to return. It should not be used and any methods
 // called on it will panic.
 var NilType = Type{}
+
+// HasDynamicTypes returns true either if the receiver is itself
+// DynamicPseudoType or if it is a compound type whose descendent elements
+// are DynamicPseudoType.
+func (t Type) HasDynamicTypes() bool {
+	switch {
+	case t == DynamicPseudoType:
+		return true
+	case t.IsPrimitiveType():
+		return false
+	case t.IsCollectionType():
+		return false
+	case t.IsObjectType():
+		attrTypes := t.AttributeTypes()
+		for _, at := range attrTypes {
+			if at.HasDynamicTypes() {
+				return true
+			}
+		}
+		return false
+	case t.IsTupleType():
+		elemTypes := t.TupleElementTypes()
+		for _, et := range elemTypes {
+			if et.HasDynamicTypes() {
+				return true
+			}
+		}
+		return false
+	case t.IsCapsuleType():
+		return false
+	default:
+		// Should never happen, since above should be exhaustive
+		panic("HasDynamicTypes does not support the given type")
+	}
+}
