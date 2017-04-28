@@ -130,6 +130,17 @@ func appendSetHashBytes(val Value, buf *bytes.Buffer) {
 		return
 	}
 
+	if val.ty.IsTupleType() {
+		buf.WriteRune('<')
+		val.ForEachElement(func(keyVal, elementVal Value) bool {
+			appendSetHashBytes(elementVal, buf)
+			buf.WriteRune(';')
+			return false
+		})
+		buf.WriteRune('>')
+		return
+	}
+
 	// should never get down here
 	panic("unsupported type in set hash")
 }

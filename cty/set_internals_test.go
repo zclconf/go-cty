@@ -105,6 +105,17 @@ func TestSetHashBytes(t *testing.T) {
 			}),
 			`<54;"ermintrude";>`,
 		},
+		{
+			EmptyTupleVal,
+			"<>",
+		},
+		{
+			TupleVal([]Value{
+				StringVal("ermintrude"),
+				NumberVal(big.NewFloat(54)),
+			}),
+			`<"ermintrude";54;>`,
+		},
 	}
 
 	for _, test := range tests {
