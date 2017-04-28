@@ -85,6 +85,32 @@ func testConformance(given Type, want Type, path Path, errs *[]error) {
 		return
 	}
 
+	if given.IsTupleType() && want.IsTupleType() {
+		givenElems := given.TupleElementTypes()
+		wantElems := want.TupleElementTypes()
+
+		if len(givenElems) != len(wantElems) {
+			*errs = append(
+				*errs,
+				errorf(path, "%d elements are required, but got %d", len(wantElems), len(givenElems)),
+			)
+			return
+		}
+
+		path = append(path, nil)
+		pathIdx := len(path) - 1
+
+		for i, wantElemType := range wantElems {
+			givenElemType := givenElems[i]
+			path[pathIdx] = IndexStep{Key: NumberIntVal(int64(i))}
+			testConformance(givenElemType, wantElemType, path, errs)
+		}
+
+		path = path[0:pathIdx]
+
+		return
+	}
+
 	if given.IsListType() && want.IsListType() {
 		path = append(path, IndexStep{Key: UnknownVal(Number)})
 		pathIdx := len(path) - 1

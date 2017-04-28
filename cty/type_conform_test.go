@@ -137,6 +137,46 @@ func TestTypeTestConformance(t *testing.T) {
 			Given:    Object(map[string]Type{"name": String, "number": Number}),
 			Conforms: false,
 		},
+		{
+			Receiver: EmptyTuple,
+			Given:    EmptyTuple,
+			Conforms: true,
+		},
+		{
+			Receiver: EmptyTuple,
+			Given:    Tuple([]Type{String}),
+			Conforms: false,
+		},
+		{
+			Given:    Tuple([]Type{String}),
+			Receiver: EmptyTuple,
+			Conforms: false,
+		},
+		{
+			Receiver: Tuple([]Type{String}),
+			Given:    Tuple([]Type{String}),
+			Conforms: true,
+		},
+		{
+			Receiver: Tuple([]Type{String}),
+			Given:    Tuple([]Type{Number}),
+			Conforms: false,
+		},
+		{
+			Receiver: Tuple([]Type{String, Number}),
+			Given:    Tuple([]Type{String, Number}),
+			Conforms: true,
+		},
+		{
+			Receiver: Tuple([]Type{String}),
+			Given:    Tuple([]Type{String, Number}),
+			Conforms: false,
+		},
+		{
+			Receiver: Tuple([]Type{String, Number}),
+			Given:    Tuple([]Type{String}),
+			Conforms: false,
+		},
 	}
 
 	for _, test := range tests {
