@@ -233,6 +233,21 @@ func TestOut(t *testing.T) {
 			},
 		},
 
+		// Tuples
+		{
+			CtyValue:   cty.EmptyTupleVal,
+			TargetType: reflect.TypeOf(struct{}{}),
+			Want:       struct{}{},
+		},
+		{
+			CtyValue: cty.TupleVal([]cty.Value{
+				cty.StringVal("Stephen"),
+				cty.NumberIntVal(5),
+			}),
+			TargetType: reflect.TypeOf(testTupleStruct{}),
+			Want:       testTupleStruct{"Stephen", 5},
+		},
+
 		// Capsules
 		{
 			CtyValue:   cty.CapsuleVal(capsuleType1, capsuleANative),
@@ -335,4 +350,9 @@ func testOutWrongResult(ctyValue cty.Value, targetType reflect.Type, got interfa
 type testStruct struct {
 	Name   string `cty:"name"`
 	Number *int   `cty:"number"`
+}
+
+type testTupleStruct struct {
+	Name   string
+	Number int
 }

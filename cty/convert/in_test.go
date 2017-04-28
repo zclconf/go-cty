@@ -347,6 +347,57 @@ func TestIn(t *testing.T) {
 			}),
 		},
 
+		// Tuples
+		{
+			GoValue: []interface{}{},
+			Type:    cty.EmptyTuple,
+			Want:    cty.EmptyTupleVal,
+		},
+		{
+			GoValue: struct{}{},
+			Type:    cty.EmptyTuple,
+			Want:    cty.EmptyTupleVal,
+		},
+		{
+			GoValue: testTupleStruct{"Stephen", 23},
+			Type:    cty.Tuple([]cty.Type{cty.String, cty.Number}),
+			Want: cty.TupleVal([]cty.Value{
+				cty.StringVal("Stephen"),
+				cty.NumberIntVal(23),
+			}),
+		},
+		{
+			GoValue: []interface{}{1, 2, 3},
+			Type: cty.Tuple([]cty.Type{
+				cty.Number,
+				cty.Number,
+				cty.Number,
+			}),
+			Want: cty.TupleVal([]cty.Value{
+				cty.NumberIntVal(1),
+				cty.NumberIntVal(2),
+				cty.NumberIntVal(3),
+			}),
+		},
+		{
+			GoValue: []interface{}{1, "hello", 3},
+			Type: cty.Tuple([]cty.Type{
+				cty.Number,
+				cty.String,
+				cty.Number,
+			}),
+			Want: cty.TupleVal([]cty.Value{
+				cty.NumberIntVal(1),
+				cty.StringVal("hello"),
+				cty.NumberIntVal(3),
+			}),
+		},
+		{
+			GoValue: []interface{}(nil),
+			Type:    cty.Tuple([]cty.Type{cty.Number}),
+			Want:    cty.NullVal(cty.Tuple([]cty.Type{cty.Number})),
+		},
+
 		// Capsules
 		{
 			GoValue: capsuleANative,

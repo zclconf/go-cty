@@ -97,6 +97,8 @@ func fromCtyValue(val cty.Value, target reflect.Value, path cty.Path) error {
 		return fromCtySet(val, target, path)
 	case ty.IsObjectType():
 		return fromCtyObject(val, target, path)
+	case ty.IsTupleType():
+		return fromCtyTuple(val, target, path)
 	case ty.IsCapsuleType():
 		return fromCtyCapsule(val, target, path)
 	}
@@ -515,6 +517,45 @@ func fromCtyObject(val cty.Value, target reflect.Value, path cty.Path) error {
 	}
 }
 
+func fromCtyTuple(val cty.Value, target reflect.Value, path cty.Path) error {
+
+	switch target.Kind() {
+
+	case reflect.Struct:
+
+		elemTypes := val.Type().TupleElementTypes()
+		fieldCount := target.Type().NumField()
+
+		if fieldCount != len(elemTypes) {
+			return errorf(path, "a tuple of %d elements is required", fieldCount)
+		}
+
+		path = append(path, nil)
+
+		for i := range elemTypes {
+			path[len(path)-1] = cty.IndexStep{
+				Key: cty.NumberIntVal(int64(i)),
+			}
+
+			ev := val.Index(cty.NumberIntVal(int64(i)))
+
+			targetField := target.Field(i)
+			err := fromCtyValue(ev, targetField, path)
+			if err != nil {
+				return err
+			}
+		}
+
+		path = path[:len(path)-1]
+
+		return nil
+
+	default:
+		return likelyRequiredTypesError(path, target)
+
+	}
+}
+
 func fromCtyCapsule(val cty.Value, target reflect.Value, path cty.Path) error {
 
 	if target.Kind() == reflect.Ptr {
@@ -651,7 +692,7 @@ func likelyRequiredTypesError(path cty.Path, target reflect.Value) error {
 			return errorf(path, "set or list value is required")
 
 		default:
-			return errorf(path, "object value is required")
+			return errorf(path, "object or tuple value is required")
 
 		}
 

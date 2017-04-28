@@ -53,6 +53,8 @@ func toCtyValue(val reflect.Value, ty cty.Type, path cty.Path) (cty.Value, error
 		return toCtySet(val, ty.ElementType(), path)
 	case ty.IsObjectType():
 		return toCtyObject(val, ty.AttributeTypes(), path)
+	case ty.IsTupleType():
+		return toCtyTuple(val, ty.TupleElementTypes(), path)
 	case ty.IsCapsuleType():
 		return toCtyCapsule(val, ty, path)
 	}
@@ -374,6 +376,90 @@ func toCtyObject(val reflect.Value, attrTypes map[string]cty.Type, path cty.Path
 
 	default:
 		return cty.NilVal, errorf(path, "can't convert Go %s to %#v", val.Kind(), cty.Object(attrTypes))
+
+	}
+}
+
+func toCtyTuple(val reflect.Value, elemTypes []cty.Type, path cty.Path) (cty.Value, error) {
+	if val = toCtyUnwrapPointer(val); !val.IsValid() {
+		return cty.NullVal(cty.Tuple(elemTypes)), nil
+	}
+
+	switch val.Kind() {
+
+	case reflect.Slice:
+		if val.IsNil() {
+			return cty.NullVal(cty.Tuple(elemTypes)), nil
+		}
+
+		if val.Len() != len(elemTypes) {
+			return cty.NilVal, errorf(path, "wrong number of elements %d; need %d", val.Len(), len(elemTypes))
+		}
+
+		if len(elemTypes) == 0 {
+			return cty.EmptyTupleVal, nil
+		}
+
+		// While we work on our elements we'll temporarily grow
+		// path to give us a place to put our Index step.
+		path = append(path, cty.PathStep(nil))
+
+		vals := make([]cty.Value, len(elemTypes))
+		for i, ety := range elemTypes {
+			var err error
+
+			path[len(path)-1] = cty.IndexStep{
+				Key: cty.NumberIntVal(int64(i)),
+			}
+
+			vals[i], err = toCtyValue(val.Index(i), ety, path)
+			if err != nil {
+				return cty.NilVal, err
+			}
+		}
+
+		// Discard our extra path segment, retaining it as extra capacity
+		// for future appending to the path.
+		path = path[:len(path)-1]
+
+		return cty.TupleVal(vals), nil
+
+	case reflect.Struct:
+		fieldCount := val.Type().NumField()
+		if fieldCount != len(elemTypes) {
+			return cty.NilVal, errorf(path, "wrong number of struct fields %d; need %d", fieldCount, len(elemTypes))
+		}
+
+		if len(elemTypes) == 0 {
+			return cty.EmptyTupleVal, nil
+		}
+
+		// While we work on our elements we'll temporarily grow
+		// path to give us a place to put our Index step.
+		path = append(path, cty.PathStep(nil))
+
+		vals := make([]cty.Value, len(elemTypes))
+		for i, ety := range elemTypes {
+			var err error
+
+			path[len(path)-1] = cty.IndexStep{
+				Key: cty.NumberIntVal(int64(i)),
+			}
+
+			vals[i], err = toCtyValue(val.Field(i), ety, path)
+			if err != nil {
+				return cty.NilVal, err
+			}
+		}
+
+		// Discard our extra path segment, retaining it as extra capacity
+		// for future appending to the path.
+		path = path[:len(path)-1]
+
+		return cty.TupleVal(vals), nil
+
+	default:
+		return cty.NilVal, errorf(path, "can't convert Go %s to %#v", val.Kind(), cty.Tuple(elemTypes))
 
 	}
 }
