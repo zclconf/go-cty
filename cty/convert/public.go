@@ -69,7 +69,7 @@ func Convert(in cty.Value, want cty.Type) (cty.Value, error) {
 // common subtype of a set of types should disregard DynamicPseudoType as
 // the solution unless it is the *only* type present.
 func CompareTypes(a cty.Type, b cty.Type) int {
-	return 0
+	return compareTypes(a, b)
 }
 
 // Unify attempts to find a common supertype of the given types. If this is
