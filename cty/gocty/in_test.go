@@ -1,4 +1,4 @@
-package convert
+package gocty
 
 import (
 	"fmt"
