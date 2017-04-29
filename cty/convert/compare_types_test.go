@@ -252,6 +252,38 @@ func TestCompareTypes(t *testing.T) {
 			0,
 		},
 
+		// Lists and Sets
+		{
+			cty.Set(cty.String),
+			cty.List(cty.String),
+			1,
+		},
+		{
+			cty.List(cty.String),
+			cty.Set(cty.String),
+			-1,
+		},
+		{
+			cty.List(cty.String),
+			cty.Set(cty.Number),
+			-1,
+		},
+		{
+			cty.Set(cty.Number),
+			cty.List(cty.String),
+			1,
+		},
+		{
+			cty.List(cty.Number),
+			cty.Set(cty.String),
+			0,
+		},
+		{
+			cty.Set(cty.String),
+			cty.List(cty.Number),
+			0,
+		},
+
 		// Dynamics
 		{
 			cty.DynamicPseudoType,

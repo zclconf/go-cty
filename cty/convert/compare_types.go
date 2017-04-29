@@ -42,7 +42,32 @@ func compareTypes(a cty.Type, b cty.Type) int {
 		return compareTypes(a.ElementType(), b.ElementType())
 	}
 
-	// TODO: list to tuple, map to object, set to list
+	// From this point on we may have swapped the two items in order to
+	// simplify our cases. Therefore any non-zero return after this point
+	// must be multiplied by "swap" to potentially invert the return value
+	// if needed.
+	swap := 1
+	switch {
+	case a.IsSetType() && b.IsListType():
+		a, b = b, a
+		swap = -1
+	}
+
+	if a.IsListType() && b.IsSetType() {
+		etyA := a.ElementType() // string
+		etyB := b.ElementType() // number
+		if etyA.Equals(etyB) {
+			// If the two element types are the same, then the "listiness"
+			// of A causes it to be a supertype.
+			return -1 * swap
+		}
+
+		elemCmp := compareTypes(etyA, etyB)
+		if elemCmp == -1 {
+			return elemCmp * swap
+		}
+		return 0
+	}
 
 	// For object and tuple types, comparing two types doesn't really tell
 	// the whole story because it may be possible to construct a new type C
@@ -79,9 +104,9 @@ func compareTypes(a cty.Type, b cty.Type) int {
 		case hasASuper && hasBSuper:
 			return 0
 		case hasASuper:
-			return -1
+			return -1 * swap
 		case hasBSuper:
-			return 1
+			return 1 * swap
 		default:
 			return 0
 		}
@@ -109,9 +134,9 @@ func compareTypes(a cty.Type, b cty.Type) int {
 		case hasASuper && hasBSuper:
 			return 0
 		case hasASuper:
-			return -1
+			return -1 * swap
 		case hasBSuper:
-			return 1
+			return 1 * swap
 		default:
 			return 0
 		}
