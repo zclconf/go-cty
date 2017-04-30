@@ -72,9 +72,9 @@ func CompareTypes(a cty.Type, b cty.Type) int {
 	return compareTypes(a, b)
 }
 
-// Unify attempts to find a common supertype of the given types. If this is
-// possible, that type is returned along with a slice of necessary conversions
-// for some of the given types.
+// Unify attempts to find the most general type that can be converted from
+// all of the given types. If this is possible, that type is returned along
+// with a slice of necessary conversions for some of the given types.
 //
 // If no common supertype can be found, this function returns cty.NilType and
 // a nil slice.
@@ -94,5 +94,11 @@ func CompareTypes(a cty.Type, b cty.Type) int {
 // degenerate case of an empty slice of types, the returned type is itself
 // cty.DynamicPseudoType and no conversions are attempted.
 func Unify(types []cty.Type) (cty.Type, []Conversion) {
+	return cty.NilType, nil
+}
+
+// UnifyUnsafe is the same as Unify except that it may return unsafe
+// conversions in situations where a safe conversion isn't also available.
+func UnifyUnsafe(types []cty.Type) (cty.Type, []Conversion) {
 	return cty.NilType, nil
 }
