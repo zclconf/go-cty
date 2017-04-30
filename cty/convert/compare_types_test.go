@@ -324,7 +324,7 @@ func TestCompareTypes(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(fmt.Sprintf("%#v,%#v", test.A, test.B), func(t *testing.T) {
-			got := CompareTypes(test.A, test.B)
+			got := compareTypes(test.A, test.B)
 			if got != test.Want {
 				t.Errorf(
 					"wrong result\nA: %#v\nB: %#v\ngot:  %#v\nwant: %#v",

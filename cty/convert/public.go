@@ -52,26 +52,6 @@ func Convert(in cty.Value, want cty.Type) (cty.Value, error) {
 	return conv(in)
 }
 
-// CompareTypes returns a value that defines the partial order of types.
-// If -1 is returned then Type a is a supertype of Type b. If 1 is returned
-// then the converse is true. If 0 is returned then the two types have no
-// such relationship.
-//
-// In cty the subtype/supertype relationships are somewhat loose and result
-// from the availability of type conversions. The availability of a *safe*
-// type conversion from a to b makes Type b a supertype of Type a. Conversely,
-// the availability of an *unsafe* conversion makes Type b a *subtype* of
-// Type a.
-//
-// cty.DynamicPseudoType is, as usual, a special case: it is treated as the
-// universal supertype for comparison purposes, but since it is used as a type
-// *placeholder* rather than as an actual type, callers seeking the closest
-// common subtype of a set of types should disregard DynamicPseudoType as
-// the solution unless it is the *only* type present.
-func CompareTypes(a cty.Type, b cty.Type) int {
-	return compareTypes(a, b)
-}
-
 // Unify attempts to find the most general type that can be converted from
 // all of the given types. If this is possible, that type is returned along
 // with a slice of necessary conversions for some of the given types.
