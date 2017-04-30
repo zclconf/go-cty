@@ -74,11 +74,11 @@ func Convert(in cty.Value, want cty.Type) (cty.Value, error) {
 // degenerate case of an empty slice of types, the returned type is itself
 // cty.DynamicPseudoType and no conversions are attempted.
 func Unify(types []cty.Type) (cty.Type, []Conversion) {
-	return cty.NilType, nil
+	return unify(types, false)
 }
 
 // UnifyUnsafe is the same as Unify except that it may return unsafe
 // conversions in situations where a safe conversion isn't also available.
 func UnifyUnsafe(types []cty.Type) (cty.Type, []Conversion) {
-	return cty.NilType, nil
+	return unify(types, true)
 }
