@@ -293,32 +293,32 @@ func TestCompareTypes(t *testing.T) {
 		{
 			cty.DynamicPseudoType,
 			cty.String,
-			-1,
+			1,
 		},
 		{
 			cty.String,
 			cty.DynamicPseudoType,
-			1,
+			-1,
 		},
 		{
 			cty.Number,
 			cty.DynamicPseudoType,
-			1,
+			-1,
 		},
 		{
 			cty.DynamicPseudoType,
 			cty.Number,
-			-1,
-		},
-		{
-			cty.Bool,
-			cty.DynamicPseudoType,
 			1,
 		},
 		{
+			cty.Bool,
+			cty.DynamicPseudoType,
+			-1,
+		},
+		{
 			cty.DynamicPseudoType,
 			cty.Bool,
-			-1,
+			1,
 		},
 	}
 

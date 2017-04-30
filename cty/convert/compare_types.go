@@ -12,12 +12,16 @@ import (
 // optimistic assumptions.
 func compareTypes(a cty.Type, b cty.Type) int {
 
+	// DynamicPseudoType always has lowest preference, because anything can
+	// convert to it (it acts as a placeholder for "any type") and we want
+	// to optimistically assume that any dynamics will converge on matching
+	// their neighbors.
 	if a == cty.DynamicPseudoType || b == cty.DynamicPseudoType {
 		if a != cty.DynamicPseudoType {
-			return 1
+			return -1
 		}
 		if b != cty.DynamicPseudoType {
-			return -1
+			return 1
 		}
 		return 0
 	}

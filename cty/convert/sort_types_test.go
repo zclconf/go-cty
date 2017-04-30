@@ -62,6 +62,14 @@ func TestSortTypes(t *testing.T) {
 			[]cty.Type{cty.Bool, cty.List(cty.String), cty.String},
 			[]cty.Type{cty.List(cty.String), cty.String, cty.Bool},
 		},
+		{
+			[]cty.Type{cty.String, cty.DynamicPseudoType},
+			[]cty.Type{cty.String, cty.DynamicPseudoType},
+		},
+		{
+			[]cty.Type{cty.DynamicPseudoType, cty.String},
+			[]cty.Type{cty.String, cty.DynamicPseudoType},
+		},
 	}
 
 	for _, test := range tests {
