@@ -4,8 +4,12 @@ import (
 	"github.com/apparentlymart/go-cty/cty"
 )
 
-// compareTypes is the implementation of the public CompareTypes function,
-// defined in public.go.
+// compareTypes implements a preference order for unification.
+//
+// The result of this method is not useful for anything other than unification
+// preferences, since it assumes that the caller will verify that any suggested
+// conversion is actually possible and it is thus able to to make certain
+// optimistic assumptions.
 func compareTypes(a cty.Type, b cty.Type) int {
 
 	if a == cty.DynamicPseudoType || b == cty.DynamicPseudoType {
@@ -48,25 +52,36 @@ func compareTypes(a cty.Type, b cty.Type) int {
 	// if needed.
 	swap := 1
 	switch {
+	case a.IsTupleType() && b.IsListType():
+		fallthrough
+	case a.IsObjectType() && b.IsMapType():
+		fallthrough
+	case a.IsSetType() && b.IsTupleType():
+		fallthrough
 	case a.IsSetType() && b.IsListType():
 		a, b = b, a
 		swap = -1
 	}
 
-	if a.IsListType() && b.IsSetType() {
-		etyA := a.ElementType() // string
-		etyB := b.ElementType() // number
-		if etyA.Equals(etyB) {
-			// If the two element types are the same, then the "listiness"
-			// of A causes it to be a supertype.
-			return -1 * swap
-		}
+	if b.IsSetType() && (a.IsTupleType() || a.IsListType()) {
+		// We'll just optimistically assume that the element types are
+		// unifyable/convertible, and let a second recursive pass
+		// figure out how to make that so.
+		return -1 * swap
+	}
 
-		elemCmp := compareTypes(etyA, etyB)
-		if elemCmp == -1 {
-			return elemCmp * swap
-		}
-		return 0
+	if a.IsListType() && b.IsTupleType() {
+		// We'll just optimistically assume that the tuple's element types
+		// can be unified into something compatible with the list's element
+		// type.
+		return -1 * swap
+	}
+
+	if a.IsMapType() && b.IsObjectType() {
+		// We'll just optimistically assume that the object's attribute types
+		// can be unified into something compatible with the map's element
+		// type.
+		return -1 * swap
 	}
 
 	// For object and tuple types, comparing two types doesn't really tell

@@ -276,12 +276,12 @@ func TestCompareTypes(t *testing.T) {
 		{
 			cty.List(cty.Number),
 			cty.Set(cty.String),
-			0,
+			-1,
 		},
 		{
 			cty.Set(cty.String),
 			cty.List(cty.Number),
-			0,
+			1,
 		},
 
 		// Dynamics
