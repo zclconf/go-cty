@@ -24,18 +24,13 @@ type Conversion func(in cty.Value) (out cty.Value, err error)
 // GetConversion returns a Conversion between the given in and out Types if
 // a safe one is available, or returns nil otherwise.
 func GetConversion(in cty.Type, out cty.Type) Conversion {
-	return nil
+	return retConversion(getConversion(in, out, false))
 }
 
 // GetConversionUnsafe returns a Conversion between the given in and out Types
 // if either a safe or unsafe one is available, or returns nil otherwise.
 func GetConversionUnsafe(in cty.Type, out cty.Type) Conversion {
-	safe := GetConversion(in, out)
-	if safe != nil {
-		return safe
-	}
-
-	return nil
+	return retConversion(getConversion(in, out, true))
 }
 
 // Convert returns the result of converting the given value to the given type
@@ -45,9 +40,13 @@ func GetConversionUnsafe(in cty.Type, out cty.Type) Conversion {
 // This is a convenience wrapper around calling GetConversionUnsafe and then
 // immediately passing the given value to the resulting function.
 func Convert(in cty.Value, want cty.Type) (cty.Value, error) {
+	if in.Type().Equals(want) {
+		return in, nil
+	}
+
 	conv := GetConversionUnsafe(in.Type(), want)
 	if conv == nil {
-		return cty.NilVal, fmt.Errorf("incorrect value type; %s required", want.FriendlyName())
+		return cty.NilVal, fmt.Errorf("incorrect type; %s required", want.FriendlyName())
 	}
 	return conv(in)
 }

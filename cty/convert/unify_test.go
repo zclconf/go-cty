@@ -34,12 +34,26 @@ func TestUnify(t *testing.T) {
 			cty.Number,
 			[]bool{false, false},
 		},
-		// TODO: actually implement conversions so this can work
-		/*{
+		{
 			[]cty.Type{cty.Number, cty.String},
 			cty.String,
 			[]bool{true, false},
-		},*/
+		},
+		{
+			[]cty.Type{cty.String, cty.Number},
+			cty.String,
+			[]bool{false, true},
+		},
+		{
+			[]cty.Type{cty.Bool, cty.String, cty.Number},
+			cty.String,
+			[]bool{true, false, true},
+		},
+		{
+			[]cty.Type{cty.Bool, cty.Number},
+			cty.NilType,
+			nil,
+		},
 	}
 
 	for _, test := range tests {
