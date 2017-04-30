@@ -44,6 +44,16 @@ func (t Type) FriendlyName() string {
 	return t.typeImpl.FriendlyName()
 }
 
+// GoString returns a string approximating how the receiver type would be
+// expressed in Go source code.
+func (t Type) GoString() string {
+	if t.typeImpl == nil {
+		return "cty.NilType"
+	}
+
+	return t.typeImpl.GoString()
+}
+
 // NilType is an invalid type used when a function is returning an error
 // and has no useful type to return. It should not be used and any methods
 // called on it will panic.
