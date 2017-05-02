@@ -66,7 +66,7 @@ func fromCtyValue(val cty.Value, target reflect.Value, path cty.Path) error {
 	if val.IsNull() && !val.Type().IsListType() && !val.Type().IsMapType() && !val.Type().IsCapsuleType() {
 		target = fromCtyPopulatePtr(target, true)
 		if target.Kind() != reflect.Ptr {
-			return errorf(path, "null value is not allowed")
+			return path.NewErrorf("null value is not allowed")
 		}
 
 		target.Set(reflect.Zero(target.Type()))
@@ -76,7 +76,7 @@ func fromCtyValue(val cty.Value, target reflect.Value, path cty.Path) error {
 	target = deepTarget
 
 	if !val.IsKnown() {
-		return errorf(path, "value must be known")
+		return path.NewErrorf("value must be known")
 	}
 
 	switch ty {
@@ -105,7 +105,7 @@ func fromCtyValue(val cty.Value, target reflect.Value, path cty.Path) error {
 
 	// We should never fall out here; reaching here indicates a bug in this
 	// function.
-	return errorf(path, "unsupported source type %#v", ty)
+	return path.NewErrorf("unsupported source type %#v", ty)
 }
 
 func fromCtyBool(val cty.Value, target reflect.Value, path cty.Path) error {
@@ -172,7 +172,7 @@ func fromCtyNumberInt(bf *big.Float, target reflect.Value, path cty.Path) error 
 
 	iv, accuracy := bf.Int64()
 	if accuracy != big.Exact || iv < min || iv > max {
-		return errorf(path, "value must be a whole number, between %d and %d", min, max)
+		return path.NewErrorf("value must be a whole number, between %d and %d", min, max)
 	}
 
 	target.Set(reflect.ValueOf(iv).Convert(target.Type()))
@@ -199,7 +199,7 @@ func fromCtyNumberUInt(bf *big.Float, target reflect.Value, path cty.Path) error
 
 	iv, accuracy := bf.Uint64()
 	if accuracy != big.Exact || iv > max {
-		return errorf(path, "value must be a whole number, between 0 and %d inclusive", max)
+		return path.NewErrorf("value must be a whole number, between 0 and %d inclusive", max)
 	}
 
 	target.Set(reflect.ValueOf(iv).Convert(target.Type()))
@@ -215,7 +215,7 @@ func fromCtyNumberFloat(bf *big.Float, target reflect.Value, path cty.Path) erro
 			// We allow the precision to be truncated as part of our conversion,
 			// but we don't want to silently introduce infinities.
 			if math.IsInf(float64(fv), 0) {
-				return errorf(path, "value must be between %f and %f inclusive", -math.MaxFloat32, math.MaxFloat32)
+				return path.NewErrorf("value must be between %f and %f inclusive", -math.MaxFloat32, math.MaxFloat32)
 			}
 		}
 		target.Set(reflect.ValueOf(fv))
@@ -226,7 +226,7 @@ func fromCtyNumberFloat(bf *big.Float, target reflect.Value, path cty.Path) erro
 			// We allow the precision to be truncated as part of our conversion,
 			// but we don't want to silently introduce infinities.
 			if math.IsInf(fv, 0) {
-				return errorf(path, "value must be between %f and %f inclusive", -math.MaxFloat64, math.MaxFloat64)
+				return path.NewErrorf("value must be between %f and %f inclusive", -math.MaxFloat64, math.MaxFloat64)
 			}
 		}
 		target.Set(reflect.ValueOf(fv))
@@ -247,7 +247,7 @@ func fromCtyNumberBig(bf *big.Float, target reflect.Value, path cty.Path) error 
 	case bigIntType.AssignableTo(target.Type()):
 		bi, accuracy := bf.Int(nil)
 		if accuracy != big.Exact {
-			return errorf(path, "value must be a whole number")
+			return path.NewErrorf("value must be a whole number")
 		}
 		target.Set(reflect.ValueOf(bi).Elem())
 		return nil
@@ -311,12 +311,12 @@ func fromCtyList(val cty.Value, target reflect.Value, path cty.Path) error {
 
 	case reflect.Array:
 		if val.IsNull() {
-			return errorf(path, "null value is not allowed")
+			return path.NewErrorf("null value is not allowed")
 		}
 
 		length := val.LengthInt()
 		if length != target.Len() {
-			return errorf(path, "must be a list of length %d", target.Len())
+			return path.NewErrorf("must be a list of length %d", target.Len())
 		}
 
 		path = append(path, nil)
@@ -429,12 +429,12 @@ func fromCtySet(val cty.Value, target reflect.Value, path cty.Path) error {
 
 	case reflect.Array:
 		if val.IsNull() {
-			return errorf(path, "null value is not allowed")
+			return path.NewErrorf("null value is not allowed")
 		}
 
 		length := val.LengthInt()
 		if length != target.Len() {
-			return errorf(path, "must be a set of length %d", target.Len())
+			return path.NewErrorf("must be a set of length %d", target.Len())
 		}
 
 		i := 0
@@ -483,7 +483,7 @@ func fromCtyObject(val cty.Value, target reflect.Value, path cty.Path) error {
 				case reflect.Ptr, reflect.Slice, reflect.Map, reflect.Interface:
 					// okay
 				default:
-					return errorf(path, "missing required attribute %q", k)
+					return path.NewErrorf("missing required attribute %q", k)
 				}
 			}
 		}
@@ -495,7 +495,7 @@ func fromCtyObject(val cty.Value, target reflect.Value, path cty.Path) error {
 
 			fieldIdx, exists := targetFields[k]
 			if !exists {
-				return errorf(path, "unsupported attribute %q", k)
+				return path.NewErrorf("unsupported attribute %q", k)
 			}
 
 			ev := val.GetAttr(k)
@@ -527,7 +527,7 @@ func fromCtyTuple(val cty.Value, target reflect.Value, path cty.Path) error {
 		fieldCount := target.Type().NumField()
 
 		if fieldCount != len(elemTypes) {
-			return errorf(path, "a tuple of %d elements is required", fieldCount)
+			return path.NewErrorf("a tuple of %d elements is required", fieldCount)
 		}
 
 		path = append(path, nil)
@@ -579,7 +579,7 @@ func fromCtyCapsule(val cty.Value, target reflect.Value, path cty.Path) error {
 			// implementation details in error messages, so we need to keep
 			// this vague. This can only arise if a calling application has
 			// more than one capsule type in play and a user mixes them up.
-			return errorf(path, "incorrect type %s", val.Type().FriendlyName())
+			return path.NewErrorf("incorrect type %s", val.Type().FriendlyName())
 		}
 
 		target.Set(reflect.ValueOf(val.EncapsulatedValue()))
@@ -587,7 +587,7 @@ func fromCtyCapsule(val cty.Value, target reflect.Value, path cty.Path) error {
 		return nil
 	} else {
 		if val.IsNull() {
-			return errorf(path, "null value is not allowed")
+			return path.NewErrorf("null value is not allowed")
 		}
 
 		// If our target isn't a pointer then we will attempt to copy
@@ -600,7 +600,7 @@ func fromCtyCapsule(val cty.Value, target reflect.Value, path cty.Path) error {
 			// implementation details in error messages, so we need to keep
 			// this vague. This can only arise if a calling application has
 			// more than one capsule type in play and a user mixes them up.
-			return errorf(path, "incorrect type %s", val.Type().FriendlyName())
+			return path.NewErrorf("incorrect type %s", val.Type().FriendlyName())
 		}
 
 		// We know that EncapsulatedValue is always a pointer, so we
@@ -664,42 +664,42 @@ func likelyRequiredTypesError(path cty.Path, target reflect.Value) error {
 	switch target.Kind() {
 
 	case reflect.Bool:
-		return errorf(path, "bool value is required")
+		return path.NewErrorf("bool value is required")
 
 	case reflect.String:
-		return errorf(path, "string value is required")
+		return path.NewErrorf("string value is required")
 
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		fallthrough
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		fallthrough
 	case reflect.Float32, reflect.Float64:
-		return errorf(path, "number value is required")
+		return path.NewErrorf("number value is required")
 
 	case reflect.Slice, reflect.Array:
-		return errorf(path, "list or set value is required")
+		return path.NewErrorf("list or set value is required")
 
 	case reflect.Map:
-		return errorf(path, "map or object value is required")
+		return path.NewErrorf("map or object value is required")
 
 	case reflect.Struct:
 		switch {
 
 		case target.Type().AssignableTo(bigFloatType) || target.Type().AssignableTo(bigIntType):
-			return errorf(path, "number value is required")
+			return path.NewErrorf("number value is required")
 
 		case target.Type().AssignableTo(setType):
-			return errorf(path, "set or list value is required")
+			return path.NewErrorf("set or list value is required")
 
 		default:
-			return errorf(path, "object or tuple value is required")
+			return path.NewErrorf("object or tuple value is required")
 
 		}
 
 	default:
 		// We should avoid getting into this path, since this error
 		// message is rather useless.
-		return errorf(path, "incorrect type")
+		return path.NewErrorf("incorrect type")
 
 	}
 }

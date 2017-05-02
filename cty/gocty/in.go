@@ -60,7 +60,7 @@ func toCtyValue(val reflect.Value, ty cty.Type, path cty.Path) (cty.Value, error
 	}
 
 	// We should never fall out here
-	return cty.NilVal, errorf(path, "unsupported target type %#v", ty)
+	return cty.NilVal, path.NewErrorf("unsupported target type %#v", ty)
 }
 
 func toCtyBool(val reflect.Value, path cty.Path) (cty.Value, error) {
@@ -74,7 +74,7 @@ func toCtyBool(val reflect.Value, path cty.Path) (cty.Value, error) {
 		return cty.BoolVal(val.Bool()), nil
 
 	default:
-		return cty.NilVal, errorf(path, "can't convert Go %s to bool", val.Kind())
+		return cty.NilVal, path.NewErrorf("can't convert Go %s to bool", val.Kind())
 
 	}
 
@@ -110,7 +110,7 @@ func toCtyNumber(val reflect.Value, path cty.Path) (cty.Value, error) {
 
 		fallthrough
 	default:
-		return cty.NilVal, errorf(path, "can't convert Go %s to number", val.Kind())
+		return cty.NilVal, path.NewErrorf("can't convert Go %s to number", val.Kind())
 
 	}
 
@@ -127,7 +127,7 @@ func toCtyString(val reflect.Value, path cty.Path) (cty.Value, error) {
 		return cty.StringVal(val.String()), nil
 
 	default:
-		return cty.NilVal, errorf(path, "can't convert Go %s to string", val.Kind())
+		return cty.NilVal, path.NewErrorf("can't convert Go %s to string", val.Kind())
 
 	}
 
@@ -173,7 +173,7 @@ func toCtyList(val reflect.Value, ety cty.Type, path cty.Path) (cty.Value, error
 		return cty.ListVal(vals), nil
 
 	default:
-		return cty.NilVal, errorf(path, "can't convert Go %s to %#v", val.Kind(), cty.List(ety))
+		return cty.NilVal, path.NewErrorf("can't convert Go %s to %#v", val.Kind(), cty.List(ety))
 
 	}
 }
@@ -196,7 +196,7 @@ func toCtyMap(val reflect.Value, ety cty.Type, path cty.Path) (cty.Value, error)
 
 		keyType := val.Type().Key()
 		if keyType.Kind() != reflect.String {
-			return cty.NilVal, errorf(path, "can't convert Go map with key type %s; key type must be string", keyType)
+			return cty.NilVal, path.NewErrorf("can't convert Go map with key type %s; key type must be string", keyType)
 		}
 
 		// While we work on our elements we'll temporarily grow
@@ -223,7 +223,7 @@ func toCtyMap(val reflect.Value, ety cty.Type, path cty.Path) (cty.Value, error)
 		return cty.MapVal(vals), nil
 
 	default:
-		return cty.NilVal, errorf(path, "can't convert Go %s to %#v", val.Kind(), cty.Map(ety))
+		return cty.NilVal, path.NewErrorf("can't convert Go %s to %#v", val.Kind(), cty.Map(ety))
 
 	}
 }
@@ -259,7 +259,7 @@ func toCtySet(val reflect.Value, ety cty.Type, path cty.Path) (cty.Value, error)
 	case reflect.Struct:
 
 		if !val.Type().AssignableTo(setType) {
-			return cty.NilVal, errorf(path, "can't convert Go %s to %#v", val.Type(), cty.Set(ety))
+			return cty.NilVal, path.NewErrorf("can't convert Go %s to %#v", val.Type(), cty.Set(ety))
 		}
 
 		rawSet := val.Interface().(set.Set)
@@ -279,7 +279,7 @@ func toCtySet(val reflect.Value, ety cty.Type, path cty.Path) (cty.Value, error)
 		}
 
 	default:
-		return cty.NilVal, errorf(path, "can't convert Go %s to %#v", val.Kind(), cty.Set(ety))
+		return cty.NilVal, path.NewErrorf("can't convert Go %s to %#v", val.Kind(), cty.Set(ety))
 
 	}
 
@@ -300,7 +300,7 @@ func toCtyObject(val reflect.Value, attrTypes map[string]cty.Type, path cty.Path
 
 		keyType := val.Type().Key()
 		if keyType.Kind() != reflect.String {
-			return cty.NilVal, errorf(path, "can't convert Go map with key type %s; key type must be string", keyType)
+			return cty.NilVal, path.NewErrorf("can't convert Go map with key type %s; key type must be string", keyType)
 		}
 
 		if len(attrTypes) == 0 {
@@ -375,7 +375,7 @@ func toCtyObject(val reflect.Value, attrTypes map[string]cty.Type, path cty.Path
 		return cty.ObjectVal(vals), nil
 
 	default:
-		return cty.NilVal, errorf(path, "can't convert Go %s to %#v", val.Kind(), cty.Object(attrTypes))
+		return cty.NilVal, path.NewErrorf("can't convert Go %s to %#v", val.Kind(), cty.Object(attrTypes))
 
 	}
 }
@@ -393,7 +393,7 @@ func toCtyTuple(val reflect.Value, elemTypes []cty.Type, path cty.Path) (cty.Val
 		}
 
 		if val.Len() != len(elemTypes) {
-			return cty.NilVal, errorf(path, "wrong number of elements %d; need %d", val.Len(), len(elemTypes))
+			return cty.NilVal, path.NewErrorf("wrong number of elements %d; need %d", val.Len(), len(elemTypes))
 		}
 
 		if len(elemTypes) == 0 {
@@ -427,7 +427,7 @@ func toCtyTuple(val reflect.Value, elemTypes []cty.Type, path cty.Path) (cty.Val
 	case reflect.Struct:
 		fieldCount := val.Type().NumField()
 		if fieldCount != len(elemTypes) {
-			return cty.NilVal, errorf(path, "wrong number of struct fields %d; need %d", fieldCount, len(elemTypes))
+			return cty.NilVal, path.NewErrorf("wrong number of struct fields %d; need %d", fieldCount, len(elemTypes))
 		}
 
 		if len(elemTypes) == 0 {
@@ -459,7 +459,7 @@ func toCtyTuple(val reflect.Value, elemTypes []cty.Type, path cty.Path) (cty.Val
 		return cty.TupleVal(vals), nil
 
 	default:
-		return cty.NilVal, errorf(path, "can't convert Go %s to %#v", val.Kind(), cty.Tuple(elemTypes))
+		return cty.NilVal, path.NewErrorf("can't convert Go %s to %#v", val.Kind(), cty.Tuple(elemTypes))
 
 	}
 }
@@ -471,14 +471,14 @@ func toCtyCapsule(val reflect.Value, capsuleType cty.Type, path cty.Path) (cty.V
 
 	if val.Kind() != reflect.Ptr {
 		if !val.CanAddr() {
-			return cty.NilVal, errorf(path, "source value for capsule %#v must be addressable", capsuleType)
+			return cty.NilVal, path.NewErrorf("source value for capsule %#v must be addressable", capsuleType)
 		}
 
 		val = val.Addr()
 	}
 
 	if !val.Type().Elem().AssignableTo(capsuleType.EncapsulatedType()) {
-		return cty.NilVal, errorf(path, "value of type %T not compatible with capsule %#v", val.Interface(), capsuleType)
+		return cty.NilVal, path.NewErrorf("value of type %T not compatible with capsule %#v", val.Interface(), capsuleType)
 	}
 
 	return cty.CapsuleVal(capsuleType, val.Interface()), nil
@@ -493,13 +493,13 @@ func toCtyDynamic(val reflect.Value, path cty.Path) (cty.Value, error) {
 
 	case reflect.Struct:
 		if !val.Type().AssignableTo(valueType) {
-			return cty.NilVal, errorf(path, "can't convert Go %s dynamically; only cty.Value allowed", val.Type())
+			return cty.NilVal, path.NewErrorf("can't convert Go %s dynamically; only cty.Value allowed", val.Type())
 		}
 
 		return val.Interface().(cty.Value), nil
 
 	default:
-		return cty.NilVal, errorf(path, "can't convert Go %s dynamically; only cty.Value allowed", val.Kind())
+		return cty.NilVal, path.NewErrorf("can't convert Go %s dynamically; only cty.Value allowed", val.Kind())
 
 	}
 
