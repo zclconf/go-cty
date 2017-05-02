@@ -3,7 +3,6 @@ package cty
 import (
 	"fmt"
 	"math/big"
-	"sort"
 
 	"github.com/apparentlymart/go-cty/cty/set"
 )
@@ -686,24 +685,43 @@ func (val Value) LengthInt() int {
 	}
 }
 
+// ElementIterator returns an ElementIterator for iterating the elements
+// of the receiver, which must be a collection type or a tuple type. If called
+// on a method of any other type, this method will panic.
+//
+// The value must be Known and non-Null, or this method will panic.
+//
+// If the receiver is of a list type, the returned keys will be of type Number
+// and the values will be of the list's element type.
+//
+// If the receiver is of a map type, the returned keys will be of type String
+// and the value will be of the map's element type. Elements are passed in
+// ascending lexicographical order by key.
+//
+// If the receiver is of a set type, each element is returned as both the
+// key and the value, since set members are their own identity.
+//
+// If the receiver is of a tuple type, the returned keys will be of type Number
+// and the value will be of the corresponding element's type.
+//
+// ElementIterator is an integration method, so it cannot handle Unknown
+// values. This method will panic if the receiver is Unknown.
+func (val Value) ElementIterator() ElementIterator {
+	if !val.IsKnown() {
+		panic("can't use ElementIterator on unknown value")
+	}
+	if val.IsNull() {
+		panic("can't use ElementIterator on null value")
+	}
+	return elementIterator(val)
+}
+
 // ForEachElement executes a given callback function for each element of
 // the receiver, which must be a collection type or tuple type, or this method
 // will panic.
 //
-// If the receiver is of a list type, the key passed to to the callback
-// will be of type Number and the value will be of the list's element type.
-//
-// If the receiver is of a map type, the key passed to the callback will
-// be of type String and the value will be of the map's element type.
-// Elements are passed in ascending lexicographical order by key.
-//
-// If the receiver is of a set type, the key passed to the callback will be
-// NilVal and should be disregarded. Elements are passed in an undefined but
-// consistent order.
-//
-// If the receiver is of a tuple type, the key passed to to the callback
-// will be of type Number and the value will be of the corresponding element's
-// type.
+// ForEachElement uses ElementIterator internally, and so the values passed
+// to the callback are as described for ElementIterator.
 //
 // Returns true if the iteration exited early due to the callback function
 // returning true, or false if the loop ran to completion.
@@ -711,75 +729,15 @@ func (val Value) LengthInt() int {
 // ForEachElement is an integration method, so it cannot handle Unknown
 // values. This method will panic if the receiver is Unknown.
 func (val Value) ForEachElement(cb ElementCallback) bool {
-	switch {
-	case val.ty.IsListType():
-		ety := val.ty.ElementType()
-
-		for i, rawVal := range val.v.([]interface{}) {
-			stop := cb(NumberIntVal(int64(i)), Value{
-				ty: ety,
-				v:  rawVal,
-			})
-			if stop {
-				return true
-			}
+	it := val.ElementIterator()
+	for it.Next() {
+		key, val := it.Element()
+		stop := cb(key, val)
+		if stop {
+			return true
 		}
-		return false
-	case val.ty.IsMapType():
-		ety := val.ty.ElementType()
-
-		// We iterate the keys in a predictable lexicographical order so
-		// that results will always be stable given the same input map.
-		rawMap := val.v.(map[string]interface{})
-		keys := make([]string, 0, len(rawMap))
-		for key := range rawMap {
-			keys = append(keys, key)
-		}
-		sort.Strings(keys)
-
-		for _, key := range keys {
-			rawVal := rawMap[key]
-			stop := cb(StringVal(key), Value{
-				ty: ety,
-				v:  rawVal,
-			})
-			if stop {
-				return true
-			}
-		}
-		return false
-	case val.ty.IsSetType():
-		ety := val.ty.ElementType()
-
-		rawSet := val.v.(set.Set)
-		stop := false
-		rawSet.EachValue(func(ev interface{}) {
-			if stop {
-				return
-			}
-			stop = cb(NilVal, Value{
-				ty: ety,
-				v:  ev,
-			})
-		})
-		return stop
-	case val.ty.IsTupleType():
-		etys := val.ty.TupleElementTypes()
-
-		for i, rawVal := range val.v.([]interface{}) {
-			ety := etys[i]
-			stop := cb(NumberIntVal(int64(i)), Value{
-				ty: ety,
-				v:  rawVal,
-			})
-			if stop {
-				return true
-			}
-		}
-		return false
-	default:
-		panic("ForEachElement on non-collection, non-tuple type")
 	}
+	return false
 }
 
 // Not returns the logical inverse of the receiver, which must be of type
