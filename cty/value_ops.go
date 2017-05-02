@@ -710,7 +710,7 @@ func (val Value) LengthInt() int {
 //
 // ForEachElement is an integration method, so it cannot handle Unknown
 // values. This method will panic if the receiver is Unknown.
-func (val Value) ForEachElement(cb ElementIterator) bool {
+func (val Value) ForEachElement(cb ElementCallback) bool {
 	switch {
 	case val.ty.IsListType():
 		ety := val.ty.ElementType()
