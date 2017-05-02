@@ -99,6 +99,43 @@ func TestConvert(t *testing.T) {
 			Type:  cty.DynamicPseudoType,
 			Want:  cty.StringVal("hello"),
 		},
+		{
+			Value: cty.ListVal([]cty.Value{
+				cty.NumberIntVal(5),
+				cty.NumberIntVal(10),
+			}),
+			Type: cty.List(cty.String),
+			Want: cty.ListVal([]cty.Value{
+				cty.StringVal("5"),
+				cty.StringVal("10"),
+			}),
+		},
+		{
+			Value: cty.SetVal([]cty.Value{
+				cty.StringVal("5"),
+				cty.StringVal("10"),
+			}),
+			Type: cty.List(cty.String),
+			Want: cty.ListVal([]cty.Value{
+				// NOTE: This results depends on the traversal order of the
+				// set, which may change if the set implementation changes.
+				cty.StringVal("10"),
+				cty.StringVal("5"),
+			}),
+		},
+		{
+			Value: cty.SetVal([]cty.Value{
+				cty.NumberIntVal(5),
+				cty.NumberIntVal(10),
+			}),
+			Type: cty.List(cty.String),
+			Want: cty.ListVal([]cty.Value{
+				// NOTE: This results depends on the traversal order of the
+				// set, which may change if the set implementation changes.
+				cty.StringVal("5"),
+				cty.StringVal("10"),
+			}),
+		},
 	}
 
 	for _, test := range tests {

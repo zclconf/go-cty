@@ -32,7 +32,6 @@ func getConversion(in cty.Type, out cty.Type, unsafe bool) conversion {
 }
 
 func getConversionKnown(in cty.Type, out cty.Type, unsafe bool) conversion {
-
 	switch {
 
 	case out == cty.DynamicPseudoType:
@@ -57,6 +56,12 @@ func getConversionKnown(in cty.Type, out cty.Type, unsafe bool) conversion {
 			return primitiveConversionsUnsafe[in][out]
 		}
 		return nil
+
+	case out.IsListType() && (in.IsListType() || in.IsSetType()):
+		inEty := in.ElementType()
+		outEty := out.ElementType()
+		convEty := getConversion(inEty, outEty, unsafe)
+		return conversionCollectionToList(outEty, convEty)
 
 	default:
 		return nil
