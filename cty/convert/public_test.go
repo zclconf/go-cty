@@ -119,7 +119,7 @@ func TestConvert(t *testing.T) {
 					t.Errorf(
 						"wrong result\nvalue: %#v\ntype:  %#v\ngot:   %#v\nwant:  %#v",
 						test.Value, test.Type,
-						test.Want, test.WantError,
+						got, test.Want,
 					)
 				}
 			}
