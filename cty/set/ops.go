@@ -65,9 +65,20 @@ func (s Set) Has(val interface{}) bool {
 	return false
 }
 
-// EachValue calls the given callback once for each value in the set, in an
-// undefined order that callers should not depend on.
-func (s Set) EachValue(cb func(interface{})) {
+// Iterator returns an iterator over values in the set, in an undefined order
+// that callers should not depend on.
+//
+// The pattern for using the returned iterator is:
+//
+//     it := set.Iterator()
+//     for it.Next() {
+//         val := it.Value()
+//         // ...
+//     }
+//
+// Once an iterator has been created for a set, the set *must not* be mutated
+// until the iterator is no longer in use.
+func (s Set) Iterator() *Iterator {
 	// Sort the bucketIds to ensure that we always traverse in a
 	// consistent order.
 	bucketIds := make([]int, 0, len(s.vals))
@@ -76,11 +87,19 @@ func (s Set) EachValue(cb func(interface{})) {
 	}
 	sort.Ints(bucketIds)
 
-	for _, bucketId := range bucketIds {
-		bucket := s.vals[bucketId]
-		for _, val := range bucket {
-			cb(val)
-		}
+	return &Iterator{
+		bucketIds: bucketIds,
+		vals:      s.vals,
+		bucketIdx: -1,
+	}
+}
+
+// EachValue calls the given callback once for each value in the set, in an
+// undefined order that callers should not depend on.
+func (s Set) EachValue(cb func(interface{})) {
+	it := s.Iterator()
+	for it.Next() {
+		cb(it.Value())
 	}
 }
 
