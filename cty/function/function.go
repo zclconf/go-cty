@@ -72,7 +72,14 @@ func New(spec *Spec) Function {
 type TypeFunc func(args []cty.Value) (cty.Type, error)
 
 // ImplFunc is a callback type for the main implementation of a function.
-type ImplFunc func(args []cty.Value) (cty.Value, error)
+//
+// "args" are the values for the arguments, and this slice will always be at
+// least as long as the argument definition slice for the function.
+//
+// "retType" is the type returned from the Type callback, included as a
+// convenience to avoid the need to re-compute the return type for generic
+// functions whose return type is a function of the arguments.
+type ImplFunc func(args []cty.Value, retType cty.Type) (cty.Value, error)
 
 // StaticReturnType returns a TypeFunc that always returns the given type.
 //
@@ -213,7 +220,7 @@ func (f Function) Call(args []cty.Value) (cty.Value, error) {
 		}
 	}
 
-	retVal, err := f.spec.Impl(args)
+	retVal, err := f.spec.Impl(args, expectedType)
 	if err != nil {
 		return cty.NilVal, err
 	}

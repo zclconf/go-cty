@@ -150,6 +150,6 @@ func TestReturnTypeForValues(t *testing.T) {
 	}
 }
 
-func stubImpl([]cty.Value) (cty.Value, error) {
+func stubImpl([]cty.Value, cty.Type) (cty.Value, error) {
 	return cty.NilVal, fmt.Errorf("should not be called")
 }
