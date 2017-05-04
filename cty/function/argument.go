@@ -34,5 +34,17 @@ type Parameter struct {
 	// dynamic values will cause the function to immediately return
 	// DynamicVal value without calling the implementation function, thus
 	// freeing the function implementer from dealing with this case.
+	//
+	// Note that DynamicVal is also unknown, so in order to receive dynamic
+	// *values* it is also necessary to set AllowUnknown.
+	//
+	// However, it is valid to set AllowDynamicType without AllowUnknown, in
+	// which case a dynamic value may be passed to the type checking function
+	// but will not make it to the *implementation* function. Instead, an
+	// unknown value of the type returned by the type-check function will be
+	// returned. This is suggested for functions that have a static return
+	// type since it allows the return value to be typed even if the input
+	// values are not, thus improving the type-check accuracy of derived
+	// values.
 	AllowDynamicType bool
 }
