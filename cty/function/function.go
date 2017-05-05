@@ -172,11 +172,11 @@ func (f Function) ReturnTypeForValues(args []cty.Value) (cty.Type, error) {
 				return cty.Type{}, argErrorf(realI, "must not be null")
 			}
 
-			if val.Type() == cty.DynamicPseudoType && !spec.AllowDynamicType {
-				return cty.DynamicPseudoType, nil
-			}
-
-			if errs := val.Type().TestConformance(spec.Type); errs != nil {
+			if val.Type() == cty.DynamicPseudoType {
+				if !spec.AllowDynamicType {
+					return cty.DynamicPseudoType, nil
+				}
+			} else if errs := val.Type().TestConformance(spec.Type); errs != nil {
 				// For now we'll just return the first error in the set, since
 				// we don't have a good way to return the whole list here.
 				// Would be good to do something better at some point...
