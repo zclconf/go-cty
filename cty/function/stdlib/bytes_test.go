@@ -26,11 +26,9 @@ func TestBytesLen(t *testing.T) {
 		},
 	}
 
-	bytesLen := BytesLen.Proxy()
-
 	for _, test := range tests {
 		t.Run(test.Input.GoString(), func(t *testing.T) {
-			got, err := bytesLen(test.Input)
+			got, err := BytesLen(test.Input)
 
 			if err != nil {
 				t.Fatal(err)
@@ -85,11 +83,9 @@ func TestBytesSlice(t *testing.T) {
 		},
 	}
 
-	bytesSlice := BytesSlice.Proxy()
-
 	for _, test := range tests {
 		t.Run(test.Input.GoString(), func(t *testing.T) {
-			got, err := bytesSlice(test.Input, test.Offset, test.Length)
+			got, err := BytesSlice(test.Input, test.Offset, test.Length)
 
 			if err != nil {
 				t.Fatal(err)

@@ -29,7 +29,7 @@ func BytesVal(buf []byte) cty.Value {
 
 // BytesLen is a Function that returns the length of the buffer encapsulated
 // in a Bytes value.
-var BytesLen = function.New(&function.Spec{
+var BytesLenFunc = function.New(&function.Spec{
 	Params: []function.Parameter{
 		{
 			Name:             "buf",
@@ -45,7 +45,7 @@ var BytesLen = function.New(&function.Spec{
 })
 
 // BytesSlice is a Function that returns a slice of the given Bytes value.
-var BytesSlice = function.New(&function.Spec{
+var BytesSliceFunc = function.New(&function.Spec{
 	Params: []function.Parameter{
 		{
 			Name:             "buf",
@@ -102,3 +102,11 @@ var BytesSlice = function.New(&function.Spec{
 		return BytesVal((*bufPtr)[offset:end]), nil
 	},
 })
+
+func BytesLen(buf cty.Value) (cty.Value, error) {
+	return BytesLenFunc.Call([]cty.Value{buf})
+}
+
+func BytesSlice(buf cty.Value, offset cty.Value, length cty.Value) (cty.Value, error) {
+	return BytesSliceFunc.Call([]cty.Value{buf, offset, length})
+}

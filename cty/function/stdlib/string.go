@@ -10,8 +10,7 @@ import (
 	"github.com/apparentlymart/go-cty/cty/gocty"
 )
 
-// Upper is a Function that converts a given string to uppercase.
-var Upper = function.New(&function.Spec{
+var UpperFunc = function.New(&function.Spec{
 	Params: []function.Parameter{
 		{
 			Name:             "str",
@@ -27,8 +26,7 @@ var Upper = function.New(&function.Spec{
 	},
 })
 
-// Lower is a Function that converts a given string to lowercase.
-var Lower = function.New(&function.Spec{
+var LowerFunc = function.New(&function.Spec{
 	Params: []function.Parameter{
 		{
 			Name:             "str",
@@ -44,13 +42,7 @@ var Lower = function.New(&function.Spec{
 	},
 })
 
-// Reverse is a Function that reverses the order of the characters in the
-// given string.
-//
-// As usual, "character" for the sake of this function is a grapheme cluster,
-// so combining diacritics (for example) will be considered together as a
-// single character.
-var Reverse = function.New(&function.Spec{
+var ReverseFunc = function.New(&function.Spec{
 	Params: []function.Parameter{
 		{
 			Name:             "str",
@@ -76,13 +68,7 @@ var Reverse = function.New(&function.Spec{
 	},
 })
 
-// Strlen is a Function that returns the length of the given string in
-// characters.
-//
-// As usual, "character" for the sake of this function is a grapheme cluster,
-// so combining diacritics (for example) will be considered together as a
-// single character.
-var Strlen = function.New(&function.Spec{
+var StrlenFunc = function.New(&function.Spec{
 	Params: []function.Parameter{
 		{
 			Name:             "str",
@@ -105,19 +91,7 @@ var Strlen = function.New(&function.Spec{
 	},
 })
 
-// Substr is a Function that extracts a sequence of characters from another
-// string and creates a new string.
-//
-// As usual, "character" for the sake of this function is a grapheme cluster,
-// so combining diacritics (for example) will be considered together as a
-// single character.
-//
-// The "offset" index may be negative, in which case it is relative to the
-// end of the given string.
-//
-// The "length" may be -1, in which case the remainder of the string after
-// the given offset will be returned.
-var Substr = function.New(&function.Spec{
+var SubstrFunc = function.New(&function.Spec{
 	Params: []function.Parameter{
 		{
 			Name:             "str",
@@ -151,7 +125,7 @@ var Substr = function.New(&function.Spec{
 		}
 
 		if offset < 0 {
-			totalLenNum, err := Strlen.Call(args[0:1])
+			totalLenNum, err := Strlen(args[0])
 			if err != nil {
 				// should never happen
 				panic("Stdlen returned an error")
@@ -211,3 +185,49 @@ var Substr = function.New(&function.Spec{
 		return cty.StringVal(string(sub)), nil
 	},
 })
+
+// Upper is a Function that converts a given string to uppercase.
+func Upper(str cty.Value) (cty.Value, error) {
+	return UpperFunc.Call([]cty.Value{str})
+}
+
+// Lower is a Function that converts a given string to lowercase.
+func Lower(str cty.Value) (cty.Value, error) {
+	return LowerFunc.Call([]cty.Value{str})
+}
+
+// Reverse is a Function that reverses the order of the characters in the
+// given string.
+//
+// As usual, "character" for the sake of this function is a grapheme cluster,
+// so combining diacritics (for example) will be considered together as a
+// single character.
+func Reverse(str cty.Value) (cty.Value, error) {
+	return ReverseFunc.Call([]cty.Value{str})
+}
+
+// Strlen is a Function that returns the length of the given string in
+// characters.
+//
+// As usual, "character" for the sake of this function is a grapheme cluster,
+// so combining diacritics (for example) will be considered together as a
+// single character.
+func Strlen(str cty.Value) (cty.Value, error) {
+	return StrlenFunc.Call([]cty.Value{str})
+}
+
+// Substr is a Function that extracts a sequence of characters from another
+// string and creates a new string.
+//
+// As usual, "character" for the sake of this function is a grapheme cluster,
+// so combining diacritics (for example) will be considered together as a
+// single character.
+//
+// The "offset" index may be negative, in which case it is relative to the
+// end of the given string.
+//
+// The "length" may be -1, in which case the remainder of the string after
+// the given offset will be returned.
+func Substr(str cty.Value, offset cty.Value, length cty.Value) (cty.Value, error) {
+	return SubstrFunc.Call([]cty.Value{str, offset, length})
+}

@@ -57,11 +57,9 @@ func TestUpper(t *testing.T) {
 		},
 	}
 
-	upper := Upper.Proxy()
-
 	for _, test := range tests {
 		t.Run(test.Input.GoString(), func(t *testing.T) {
-			got, err := upper(test.Input)
+			got, err := Upper(test.Input)
 
 			if err != nil {
 				t.Fatalf("unexpected error: %s", err)
@@ -109,11 +107,9 @@ func TestLower(t *testing.T) {
 		},
 	}
 
-	lower := Lower.Proxy()
-
 	for _, test := range tests {
 		t.Run(test.Input.GoString(), func(t *testing.T) {
-			got, err := lower(test.Input)
+			got, err := Lower(test.Input)
 
 			if err != nil {
 				t.Fatalf("unexpected error: %s", err)
@@ -182,11 +178,9 @@ func TestReverse(t *testing.T) {
 		},
 	}
 
-	reverse := Reverse.Proxy()
-
 	for _, test := range tests {
 		t.Run(test.Input.GoString(), func(t *testing.T) {
-			got, err := reverse(test.Input)
+			got, err := Reverse(test.Input)
 
 			if err != nil {
 				t.Fatalf("unexpected error: %s", err)
@@ -255,11 +249,9 @@ func TestStrlen(t *testing.T) {
 		},
 	}
 
-	strlen := Strlen.Proxy()
-
 	for _, test := range tests {
 		t.Run(test.Input.GoString(), func(t *testing.T) {
-			got, err := strlen(test.Input)
+			got, err := Strlen(test.Input)
 
 			if err != nil {
 				t.Fatalf("unexpected error: %s", err)
@@ -377,11 +369,9 @@ func TestSubstr(t *testing.T) {
 		},
 	}
 
-	substr := Substr.Proxy()
-
 	for _, test := range tests {
 		t.Run(test.Input.GoString(), func(t *testing.T) {
-			got, err := substr(test.Input, test.Offset, test.Length)
+			got, err := Substr(test.Input, test.Offset, test.Length)
 
 			if err != nil {
 				t.Fatalf("unexpected error: %s", err)
