@@ -21,10 +21,10 @@ package cty
 // is of that type then the error message is written for (English-speaking)
 // end-users working within the cty type system, not mentioning any Go-oriented
 // implementation details.
-func (ty Type) TestConformance(other Type) []error {
+func (t Type) TestConformance(other Type) []error {
 	path := make(Path, 0)
 	var errs []error
-	testConformance(ty, other, path, &errs)
+	testConformance(t, other, path, &errs)
 	return errs
 }
 
