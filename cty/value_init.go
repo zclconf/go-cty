@@ -239,7 +239,7 @@ func CapsuleVal(ty Type, wrapVal interface{}) Value {
 		panic("wrapVal is not a pointer")
 	}
 
-	it := ty.typeImpl.(*capsuleType).goType
+	it := ty.typeImpl.(*capsuleType).GoType
 	if !wv.Type().Elem().AssignableTo(it) {
 		panic("wrapVal target is not compatible with the given capsule type")
 	}

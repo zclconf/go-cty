@@ -6,7 +6,7 @@ import (
 
 type typeTuple struct {
 	typeImplSigil
-	elemTypes []Type
+	ElemTypes []Type
 }
 
 // Tuple creates a tuple type with the given element types.
@@ -16,21 +16,21 @@ type typeTuple struct {
 func Tuple(elemTypes []Type) Type {
 	return Type{
 		typeTuple{
-			elemTypes: elemTypes,
+			ElemTypes: elemTypes,
 		},
 	}
 }
 
 func (t typeTuple) Equals(other Type) bool {
 	if ot, ok := other.typeImpl.(typeTuple); ok {
-		if len(t.elemTypes) != len(ot.elemTypes) {
+		if len(t.ElemTypes) != len(ot.ElemTypes) {
 			// Fast path: if we don't have the same number of elements
 			// then we can't possibly be equal.
 			return false
 		}
 
-		for i, ty := range t.elemTypes {
-			oty := ot.elemTypes[i]
+		for i, ty := range t.ElemTypes {
+			oty := ot.ElemTypes[i]
 			if !ok {
 				return false
 			}
@@ -56,10 +56,10 @@ func (t typeTuple) FriendlyName() string {
 }
 
 func (t typeTuple) GoString() string {
-	if len(t.elemTypes) == 0 {
+	if len(t.ElemTypes) == 0 {
 		return "cty.EmptyTuple"
 	}
-	return fmt.Sprintf("cty.Tuple(%#v)", t.elemTypes)
+	return fmt.Sprintf("cty.Tuple(%#v)", t.ElemTypes)
 }
 
 // EmptyTuple is a shorthand for Tuple([]Type{}), to more easily talk about
@@ -90,7 +90,7 @@ func (t Type) IsTupleType() bool {
 // whether this operation will succeed.
 func (t Type) Length() int {
 	if ot, ok := t.typeImpl.(typeTuple); ok {
-		return len(ot.elemTypes)
+		return len(ot.ElemTypes)
 	}
 	panic("Length on non-tuple Type")
 }
@@ -100,7 +100,7 @@ func (t Type) Length() int {
 // or if the index is out of range (use Length to confirm).
 func (t Type) TupleElementType(idx int) Type {
 	if ot, ok := t.typeImpl.(typeTuple); ok {
-		return ot.elemTypes[idx]
+		return ot.ElemTypes[idx]
 	}
 	panic("TupleElementType on non-tuple Type")
 }
@@ -115,7 +115,7 @@ func (t Type) TupleElementType(idx int) Type {
 // are more appropriate and more convenient to use.
 func (t Type) TupleElementTypes() []Type {
 	if ot, ok := t.typeImpl.(typeTuple); ok {
-		return ot.elemTypes
+		return ot.ElemTypes
 	}
 	panic("TupleElementTypes on non-tuple Type")
 }

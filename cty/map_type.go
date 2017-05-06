@@ -8,7 +8,7 @@ import (
 // creates a distinct, non-equal list type.
 type typeMap struct {
 	typeImplSigil
-	elementType Type
+	ElementTypeT Type
 }
 
 // Map creates a map type with the given element Type.
@@ -17,7 +17,7 @@ type typeMap struct {
 func Map(elem Type) Type {
 	return Type{
 		typeMap{
-			elementType: elem,
+			ElementTypeT: elem,
 		},
 	}
 }
@@ -30,19 +30,19 @@ func (t typeMap) Equals(other Type) bool {
 		return false
 	}
 
-	return t.elementType.Equals(ot.elementType)
+	return t.ElementTypeT.Equals(ot.ElementTypeT)
 }
 
 func (t typeMap) FriendlyName() string {
-	return "map of " + t.elementType.FriendlyName()
+	return "map of " + t.ElementTypeT.FriendlyName()
 }
 
 func (t typeMap) ElementType() Type {
-	return t.elementType
+	return t.ElementTypeT
 }
 
 func (t typeMap) GoString() string {
-	return fmt.Sprintf("cty.Map(%#v)", t.elementType)
+	return fmt.Sprintf("cty.Map(%#v)", t.ElementTypeT)
 }
 
 // IsMapType returns true if the given type is a list type, regardless of its
@@ -62,7 +62,7 @@ func (t Type) IsMapType() bool {
 //     }
 func (t Type) MapElementType() *Type {
 	if lt, ok := t.typeImpl.(typeMap); ok {
-		return &lt.elementType
+		return &lt.ElementTypeT
 	}
 	return nil
 }

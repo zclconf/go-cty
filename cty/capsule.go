@@ -7,8 +7,8 @@ import (
 
 type capsuleType struct {
 	typeImplSigil
-	name   string
-	goType reflect.Type
+	Name   string
+	GoType reflect.Type
 }
 
 func (t *capsuleType) Equals(other Type) bool {
@@ -20,14 +20,14 @@ func (t *capsuleType) Equals(other Type) bool {
 }
 
 func (t *capsuleType) FriendlyName() string {
-	return t.name
+	return t.Name
 }
 
 func (t *capsuleType) GoString() string {
 	// To get a useful representation of our native type requires some
 	// shenanigans.
-	victimVal := reflect.Zero(t.goType)
-	return fmt.Sprintf("cty.Capsule(%q, reflect.TypeOf(%#v))", t.name, victimVal.Interface())
+	victimVal := reflect.Zero(t.GoType)
+	return fmt.Sprintf("cty.Capsule(%q, reflect.TypeOf(%#v))", t.Name, victimVal.Interface())
 }
 
 // Capsule creates a new Capsule type.
@@ -63,8 +63,8 @@ func (t *capsuleType) GoString() string {
 func Capsule(name string, nativeType reflect.Type) Type {
 	return Type{
 		&capsuleType{
-			name:   name,
-			goType: nativeType,
+			Name:   name,
+			GoType: nativeType,
 		},
 	}
 }
@@ -85,5 +85,5 @@ func (t Type) EncapsulatedType() reflect.Type {
 	if !ok {
 		panic("not a capsule type")
 	}
-	return impl.goType
+	return impl.GoType
 }

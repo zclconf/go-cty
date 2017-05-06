@@ -6,7 +6,7 @@ import (
 
 type typeObject struct {
 	typeImplSigil
-	attrTypes map[string]Type
+	AttrTypes map[string]Type
 }
 
 // Object creates an object type with the given attribute types.
@@ -16,14 +16,14 @@ type typeObject struct {
 func Object(attrTypes map[string]Type) Type {
 	return Type{
 		typeObject{
-			attrTypes: attrTypes,
+			AttrTypes: attrTypes,
 		},
 	}
 }
 
 func (t typeObject) Equals(other Type) bool {
 	if ot, ok := other.typeImpl.(typeObject); ok {
-		if len(t.attrTypes) != len(ot.attrTypes) {
+		if len(t.AttrTypes) != len(ot.AttrTypes) {
 			// Fast path: if we don't have the same number of attributes
 			// then we can't possibly be equal. This also avoids the need
 			// to test attributes in both directions below, since we know
@@ -31,8 +31,8 @@ func (t typeObject) Equals(other Type) bool {
 			return false
 		}
 
-		for attr, ty := range t.attrTypes {
-			oty, ok := ot.attrTypes[attr]
+		for attr, ty := range t.AttrTypes {
+			oty, ok := ot.AttrTypes[attr]
 			if !ok {
 				return false
 			}
@@ -58,10 +58,10 @@ func (t typeObject) FriendlyName() string {
 }
 
 func (t typeObject) GoString() string {
-	if len(t.attrTypes) == 0 {
+	if len(t.AttrTypes) == 0 {
 		return "cty.EmptyObject"
 	}
-	return fmt.Sprintf("cty.Object(%#v)", t.attrTypes)
+	return fmt.Sprintf("cty.Object(%#v)", t.AttrTypes)
 }
 
 // EmptyObject is a shorthand for Object(map[string]Type{}), to more
@@ -92,7 +92,7 @@ func (t Type) IsObjectType() bool {
 // type; use IsObjectType to determine whether this operation will succeed.
 func (t Type) HasAttribute(name string) bool {
 	if ot, ok := t.typeImpl.(typeObject); ok {
-		_, hasAttr := ot.attrTypes[name]
+		_, hasAttr := ot.AttrTypes[name]
 		return hasAttr
 	}
 	panic("HasAttribute on non-object Type")
@@ -103,7 +103,7 @@ func (t Type) HasAttribute(name string) bool {
 // or if the object type has no such attribute (use HasAttribute to confirm).
 func (t Type) AttributeType(name string) Type {
 	if ot, ok := t.typeImpl.(typeObject); ok {
-		aty, hasAttr := ot.attrTypes[name]
+		aty, hasAttr := ot.AttrTypes[name]
 		if !hasAttr {
 			panic("no such attribute")
 		}
@@ -122,7 +122,7 @@ func (t Type) AttributeType(name string) Type {
 // appropriate and more convenient to use.
 func (t Type) AttributeTypes() map[string]Type {
 	if ot, ok := t.typeImpl.(typeObject); ok {
-		return ot.attrTypes
+		return ot.AttrTypes
 	}
 	panic("AttributeTypes on non-object Type")
 }

@@ -108,7 +108,7 @@ func (val Value) Equals(other Value) Value {
 	case ty.IsObjectType():
 		oty := ty.typeImpl.(typeObject)
 		result = true
-		for attr, aty := range oty.attrTypes {
+		for attr, aty := range oty.AttrTypes {
 			lhs := Value{
 				ty: aty,
 				v:  val.v.(map[string]interface{})[attr],
@@ -129,7 +129,7 @@ func (val Value) Equals(other Value) Value {
 	case ty.IsTupleType():
 		tty := ty.typeImpl.(typeTuple)
 		result = true
-		for i, ety := range tty.elemTypes {
+		for i, ety := range tty.ElemTypes {
 			lhs := Value{
 				ty: ety,
 				v:  val.v.([]interface{})[i],
@@ -148,7 +148,7 @@ func (val Value) Equals(other Value) Value {
 			}
 		}
 	case ty.IsListType():
-		ety := ty.typeImpl.(typeList).elementType
+		ety := ty.typeImpl.(typeList).ElementTypeT
 		if len(val.v.([]interface{})) == len(other.v.([]interface{})) {
 			result = true
 			for i := range val.v.([]interface{}) {
@@ -196,7 +196,7 @@ func (val Value) Equals(other Value) Value {
 
 		result = equal
 	case ty.IsMapType():
-		ety := ty.typeImpl.(typeMap).elementType
+		ety := ty.typeImpl.(typeMap).ElementTypeT
 		if len(val.v.(map[string]interface{})) == len(other.v.(map[string]interface{})) {
 			result = true
 			for k := range val.v.(map[string]interface{}) {

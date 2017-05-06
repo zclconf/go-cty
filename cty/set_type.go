@@ -6,7 +6,7 @@ import (
 
 type typeSet struct {
 	typeImplSigil
-	elementType Type
+	ElementTypeT Type
 }
 
 // Set creates a set type with the given element Type.
@@ -15,7 +15,7 @@ type typeSet struct {
 func Set(elem Type) Type {
 	return Type{
 		typeSet{
-			elementType: elem,
+			ElementTypeT: elem,
 		},
 	}
 }
@@ -28,19 +28,19 @@ func (t typeSet) Equals(other Type) bool {
 		return false
 	}
 
-	return t.elementType.Equals(ot.elementType)
+	return t.ElementTypeT.Equals(ot.ElementTypeT)
 }
 
 func (t typeSet) FriendlyName() string {
-	return "set of " + t.elementType.FriendlyName()
+	return "set of " + t.ElementTypeT.FriendlyName()
 }
 
 func (t typeSet) ElementType() Type {
-	return t.elementType
+	return t.ElementTypeT
 }
 
 func (t typeSet) GoString() string {
-	return fmt.Sprintf("cty.Set(%#v)", t.elementType)
+	return fmt.Sprintf("cty.Set(%#v)", t.ElementTypeT)
 }
 
 // IsSetType returns true if the given type is a list type, regardless of its
@@ -60,7 +60,7 @@ func (t Type) IsSetType() bool {
 //     }
 func (t Type) SetElementType() *Type {
 	if lt, ok := t.typeImpl.(typeSet); ok {
-		return &lt.elementType
+		return &lt.ElementTypeT
 	}
 	return nil
 }
