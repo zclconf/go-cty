@@ -2,7 +2,6 @@ package json
 
 import (
 	"bytes"
-	"encoding/json"
 
 	"github.com/apparentlymart/go-cty/cty"
 	"github.com/apparentlymart/go-cty/cty/convert"
@@ -53,8 +52,5 @@ func Marshal(val cty.Value, t cty.Type) ([]byte, error) {
 // may be a cty.PathError.
 func Unmarshal(buf []byte, t cty.Type) (cty.Value, error) {
 	var path cty.Path
-	r := bytes.NewReader(buf)
-	dec := json.NewDecoder(r)
-	dec.UseNumber()
-	return unmarshal(dec, t, path)
+	return unmarshal(buf, t, path)
 }

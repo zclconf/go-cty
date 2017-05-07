@@ -1,49 +1,55 @@
 package json
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
 
 	"github.com/apparentlymart/go-cty/cty"
 	"github.com/apparentlymart/go-cty/cty/convert"
 )
 
-func unmarshal(dec *json.Decoder, t cty.Type, path cty.Path) (cty.Value, error) {
+func unmarshal(buf []byte, t cty.Type, path cty.Path) (cty.Value, error) {
+	dec := bufDecoder(buf)
+
 	tok, err := dec.Token()
 	if err != nil {
 		return cty.NilVal, path.NewError(err)
 	}
 
-	return unmarshalTok(tok, dec, t, path)
-}
-
-func unmarshalTok(tok json.Token, dec *json.Decoder, t cty.Type, path cty.Path) (cty.Value, error) {
 	if tok == nil {
 		return cty.NullVal(t), nil
 	}
 
 	if t == cty.DynamicPseudoType {
-		return unmarshalDynamic(tok, dec, path)
+		return unmarshalDynamic(buf, path)
 	}
 
 	switch {
 	case t.IsPrimitiveType():
-		return unmarshalPrimitive(tok, dec, t, path)
+		val, err := unmarshalPrimitive(tok, t, path)
+		if err != nil {
+			return cty.NilVal, err
+		}
+		return val, nil
 	case t.IsListType():
-		return unmarshalList(tok, dec, t.ElementType(), path)
+		return unmarshalList(buf, t.ElementType(), path)
 	case t.IsSetType():
-		return unmarshalSet(tok, dec, t.ElementType(), path)
+		return unmarshalSet(buf, t.ElementType(), path)
 	case t.IsMapType():
-		return unmarshalMap(tok, dec, t.ElementType(), path)
+		return unmarshalMap(buf, t.ElementType(), path)
 	case t.IsTupleType():
-		return unmarshalTuple(tok, dec, t.TupleElementTypes(), path)
+		return unmarshalTuple(buf, t.TupleElementTypes(), path)
 	case t.IsObjectType():
-		return unmarshalObject(tok, dec, t.AttributeTypes(), path)
+		return unmarshalObject(buf, t.AttributeTypes(), path)
+	case t.IsCapsuleType():
+		return unmarshalCapsule(buf, t, path)
 	default:
 		return cty.NilVal, path.NewErrorf("unsupported type %s", t.FriendlyName())
 	}
 }
 
-func unmarshalPrimitive(tok json.Token, dec *json.Decoder, t cty.Type, path cty.Path) (cty.Value, error) {
+func unmarshalPrimitive(tok json.Token, t cty.Type, path cty.Path) (cty.Value, error) {
 
 	switch t {
 	case cty.Bool:
@@ -94,9 +100,10 @@ func unmarshalPrimitive(tok json.Token, dec *json.Decoder, t cty.Type, path cty.
 	}
 }
 
-func unmarshalList(tok json.Token, dec *json.Decoder, ety cty.Type, path cty.Path) (cty.Value, error) {
-	if tok != json.Delim('[') {
-		return cty.NilVal, path.NewErrorf("need JSON array for list")
+func unmarshalList(buf []byte, ety cty.Type, path cty.Path) (cty.Value, error) {
+	dec := bufDecoder(buf)
+	if err := requireDelim(dec, '['); err != nil {
+		return cty.NilVal, path.NewError(err)
 	}
 
 	var vals []cty.Value
@@ -105,29 +112,28 @@ func unmarshalList(tok json.Token, dec *json.Decoder, ety cty.Type, path cty.Pat
 		path := append(path, nil)
 		var idx int64
 
-		for {
+		for dec.More() {
 			path[len(path)-1] = cty.IndexStep{
 				Key: cty.NumberIntVal(idx),
 			}
+			idx++
 
-			tok, err := dec.Token()
+			rawVal, err := readRawValue(dec)
 			if err != nil {
-				return cty.NilVal, path.NewError(err)
+				return cty.NilVal, path.NewErrorf("failed to read list value: %s", err)
 			}
 
-			if tok == json.Delim(']') {
-				break
-			}
-
-			el, err := unmarshalTok(tok, dec, ety, path)
+			el, err := unmarshal(rawVal, ety, path)
 			if err != nil {
 				return cty.NilVal, err
 			}
 
 			vals = append(vals, el)
-
-			idx++
 		}
+	}
+
+	if err := requireDelim(dec, ']'); err != nil {
+		return cty.NilVal, path.NewError(err)
 	}
 
 	if len(vals) == 0 {
@@ -137,40 +143,38 @@ func unmarshalList(tok json.Token, dec *json.Decoder, ety cty.Type, path cty.Pat
 	return cty.ListVal(vals), nil
 }
 
-func unmarshalSet(tok json.Token, dec *json.Decoder, ety cty.Type, path cty.Path) (cty.Value, error) {
-	if tok != json.Delim('[') {
-		return cty.NilVal, path.NewErrorf("need JSON array for set")
+func unmarshalSet(buf []byte, ety cty.Type, path cty.Path) (cty.Value, error) {
+	dec := bufDecoder(buf)
+	if err := requireDelim(dec, '['); err != nil {
+		return cty.NilVal, path.NewError(err)
 	}
 
 	var vals []cty.Value
 
 	{
 		path := append(path, nil)
-		var idx int64
 
-		for {
+		for dec.More() {
 			path[len(path)-1] = cty.IndexStep{
 				Key: cty.UnknownVal(ety),
 			}
 
-			tok, err := dec.Token()
+			rawVal, err := readRawValue(dec)
 			if err != nil {
-				return cty.NilVal, path.NewError(err)
+				return cty.NilVal, path.NewErrorf("failed to read set value: %s", err)
 			}
 
-			if tok == json.Delim(']') {
-				break
-			}
-
-			el, err := unmarshalTok(tok, dec, ety, path)
+			el, err := unmarshal(rawVal, ety, path)
 			if err != nil {
 				return cty.NilVal, err
 			}
 
 			vals = append(vals, el)
-
-			idx++
 		}
+	}
+
+	if err := requireDelim(dec, ']'); err != nil {
+		return cty.NilVal, path.NewError(err)
 	}
 
 	if len(vals) == 0 {
@@ -180,9 +184,10 @@ func unmarshalSet(tok json.Token, dec *json.Decoder, ety cty.Type, path cty.Path
 	return cty.SetVal(vals), nil
 }
 
-func unmarshalMap(tok json.Token, dec *json.Decoder, ety cty.Type, path cty.Path) (cty.Value, error) {
-	if tok != json.Delim('{') {
-		return cty.NilVal, path.NewErrorf("need JSON object for map")
+func unmarshalMap(buf []byte, ety cty.Type, path cty.Path) (cty.Value, error) {
+	dec := bufDecoder(buf)
+	if err := requireDelim(dec, '{'); err != nil {
+		return cty.NilVal, path.NewError(err)
 	}
 
 	vals := make(map[string]cty.Value)
@@ -190,36 +195,38 @@ func unmarshalMap(tok json.Token, dec *json.Decoder, ety cty.Type, path cty.Path
 	{
 		path := append(path, nil)
 
-		for {
+		for dec.More() {
 			path[len(path)-1] = cty.IndexStep{
 				Key: cty.UnknownVal(cty.String),
 			}
 
-			tok, err := dec.Token()
+			var err error
+
+			k, err := requireObjectKey(dec)
 			if err != nil {
-				return cty.NilVal, path.NewError(err)
-			}
-
-			if tok == json.Delim('}') {
-				break
-			}
-
-			k, ok := tok.(string)
-			if !ok {
-				return cty.NilVal, path.NewErrorf("invalid map key")
+				return cty.NilVal, path.NewErrorf("failed to read map key: %s", err)
 			}
 
 			path[len(path)-1] = cty.IndexStep{
 				Key: cty.StringVal(k),
 			}
 
-			el, err := unmarshal(dec, ety, path)
+			rawVal, err := readRawValue(dec)
+			if err != nil {
+				return cty.NilVal, path.NewErrorf("failed to read map value: %s", err)
+			}
+
+			el, err := unmarshal(rawVal, ety, path)
 			if err != nil {
 				return cty.NilVal, err
 			}
 
 			vals[k] = el
 		}
+	}
+
+	if err := requireDelim(dec, '}'); err != nil {
+		return cty.NilVal, path.NewError(err)
 	}
 
 	if len(vals) == 0 {
@@ -229,9 +236,10 @@ func unmarshalMap(tok json.Token, dec *json.Decoder, ety cty.Type, path cty.Path
 	return cty.MapVal(vals), nil
 }
 
-func unmarshalTuple(tok json.Token, dec *json.Decoder, etys []cty.Type, path cty.Path) (cty.Value, error) {
-	if tok != json.Delim('[') {
-		return cty.NilVal, path.NewErrorf("need JSON array for tuple")
+func unmarshalTuple(buf []byte, etys []cty.Type, path cty.Path) (cty.Value, error) {
+	dec := bufDecoder(buf)
+	if err := requireDelim(dec, '['); err != nil {
+		return cty.NilVal, path.NewError(err)
 	}
 
 	var vals []cty.Value
@@ -240,36 +248,37 @@ func unmarshalTuple(tok json.Token, dec *json.Decoder, etys []cty.Type, path cty
 		path := append(path, nil)
 		var idx int
 
-		for {
-			path[len(path)-1] = cty.IndexStep{
-				Key: cty.NumberIntVal(int64(idx)),
-			}
-
-			tok, err := dec.Token()
-			if err != nil {
-				return cty.NilVal, path.NewError(err)
-			}
-
-			if tok == json.Delim(']') {
-				if len(vals) != len(etys) {
-					return cty.NilVal, path[:len(path)-1].NewErrorf("not enough tuple elements (need %d)", len(etys))
-				}
-				break
-			}
-
+		for dec.More() {
 			if idx >= len(etys) {
 				return cty.NilVal, path[:len(path)-1].NewErrorf("too many tuple elements (need %d)", len(etys))
+			}
+
+			path[len(path)-1] = cty.IndexStep{
+				Key: cty.NumberIntVal(int64(idx)),
 			}
 			ety := etys[idx]
 			idx++
 
-			el, err := unmarshalTok(tok, dec, ety, path)
+			rawVal, err := readRawValue(dec)
+			if err != nil {
+				return cty.NilVal, path.NewErrorf("failed to read tuple value: %s", err)
+			}
+
+			el, err := unmarshal(rawVal, ety, path)
 			if err != nil {
 				return cty.NilVal, err
 			}
 
 			vals = append(vals, el)
 		}
+	}
+
+	if err := requireDelim(dec, ']'); err != nil {
+		return cty.NilVal, path.NewError(err)
+	}
+
+	if len(vals) != len(etys) {
+		return cty.NilVal, path[:len(path)-1].NewErrorf("not enough tuple elements (need %d)", len(etys))
 	}
 
 	if len(vals) == 0 {
@@ -279,9 +288,10 @@ func unmarshalTuple(tok json.Token, dec *json.Decoder, etys []cty.Type, path cty
 	return cty.TupleVal(vals), nil
 }
 
-func unmarshalObject(tok json.Token, dec *json.Decoder, atys map[string]cty.Type, path cty.Path) (cty.Value, error) {
-	if tok != json.Delim('{') {
-		return cty.NilVal, path.NewErrorf("need JSON object for object")
+func unmarshalObject(buf []byte, atys map[string]cty.Type, path cty.Path) (cty.Value, error) {
+	dec := bufDecoder(buf)
+	if err := requireDelim(dec, '{'); err != nil {
+		return cty.NilVal, path.NewError(err)
 	}
 
 	vals := make(map[string]cty.Value)
@@ -290,23 +300,13 @@ func unmarshalObject(tok json.Token, dec *json.Decoder, atys map[string]cty.Type
 		objPath := path           // some errors report from the object's perspective
 		path := append(path, nil) // path to a specific attribute
 
-		for {
-			tok, err := dec.Token()
+		for dec.More() {
+
+			var err error
+
+			k, err := requireObjectKey(dec)
 			if err != nil {
-				return cty.NilVal, objPath.NewError(err)
-			}
-
-			if tok == json.Delim('}') {
-				break
-			}
-
-			k, ok := tok.(string)
-			if !ok {
-				return cty.NilVal, path.NewErrorf("invalid object attribute")
-			}
-
-			path[len(path)-1] = cty.GetAttrStep{
-				Name: k,
+				return cty.NilVal, path.NewErrorf("failed to read object key: %s", err)
 			}
 
 			aty, ok := atys[k]
@@ -314,13 +314,26 @@ func unmarshalObject(tok json.Token, dec *json.Decoder, atys map[string]cty.Type
 				return cty.NilVal, objPath.NewErrorf("unsupported attribute %q", k)
 			}
 
-			el, err := unmarshal(dec, aty, path)
+			path[len(path)-1] = cty.GetAttrStep{
+				Name: k,
+			}
+
+			rawVal, err := readRawValue(dec)
+			if err != nil {
+				return cty.NilVal, path.NewErrorf("failed to read object value: %s", err)
+			}
+
+			el, err := unmarshal(rawVal, aty, path)
 			if err != nil {
 				return cty.NilVal, err
 			}
 
 			vals[k] = el
 		}
+	}
+
+	if err := requireDelim(dec, '}'); err != nil {
+		return cty.NilVal, path.NewError(err)
 	}
 
 	// Make sure we have a value for every attribute
@@ -337,41 +350,44 @@ func unmarshalObject(tok json.Token, dec *json.Decoder, atys map[string]cty.Type
 	return cty.ObjectVal(vals), nil
 }
 
-func unmarshalDynamic(tok json.Token, dec *json.Decoder, path cty.Path) (cty.Value, error) {
-	if tok != json.Delim('{') {
-		return cty.NilVal, path.NewErrorf("need JSON object for dynamically-typed value")
+func unmarshalDynamic(buf []byte, path cty.Path) (cty.Value, error) {
+	dec := bufDecoder(buf)
+	if err := requireDelim(dec, '{'); err != nil {
+		return cty.NilVal, path.NewError(err)
 	}
 
 	var t cty.Type
-	var valBody json.RawMessage // defer actual decoding until we know the type
+	var valBody []byte // defer actual decoding until we know the type
 
-	for {
-		tok, err := dec.Token()
+	for dec.More() {
+		var err error
+
+		key, err := requireObjectKey(dec)
 		if err != nil {
-			return cty.NilVal, path.NewError(err)
+			return cty.NilVal, path.NewErrorf("failed to read dynamic type descriptor key: %s", err)
 		}
 
-		if tok == json.Delim('}') {
-			break
+		rawVal, err := readRawValue(dec)
+		if err != nil {
+			return cty.NilVal, path.NewErrorf("failed to read dynamic type descriptor value: %s", err)
 		}
-
-		key, _ := tok.(string) // key == "" if tok is not a string
 
 		switch key {
 		case "type":
-			err := dec.Decode(&t)
+			err := json.Unmarshal(rawVal, &t)
 			if err != nil {
-				return cty.NilVal, path.NewError(err)
+				return cty.NilVal, path.NewErrorf("failed to decode type for dynamic value: %s", err)
 			}
 		case "value":
-			err := dec.Decode(&valBody)
-			if err != nil {
-				return cty.NilVal, path.NewError(err)
-			}
+			valBody = rawVal
 		default:
 			return cty.NilVal, path.NewErrorf("invalid key %q in dynamically-typed value", key)
 		}
 
+	}
+
+	if err := requireDelim(dec, '}'); err != nil {
+		return cty.NilVal, path.NewError(err)
 	}
 
 	if t == cty.NilType {
@@ -386,4 +402,44 @@ func unmarshalDynamic(tok json.Token, dec *json.Decoder, path cty.Path) (cty.Val
 		return cty.NilVal, path.NewError(err)
 	}
 	return val, nil
+}
+
+func requireDelim(dec *json.Decoder, d rune) error {
+	tok, err := dec.Token()
+	if err != nil {
+		return err
+	}
+
+	if tok != json.Delim(d) {
+		return fmt.Errorf("missing expected %c", d)
+	}
+
+	return nil
+}
+
+func requireObjectKey(dec *json.Decoder) (string, error) {
+	tok, err := dec.Token()
+	if err != nil {
+		return "", err
+	}
+	if s, ok := tok.(string); ok {
+		return s, nil
+	}
+	return "", fmt.Errorf("missing expected object key")
+}
+
+func readRawValue(dec *json.Decoder) ([]byte, error) {
+	var rawVal json.RawMessage
+	err := dec.Decode(&rawVal)
+	if err != nil {
+		return nil, err
+	}
+	return []byte(rawVal), nil
+}
+
+func bufDecoder(buf []byte) *json.Decoder {
+	r := bytes.NewReader(buf)
+	dec := json.NewDecoder(r)
+	dec.UseNumber()
+	return dec
 }
