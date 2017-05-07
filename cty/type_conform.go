@@ -128,7 +128,7 @@ func testConformance(given Type, want Type, path Path, errs *[]error) {
 	}
 
 	if given.IsSetType() && want.IsSetType() {
-		path = append(path, SetElemStep{Value: UnknownVal(String)})
+		path = append(path, IndexStep{Key: UnknownVal(given.ElementType())})
 		pathIdx := len(path) - 1
 		testConformance(given.ElementType(), want.ElementType(), path, errs)
 		path = path[0:pathIdx]
