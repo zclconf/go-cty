@@ -157,7 +157,8 @@ func marshal(val cty.Value, t cty.Type, path cty.Path, b *bytes.Buffer) error {
 		b.WriteRune('}')
 		return nil
 	default:
-		panic("marshal not yet fully implemented")
+		// should never happen
+		return path.NewErrorf("cannot JSON-serialize %s", t.FriendlyName())
 	}
 }
 
