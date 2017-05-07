@@ -71,6 +71,34 @@ func marshal(val cty.Value, t cty.Type, path cty.Path, b *bytes.Buffer) error {
 		}
 		b.WriteRune(']')
 		return nil
+	case t.IsMapType():
+		b.WriteRune('{')
+		first := true
+		ety := t.ElementType()
+		it := val.ElementIterator()
+		path := append(path, nil) // local override of 'path' with extra element
+		for it.Next() {
+			if !first {
+				b.WriteRune(',')
+			}
+			ek, ev := it.Element()
+			path[len(path)-1] = cty.IndexStep{
+				Key: ek,
+			}
+			var err error
+			err = marshal(ek, ek.Type(), path, b)
+			if err != nil {
+				return err
+			}
+			b.WriteRune(':')
+			err = marshal(ev, ety, path, b)
+			if err != nil {
+				return err
+			}
+			first = false
+		}
+		b.WriteRune('}')
+		return nil
 	default:
 		panic("marshal not yet fully implemented")
 	}

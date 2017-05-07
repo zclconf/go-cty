@@ -104,6 +104,23 @@ func TestValueJSONable(t *testing.T) {
 			`[]`,
 		},
 
+		// Maps
+		{
+			cty.MapValEmpty(cty.Bool),
+			cty.Map(cty.Bool),
+			`{}`,
+		},
+		{
+			cty.MapVal(map[string]cty.Value{"yes": cty.True, "no": cty.False}),
+			cty.Map(cty.Bool),
+			`{"no":false,"yes":true}`,
+		},
+		{
+			cty.NullVal(cty.Map(cty.Bool)),
+			cty.Map(cty.Bool),
+			`null`,
+		},
+
 		// Encoding into dynamic produces type information wrapper
 		{
 			cty.True,
