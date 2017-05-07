@@ -1,7 +1,10 @@
 package json
 
 import (
+	"bytes"
+
 	"github.com/apparentlymart/go-cty/cty"
+	"github.com/apparentlymart/go-cty/cty/convert"
 )
 
 // Marshal produces a JSON representation of the given value that can later
@@ -17,7 +20,27 @@ import (
 // be possible. If the value cannot be made to be conformant then an error is
 // returned, which may be a cty.PathError.
 func Marshal(val cty.Value, t cty.Type) ([]byte, error) {
-	return nil, nil
+	errs := val.Type().TestConformance(t)
+	if errs != nil {
+		// Attempt a conversion
+		var err error
+		val, err = convert.Convert(val, t)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// From this point onward, val can be assumed to be conforming to t.
+
+	buf := &bytes.Buffer{}
+	var path cty.Path
+	err := marshal(val, t, path, buf)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
 }
 
 // Unmarshal decodes a JSON representation of the given value into a cty Value
