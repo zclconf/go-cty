@@ -49,6 +49,28 @@ func marshal(val cty.Value, t cty.Type, path cty.Path, b *bytes.Buffer) error {
 		default:
 			panic("unsupported primitive type")
 		}
+	case t.IsListType(), t.IsSetType():
+		b.WriteRune('[')
+		first := true
+		ety := t.ElementType()
+		it := val.ElementIterator()
+		path := append(path, nil) // local override of 'path' with extra element
+		for it.Next() {
+			if !first {
+				b.WriteRune(',')
+			}
+			ek, ev := it.Element()
+			path[len(path)-1] = cty.IndexStep{
+				Key: ek,
+			}
+			err := marshal(ev, ety, path, b)
+			if err != nil {
+				return err
+			}
+			first = false
+		}
+		b.WriteRune(']')
+		return nil
 	default:
 		panic("marshal not yet fully implemented")
 	}

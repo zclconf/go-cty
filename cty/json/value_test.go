@@ -13,6 +13,7 @@ func TestValueJSONable(t *testing.T) {
 		Type  cty.Type
 		Want  string
 	}{
+		// Primitives
 		{
 			cty.StringVal("hello"),
 			cty.String,
@@ -74,6 +75,35 @@ func TestValueJSONable(t *testing.T) {
 			`"true"`,
 		},
 
+		// Lists
+		{
+			cty.ListVal([]cty.Value{cty.True, cty.False}),
+			cty.List(cty.Bool),
+			`[true,false]`,
+		},
+		{
+			cty.ListValEmpty(cty.Bool),
+			cty.List(cty.Bool),
+			`[]`,
+		},
+		{
+			cty.ListVal([]cty.Value{cty.True, cty.False}),
+			cty.List(cty.String),
+			`["true","false"]`,
+		},
+
+		// Sets
+		{
+			cty.SetVal([]cty.Value{cty.True, cty.False}),
+			cty.Set(cty.Bool),
+			`[false,true]`,
+		},
+		{
+			cty.SetValEmpty(cty.Bool),
+			cty.Set(cty.Bool),
+			`[]`,
+		},
+
 		// Encoding into dynamic produces type information wrapper
 		{
 			cty.True,
@@ -89,6 +119,16 @@ func TestValueJSONable(t *testing.T) {
 			cty.NumberIntVal(5),
 			cty.DynamicPseudoType,
 			`{"value":5,"type":"number"}`,
+		},
+		{
+			cty.ListVal([]cty.Value{cty.True, cty.False}),
+			cty.DynamicPseudoType,
+			`{"value":[true,false],"type":["list","bool"]}`,
+		},
+		{
+			cty.ListVal([]cty.Value{cty.True, cty.False}),
+			cty.List(cty.DynamicPseudoType),
+			`[{"value":true,"type":"bool"},{"value":false,"type":"bool"}]`,
 		},
 	}
 
