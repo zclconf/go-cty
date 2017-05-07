@@ -2,12 +2,17 @@ package json
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/apparentlymart/go-cty/cty"
 )
 
 func TestValueJSONable(t *testing.T) {
+	bytesType := cty.Capsule("bytes", reflect.TypeOf([]byte(nil)))
+	buf := []byte("hello")
+	bytesVal := cty.CapsuleVal(bytesType, &buf)
+
 	tests := []struct {
 		Value  cty.Value
 		Type   cty.Type
@@ -170,6 +175,14 @@ func TestValueJSONable(t *testing.T) {
 			cty.ObjectVal(map[string]cty.Value{"bool": cty.True, "number": cty.Zero}),
 		},
 
+		// Capsules
+		{
+			bytesVal,
+			bytesType,
+			`"aGVsbG8="`,
+			bytesVal,
+		},
+
 		// Encoding into dynamic produces type information wrapper
 		{
 			cty.True,
@@ -236,7 +249,20 @@ func TestValueJSONable(t *testing.T) {
 			if err != nil {
 				t.Fatalf("unexpected error from Unmarshal: %s", err)
 			}
-			if !newVal.RawEquals(test.DecVal) {
+
+			// If we're dealing with our capsule type then we need to do some
+			// more manual comparison because capsule values compare by
+			// pointer identity but pointers don't survive marshalling.
+			if newVal.Type().Equals(bytesType) {
+				gotBuf := newVal.EncapsulatedValue()
+				wantBuf := test.DecVal.EncapsulatedValue()
+				if !reflect.DeepEqual(gotBuf, wantBuf) {
+					t.Errorf(
+						"mismatch after Unmarshal\njson: %s\ntype: %#v\ngot:  %#v\nwant: %#v",
+						got, test.Type, newVal, test.Value,
+					)
+				}
+			} else if !newVal.RawEquals(test.DecVal) {
 				t.Errorf(
 					"mismatch after Unmarshal\njson: %s\ntype: %#v\ngot:  %#v\nwant: %#v",
 					got, test.Type, newVal, test.Value,

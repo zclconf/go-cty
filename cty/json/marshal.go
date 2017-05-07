@@ -156,6 +156,14 @@ func marshal(val cty.Value, t cty.Type, path cty.Path, b *bytes.Buffer) error {
 		}
 		b.WriteRune('}')
 		return nil
+	case t.IsCapsuleType():
+		rawVal := val.EncapsulatedValue()
+		jsonVal, err := json.Marshal(rawVal)
+		if err != nil {
+			return path.NewError(err)
+		}
+		b.Write(jsonVal)
+		return nil
 	default:
 		// should never happen
 		return path.NewErrorf("cannot JSON-serialize %s", t.FriendlyName())

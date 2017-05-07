@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"reflect"
 
 	"github.com/apparentlymart/go-cty/cty"
 	"github.com/apparentlymart/go-cty/cty/convert"
@@ -348,6 +349,19 @@ func unmarshalObject(buf []byte, atys map[string]cty.Type, path cty.Path) (cty.V
 	}
 
 	return cty.ObjectVal(vals), nil
+}
+
+func unmarshalCapsule(buf []byte, t cty.Type, path cty.Path) (cty.Value, error) {
+	rawType := t.EncapsulatedType()
+	ptrPtr := reflect.New(reflect.PtrTo(rawType))
+	ptrPtr.Elem().Set(reflect.New(rawType))
+	ptr := ptrPtr.Elem().Interface()
+	err := json.Unmarshal(buf, ptr)
+	if err != nil {
+		return cty.NilVal, path.NewError(err)
+	}
+
+	return cty.CapsuleVal(t, ptr), nil
 }
 
 func unmarshalDynamic(buf []byte, path cty.Path) (cty.Value, error) {

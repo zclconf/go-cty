@@ -11,7 +11,7 @@ import (
 // be decoded into a value of the given type.
 //
 // A type is specified separately to allow for the given type to include
-// cty.PseudoTypeDynamic to represent situations where any type is permitted
+// cty.DynamicPseudoType to represent situations where any type is permitted
 // and so type information must be included to allow recovery of the stored
 // structure when decoding.
 //
@@ -19,6 +19,15 @@ import (
 // non-conformant types in the given value, although this will not always
 // be possible. If the value cannot be made to be conformant then an error is
 // returned, which may be a cty.PathError.
+//
+// Capsule-typed values can be marshalled, but with some caveats. Since
+// capsule values are compared by pointer equality, it is impossible to recover
+// a value that will compare equal to the original value. Additionally,
+// it's not possible to JSON-serialize the capsule type itself, so it's not
+// valid to use capsule types within parts of the value that are conformed to
+// cty.DynamicPseudoType. Otherwise, a capsule value can be used as long as
+// the encapsulated type itself is serializable with the Marshal function
+// in encoding/json.
 func Marshal(val cty.Value, t cty.Type) ([]byte, error) {
 	errs := val.Type().TestConformance(t)
 	if errs != nil {
