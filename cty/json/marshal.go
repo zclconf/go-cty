@@ -3,6 +3,7 @@ package json
 import (
 	"bytes"
 	"encoding/json"
+	"sort"
 
 	"github.com/apparentlymart/go-cty/cty"
 )
@@ -96,6 +97,62 @@ func marshal(val cty.Value, t cty.Type, path cty.Path, b *bytes.Buffer) error {
 				return err
 			}
 			first = false
+		}
+		b.WriteRune('}')
+		return nil
+	case t.IsTupleType():
+		b.WriteRune('[')
+		etys := t.TupleElementTypes()
+		it := val.ElementIterator()
+		path := append(path, nil) // local override of 'path' with extra element
+		i := 0
+		for it.Next() {
+			if i > 0 {
+				b.WriteRune(',')
+			}
+			ety := etys[i]
+			ek, ev := it.Element()
+			path[len(path)-1] = cty.IndexStep{
+				Key: ek,
+			}
+			err := marshal(ev, ety, path, b)
+			if err != nil {
+				return err
+			}
+			i++
+		}
+		b.WriteRune(']')
+		return nil
+	case t.IsObjectType():
+		b.WriteRune('{')
+		atys := t.AttributeTypes()
+		path := append(path, nil) // local override of 'path' with extra element
+
+		names := make([]string, 0, len(atys))
+		for k := range atys {
+			names = append(names, k)
+		}
+		sort.Strings(names)
+
+		for i, k := range names {
+			aty := atys[k]
+			if i > 0 {
+				b.WriteRune(',')
+			}
+			av := val.GetAttr(k)
+			path[len(path)-1] = cty.GetAttrStep{
+				Name: k,
+			}
+			var err error
+			err = marshal(cty.StringVal(k), cty.String, path, b)
+			if err != nil {
+				return err
+			}
+			b.WriteRune(':')
+			err = marshal(av, aty, path, b)
+			if err != nil {
+				return err
+			}
 		}
 		b.WriteRune('}')
 		return nil

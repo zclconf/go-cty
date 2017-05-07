@@ -104,6 +104,18 @@ func TestValueJSONable(t *testing.T) {
 			`[]`,
 		},
 
+		// Tuples
+		{
+			cty.TupleVal([]cty.Value{cty.True, cty.NumberIntVal(5)}),
+			cty.Tuple([]cty.Type{cty.Bool, cty.Number}),
+			`[true,5]`,
+		},
+		{
+			cty.EmptyTupleVal,
+			cty.EmptyTuple,
+			`[]`,
+		},
+
 		// Maps
 		{
 			cty.MapValEmpty(cty.Bool),
@@ -119,6 +131,18 @@ func TestValueJSONable(t *testing.T) {
 			cty.NullVal(cty.Map(cty.Bool)),
 			cty.Map(cty.Bool),
 			`null`,
+		},
+
+		// Objects
+		{
+			cty.EmptyObjectVal,
+			cty.EmptyObject,
+			`{}`,
+		},
+		{
+			cty.ObjectVal(map[string]cty.Value{"bool": cty.True, "number": cty.Zero}),
+			cty.Object(map[string]cty.Type{"bool": cty.Bool, "number": cty.Number}),
+			`{"bool":true,"number":0}`,
 		},
 
 		// Encoding into dynamic produces type information wrapper
@@ -146,6 +170,11 @@ func TestValueJSONable(t *testing.T) {
 			cty.ListVal([]cty.Value{cty.True, cty.False}),
 			cty.List(cty.DynamicPseudoType),
 			`[{"value":true,"type":"bool"},{"value":false,"type":"bool"}]`,
+		},
+		{
+			cty.ObjectVal(map[string]cty.Value{"static": cty.True, "dynamic": cty.True}),
+			cty.Object(map[string]cty.Type{"static": cty.Bool, "dynamic": cty.DynamicPseudoType}),
+			`{"dynamic":{"value":true,"type":"bool"},"static":true}`,
 		},
 	}
 
