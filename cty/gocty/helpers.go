@@ -18,6 +18,8 @@ var bigIntType = reflect.TypeOf(big.Int{})
 
 var emptyInterfaceType = reflect.TypeOf(interface{}(nil))
 
+var stringType = reflect.TypeOf("")
+
 // structTagIndices interrogates the fields of the given type (which must
 // be a struct type, or we'll panic) and returns a map from the cty
 // attribute names declared via struct tags to the indices of the

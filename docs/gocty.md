@@ -145,3 +145,30 @@ Since capsule values capture a pointer to the target value, it is possible
 to round-trip a pointer from a Go value into a capsule value and back to
 a Go value and recover the original pointer value, referring to the same
 in-memory object.
+
+## Implied `cty` Type of a Go value
+
+In simple cases it can be desirable to just write a simple type in Go and
+use it immediately in conversions, without needing to separately write out a
+corresponding `cty.Type` expression.
+
+The `ImpliedType` function helps with this by trying to generate a reasonable
+`cty.Type` from a native Go value. Not all `cty` types can be represented in
+this way, but if the goal is a straightforward mapping to a convenient Go
+data structure then this function is suitable.
+
+The mapping is as follows:
+
+* Go's int, uint and float types all map to `cty.Number`.
+* Go's bool type maps to `cty.Bool`
+* Go's string type maps to `cty.String`
+* Go slice types map to `cty` lists with the element type mapped per these rules.
+* Go maps _with string keys_ map to `cty` maps with the element type mapped per these rules.
+* Go struct types are converted to `cty` object types using the struct tag
+  convention described above and these mapping rules for each tagged field.
+* A Go value of type `cty.Value` maps to `cty.DynamicPseudoType`, allowing for
+  values whose precise type isn't known statically.
+
+`ImpliedType` considers only the Go type of the provided value, so it's valid
+to pass a nil or zero value of the type. When passing `nil`, be sure to convert
+it to the target type, e.g. `[]int(nil)`.
