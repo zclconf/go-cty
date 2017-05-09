@@ -8,6 +8,115 @@ import (
 	"github.com/apparentlymart/go-cty/cty/function"
 )
 
+var AddFunc = function.New(&function.Spec{
+	Params: []function.Parameter{
+		{
+			Name:             "a",
+			Type:             cty.Number,
+			AllowDynamicType: true,
+		},
+		{
+			Name:             "b",
+			Type:             cty.Number,
+			AllowDynamicType: true,
+		},
+	},
+	Type: function.StaticReturnType(cty.Number),
+	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
+		return args[0].Add(args[1]), nil
+	},
+})
+
+var SubtractFunc = function.New(&function.Spec{
+	Params: []function.Parameter{
+		{
+			Name:             "a",
+			Type:             cty.Number,
+			AllowDynamicType: true,
+		},
+		{
+			Name:             "b",
+			Type:             cty.Number,
+			AllowDynamicType: true,
+		},
+	},
+	Type: function.StaticReturnType(cty.Number),
+	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
+		return args[0].Subtract(args[1]), nil
+	},
+})
+
+var MultiplyFunc = function.New(&function.Spec{
+	Params: []function.Parameter{
+		{
+			Name:             "a",
+			Type:             cty.Number,
+			AllowDynamicType: true,
+		},
+		{
+			Name:             "b",
+			Type:             cty.Number,
+			AllowDynamicType: true,
+		},
+	},
+	Type: function.StaticReturnType(cty.Number),
+	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
+		return args[0].Multiply(args[1]), nil
+	},
+})
+
+var DivideFunc = function.New(&function.Spec{
+	Params: []function.Parameter{
+		{
+			Name:             "a",
+			Type:             cty.Number,
+			AllowDynamicType: true,
+		},
+		{
+			Name:             "b",
+			Type:             cty.Number,
+			AllowDynamicType: true,
+		},
+	},
+	Type: function.StaticReturnType(cty.Number),
+	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
+		return args[0].Divide(args[1]), nil
+	},
+})
+
+var ModuloFunc = function.New(&function.Spec{
+	Params: []function.Parameter{
+		{
+			Name:             "a",
+			Type:             cty.Number,
+			AllowDynamicType: true,
+		},
+		{
+			Name:             "b",
+			Type:             cty.Number,
+			AllowDynamicType: true,
+		},
+	},
+	Type: function.StaticReturnType(cty.Number),
+	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
+		return args[0].Modulo(args[1]), nil
+	},
+})
+
+var NegateFunc = function.New(&function.Spec{
+	Params: []function.Parameter{
+		{
+			Name:             "num",
+			Type:             cty.Number,
+			AllowDynamicType: true,
+		},
+	},
+	Type: function.StaticReturnType(cty.Number),
+	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
+		return args[0].Negate(), nil
+	},
+})
+
 var MinFunc = function.New(&function.Spec{
 	Params: []function.Parameter{},
 	VarParam: &function.Parameter{
@@ -75,6 +184,37 @@ var IntFunc = function.New(&function.Spec{
 		return cty.NumberVal(bf), nil
 	},
 })
+
+// Add returns the sum of the two given numbers.
+func Add(a cty.Value, b cty.Value) (cty.Value, error) {
+	return AddFunc.Call([]cty.Value{a, b})
+}
+
+// Subtract returns the difference between the two given numbers.
+func Subtract(a cty.Value, b cty.Value) (cty.Value, error) {
+	return SubtractFunc.Call([]cty.Value{a, b})
+}
+
+// Multiply returns the product of the two given numbers.
+func Multiply(a cty.Value, b cty.Value) (cty.Value, error) {
+	return MultiplyFunc.Call([]cty.Value{a, b})
+}
+
+// Divide returns a divided by b, where both a and b are numbers.
+func Divide(a cty.Value, b cty.Value) (cty.Value, error) {
+	return DivideFunc.Call([]cty.Value{a, b})
+}
+
+// Negate returns the given number multipled by -1.
+func Negate(num cty.Value) (cty.Value, error) {
+	return NegateFunc.Call([]cty.Value{num})
+}
+
+// Modulo returns the remainder of a divided by b under integer division,
+// where both a and b are numbers.
+func Modulo(a cty.Value, b cty.Value) (cty.Value, error) {
+	return ModuloFunc.Call([]cty.Value{a, b})
+}
 
 // Min returns the minimum number from the given numbers.
 func Min(numbers ...cty.Value) (cty.Value, error) {
