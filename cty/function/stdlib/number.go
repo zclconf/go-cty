@@ -8,6 +8,20 @@ import (
 	"github.com/apparentlymart/go-cty/cty/function"
 )
 
+var AbsoluteFunc = function.New(&function.Spec{
+	Params: []function.Parameter{
+		{
+			Name:             "num",
+			Type:             cty.Number,
+			AllowDynamicType: true,
+		},
+	},
+	Type: function.StaticReturnType(cty.Number),
+	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
+		return args[0].Absolute(), nil
+	},
+})
+
 var AddFunc = function.New(&function.Spec{
 	Params: []function.Parameter{
 		{
@@ -184,6 +198,12 @@ var IntFunc = function.New(&function.Spec{
 		return cty.NumberVal(bf), nil
 	},
 })
+
+// Absolute returns the magnitude of the given number, without its sign.
+// That is, it turns negative values into positive values.
+func Absolute(num cty.Value) (cty.Value, error) {
+	return AbsoluteFunc.Call([]cty.Value{num})
+}
 
 // Add returns the sum of the two given numbers.
 func Add(a cty.Value, b cty.Value) (cty.Value, error) {

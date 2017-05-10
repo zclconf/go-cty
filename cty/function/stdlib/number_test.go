@@ -8,6 +8,56 @@ import (
 	"github.com/apparentlymart/go-cty/cty"
 )
 
+func TestAbsolute(t *testing.T) {
+	tests := []struct {
+		Input cty.Value
+		Want  cty.Value
+	}{
+		{
+			cty.NumberIntVal(15),
+			cty.NumberIntVal(15),
+		},
+		{
+			cty.NumberIntVal(-15),
+			cty.NumberIntVal(15),
+		},
+		{
+			cty.NumberIntVal(0),
+			cty.NumberIntVal(0),
+		},
+		{
+			cty.PositiveInfinity,
+			cty.PositiveInfinity,
+		},
+		{
+			cty.NegativeInfinity,
+			cty.PositiveInfinity,
+		},
+		{
+			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number),
+		},
+		{
+			cty.DynamicVal,
+			cty.UnknownVal(cty.Number),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("Absolute(%#v)", test.Input), func(t *testing.T) {
+			got, err := Absolute(test.Input)
+
+			if err != nil {
+				t.Fatalf("unexpected error: %s", err)
+			}
+
+			if !got.RawEquals(test.Want) {
+				t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, test.Want)
+			}
+		})
+	}
+}
+
 func TestAdd(t *testing.T) {
 	tests := []struct {
 		A    cty.Value
