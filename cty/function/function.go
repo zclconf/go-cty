@@ -113,7 +113,7 @@ func (f Function) ReturnType(argTypes []cty.Type) (cty.Type, error) {
 //
 // For any arguments whose values are not known, pass an Unknown value of
 // the appropriate type.
-func (f Function) ReturnTypeForValues(args []cty.Value) (cty.Type, error) {
+func (f Function) ReturnTypeForValues(args []cty.Value) (ty cty.Type, err error) {
 	var posArgs []cty.Value
 	var varArgs []cty.Value
 
@@ -185,13 +185,22 @@ func (f Function) ReturnTypeForValues(args []cty.Value) (cty.Type, error) {
 		}
 	}
 
+	// Intercept any panics from the function and return them as normal errors,
+	// so a calling language runtime doesn't need to deal with panics.
+	defer func() {
+		if r := recover(); r != nil {
+			ty = cty.NilType
+			err = errorForPanic(r)
+		}
+	}()
+
 	return f.spec.Type(args)
 }
 
 // Call actually calls the function with the given arguments, which must
 // conform to the function's parameter specification or an error will be
 // returned.
-func (f Function) Call(args []cty.Value) (cty.Value, error) {
+func (f Function) Call(args []cty.Value) (val cty.Value, err error) {
 	expectedType, err := f.ReturnTypeForValues(args)
 	if err != nil {
 		return cty.NilVal, err
@@ -220,9 +229,21 @@ func (f Function) Call(args []cty.Value) (cty.Value, error) {
 		}
 	}
 
-	retVal, err := f.spec.Impl(args, expectedType)
-	if err != nil {
-		return cty.NilVal, err
+	var retVal cty.Value
+	{
+		// Intercept any panics from the function and return them as normal errors,
+		// so a calling language runtime doesn't need to deal with panics.
+		defer func() {
+			if r := recover(); r != nil {
+				val = cty.NilVal
+				err = errorForPanic(r)
+			}
+		}()
+
+		retVal, err = f.spec.Impl(args, expectedType)
+		if err != nil {
+			return cty.NilVal, err
+		}
 	}
 
 	// Returned value must conform to what the Type function expected, to
