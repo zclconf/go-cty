@@ -214,6 +214,26 @@ func TestDivide(t *testing.T) {
 			cty.NumberFloatVal(2.5),
 		},
 		{
+			cty.NumberIntVal(5),
+			cty.NumberIntVal(0),
+			cty.PositiveInfinity,
+		},
+		{
+			cty.NumberIntVal(-5),
+			cty.NumberIntVal(0),
+			cty.NegativeInfinity,
+		},
+		{
+			cty.NumberIntVal(1),
+			cty.PositiveInfinity,
+			cty.Zero,
+		},
+		{
+			cty.NumberIntVal(1),
+			cty.NegativeInfinity,
+			cty.Zero,
+		},
+		{
 			cty.NumberIntVal(1),
 			cty.UnknownVal(cty.Number),
 			cty.UnknownVal(cty.Number),
@@ -260,6 +280,26 @@ func TestModulo(t *testing.T) {
 			cty.NumberIntVal(15),
 			cty.NumberIntVal(10),
 			cty.NumberIntVal(5),
+		},
+		{
+			cty.NumberIntVal(0),
+			cty.NumberIntVal(0),
+			cty.NumberIntVal(0),
+		},
+		{
+			cty.PositiveInfinity,
+			cty.NumberIntVal(1),
+			cty.PositiveInfinity,
+		},
+		{
+			cty.NegativeInfinity,
+			cty.NumberIntVal(1),
+			cty.NegativeInfinity,
+		},
+		{
+			cty.NumberIntVal(1),
+			cty.PositiveInfinity,
+			cty.PositiveInfinity,
 		},
 		{
 			cty.NumberIntVal(1),
