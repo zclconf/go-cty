@@ -36,7 +36,21 @@ var AddFunc = function.New(&function.Spec{
 		},
 	},
 	Type: function.StaticReturnType(cty.Number),
-	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
+	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
+		// big.Float.Add can panic if the input values are opposing infinities,
+		// so we must catch that here in order to remain within
+		// the cty Function abstraction.
+		defer func() {
+			if r := recover(); r != nil {
+				if _, ok := r.(big.ErrNaN); ok {
+					ret = cty.NilVal
+					err = fmt.Errorf("can't compute sum of opposing infinities")
+				} else {
+					// not a panic we recognize
+					panic(r)
+				}
+			}
+		}()
 		return args[0].Add(args[1]), nil
 	},
 })
@@ -55,7 +69,21 @@ var SubtractFunc = function.New(&function.Spec{
 		},
 	},
 	Type: function.StaticReturnType(cty.Number),
-	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
+	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
+		// big.Float.Sub can panic if the input values are infinities,
+		// so we must catch that here in order to remain within
+		// the cty Function abstraction.
+		defer func() {
+			if r := recover(); r != nil {
+				if _, ok := r.(big.ErrNaN); ok {
+					ret = cty.NilVal
+					err = fmt.Errorf("can't subtract infinity from itself")
+				} else {
+					// not a panic we recognize
+					panic(r)
+				}
+			}
+		}()
 		return args[0].Subtract(args[1]), nil
 	},
 })
@@ -74,7 +102,22 @@ var MultiplyFunc = function.New(&function.Spec{
 		},
 	},
 	Type: function.StaticReturnType(cty.Number),
-	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
+	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
+		// big.Float.Mul can panic if the input values are both zero or both
+		// infinity, so we must catch that here in order to remain within
+		// the cty Function abstraction.
+		defer func() {
+			if r := recover(); r != nil {
+				if _, ok := r.(big.ErrNaN); ok {
+					ret = cty.NilVal
+					err = fmt.Errorf("can't multiply zero by infinity")
+				} else {
+					// not a panic we recognize
+					panic(r)
+				}
+			}
+		}()
+
 		return args[0].Multiply(args[1]), nil
 	},
 })
@@ -127,7 +170,22 @@ var ModuloFunc = function.New(&function.Spec{
 		},
 	},
 	Type: function.StaticReturnType(cty.Number),
-	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
+	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
+		// big.Float.Mul can panic if the input values are both zero or both
+		// infinity, so we must catch that here in order to remain within
+		// the cty Function abstraction.
+		defer func() {
+			if r := recover(); r != nil {
+				if _, ok := r.(big.ErrNaN); ok {
+					ret = cty.NilVal
+					err = fmt.Errorf("can't use modulo with zero and infinity")
+				} else {
+					// not a panic we recognize
+					panic(r)
+				}
+			}
+		}()
+
 		return args[0].Modulo(args[1]), nil
 	},
 })
