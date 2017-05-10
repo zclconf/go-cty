@@ -38,6 +38,9 @@ func marshal(val cty.Value, t cty.Type, path cty.Path, b *bytes.Buffer) error {
 			b.Write(json)
 			return nil
 		case cty.Number:
+			if val.RawEquals(cty.PositiveInfinity) || val.RawEquals(cty.NegativeInfinity) {
+				return path.NewErrorf("cannot serialize infinity as JSON")
+			}
 			b.WriteString(val.AsBigFloat().Text('f', -1))
 			return nil
 		case cty.Bool:
