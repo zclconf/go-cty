@@ -347,6 +347,9 @@ func (val Value) Multiply(other Value) Value {
 // receiver value. For some use-cases the presence of infinities may be
 // undesirable, in which case the caller should check whether the
 // other value equals zero before calling and raise an error instead.
+//
+// If both values are zero or infinity, this function will panic with
+// an instance of big.ErrNaN.
 func (val Value) Divide(other Value) Value {
 	if shortCircuit := mustTypeCheck(Number, Number, val, other); shortCircuit != nil {
 		shortCircuit = forceShortCircuitType(shortCircuit, Number)

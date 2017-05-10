@@ -93,7 +93,22 @@ var DivideFunc = function.New(&function.Spec{
 		},
 	},
 	Type: function.StaticReturnType(cty.Number),
-	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
+	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
+		// big.Float.Quo can panic if the input values are both zero or both
+		// infinity, so we must catch that here in order to remain within
+		// the cty Function abstraction.
+		defer func() {
+			if r := recover(); r != nil {
+				if _, ok := r.(big.ErrNaN); ok {
+					ret = cty.NilVal
+					err = fmt.Errorf("can't divide zero by zero or infinity by infinity")
+				} else {
+					// not a panic we recognize
+					panic(r)
+				}
+			}
+		}()
+
 		return args[0].Divide(args[1]), nil
 	},
 })
