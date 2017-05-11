@@ -190,6 +190,82 @@ var ModuloFunc = function.New(&function.Spec{
 	},
 })
 
+var GreaterThanFunc = function.New(&function.Spec{
+	Params: []function.Parameter{
+		{
+			Name:             "a",
+			Type:             cty.Number,
+			AllowDynamicType: true,
+		},
+		{
+			Name:             "b",
+			Type:             cty.Number,
+			AllowDynamicType: true,
+		},
+	},
+	Type: function.StaticReturnType(cty.Bool),
+	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
+		return args[0].GreaterThan(args[1]), nil
+	},
+})
+
+var GreaterThanOrEqualToFunc = function.New(&function.Spec{
+	Params: []function.Parameter{
+		{
+			Name:             "a",
+			Type:             cty.Number,
+			AllowDynamicType: true,
+		},
+		{
+			Name:             "b",
+			Type:             cty.Number,
+			AllowDynamicType: true,
+		},
+	},
+	Type: function.StaticReturnType(cty.Bool),
+	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
+		return args[0].GreaterThanOrEqualTo(args[1]), nil
+	},
+})
+
+var LessThanFunc = function.New(&function.Spec{
+	Params: []function.Parameter{
+		{
+			Name:             "a",
+			Type:             cty.Number,
+			AllowDynamicType: true,
+		},
+		{
+			Name:             "b",
+			Type:             cty.Number,
+			AllowDynamicType: true,
+		},
+	},
+	Type: function.StaticReturnType(cty.Bool),
+	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
+		return args[0].LessThan(args[1]), nil
+	},
+})
+
+var LessThanOrEqualToFunc = function.New(&function.Spec{
+	Params: []function.Parameter{
+		{
+			Name:             "a",
+			Type:             cty.Number,
+			AllowDynamicType: true,
+		},
+		{
+			Name:             "b",
+			Type:             cty.Number,
+			AllowDynamicType: true,
+		},
+	},
+	Type: function.StaticReturnType(cty.Bool),
+	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
+		return args[0].LessThanOrEqualTo(args[1]), nil
+	},
+})
+
 var NegateFunc = function.New(&function.Spec{
 	Params: []function.Parameter{
 		{
@@ -301,6 +377,26 @@ func Divide(a cty.Value, b cty.Value) (cty.Value, error) {
 // Negate returns the given number multipled by -1.
 func Negate(num cty.Value) (cty.Value, error) {
 	return NegateFunc.Call([]cty.Value{num})
+}
+
+// LessThan returns true if a is less than b.
+func LessThan(a cty.Value, b cty.Value) (cty.Value, error) {
+	return LessThanFunc.Call([]cty.Value{a, b})
+}
+
+// LessThanOrEqualTo returns true if a is less than b.
+func LessThanOrEqualTo(a cty.Value, b cty.Value) (cty.Value, error) {
+	return LessThanOrEqualToFunc.Call([]cty.Value{a, b})
+}
+
+// GreaterThan returns true if a is less than b.
+func GreaterThan(a cty.Value, b cty.Value) (cty.Value, error) {
+	return GreaterThanFunc.Call([]cty.Value{a, b})
+}
+
+// GreaterThanOrEqualTo returns true if a is less than b.
+func GreaterThanOrEqualTo(a cty.Value, b cty.Value) (cty.Value, error) {
+	return GreaterThanOrEqualToFunc.Call([]cty.Value{a, b})
 }
 
 // Modulo returns the remainder of a divided by b under integer division,

@@ -372,6 +372,238 @@ func TestNegate(t *testing.T) {
 	}
 }
 
+func TestLessThan(t *testing.T) {
+	tests := []struct {
+		A    cty.Value
+		B    cty.Value
+		Want cty.Value
+	}{
+		{
+			cty.NumberIntVal(1),
+			cty.NumberIntVal(2),
+			cty.True,
+		},
+		{
+			cty.NumberIntVal(2),
+			cty.NumberIntVal(1),
+			cty.False,
+		},
+		{
+			cty.NumberIntVal(2),
+			cty.NumberIntVal(2),
+			cty.False,
+		},
+		{
+			cty.NumberIntVal(1),
+			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Bool),
+		},
+		{
+			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Bool),
+		},
+		{
+			cty.NumberIntVal(1),
+			cty.DynamicVal,
+			cty.UnknownVal(cty.Bool),
+		},
+		{
+			cty.DynamicVal,
+			cty.DynamicVal,
+			cty.UnknownVal(cty.Bool),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("LessThan(%#v,%#v)", test.A, test.B), func(t *testing.T) {
+			got, err := LessThan(test.A, test.B)
+
+			if err != nil {
+				t.Fatalf("unexpected error: %s", err)
+			}
+
+			if !got.RawEquals(test.Want) {
+				t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, test.Want)
+			}
+		})
+	}
+}
+
+func TestLessThanOrEqualTo(t *testing.T) {
+	tests := []struct {
+		A    cty.Value
+		B    cty.Value
+		Want cty.Value
+	}{
+		{
+			cty.NumberIntVal(1),
+			cty.NumberIntVal(2),
+			cty.True,
+		},
+		{
+			cty.NumberIntVal(2),
+			cty.NumberIntVal(1),
+			cty.False,
+		},
+		{
+			cty.NumberIntVal(2),
+			cty.NumberIntVal(2),
+			cty.True,
+		},
+		{
+			cty.NumberIntVal(1),
+			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Bool),
+		},
+		{
+			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Bool),
+		},
+		{
+			cty.NumberIntVal(1),
+			cty.DynamicVal,
+			cty.UnknownVal(cty.Bool),
+		},
+		{
+			cty.DynamicVal,
+			cty.DynamicVal,
+			cty.UnknownVal(cty.Bool),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("LessThanOrEqualTo(%#v,%#v)", test.A, test.B), func(t *testing.T) {
+			got, err := LessThanOrEqualTo(test.A, test.B)
+
+			if err != nil {
+				t.Fatalf("unexpected error: %s", err)
+			}
+
+			if !got.RawEquals(test.Want) {
+				t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, test.Want)
+			}
+		})
+	}
+}
+
+func TestGreaterThan(t *testing.T) {
+	tests := []struct {
+		A    cty.Value
+		B    cty.Value
+		Want cty.Value
+	}{
+		{
+			cty.NumberIntVal(1),
+			cty.NumberIntVal(2),
+			cty.False,
+		},
+		{
+			cty.NumberIntVal(2),
+			cty.NumberIntVal(1),
+			cty.True,
+		},
+		{
+			cty.NumberIntVal(2),
+			cty.NumberIntVal(2),
+			cty.False,
+		},
+		{
+			cty.NumberIntVal(1),
+			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Bool),
+		},
+		{
+			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Bool),
+		},
+		{
+			cty.NumberIntVal(1),
+			cty.DynamicVal,
+			cty.UnknownVal(cty.Bool),
+		},
+		{
+			cty.DynamicVal,
+			cty.DynamicVal,
+			cty.UnknownVal(cty.Bool),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("GreaterThan(%#v,%#v)", test.A, test.B), func(t *testing.T) {
+			got, err := GreaterThan(test.A, test.B)
+
+			if err != nil {
+				t.Fatalf("unexpected error: %s", err)
+			}
+
+			if !got.RawEquals(test.Want) {
+				t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, test.Want)
+			}
+		})
+	}
+}
+
+func TestGreaterThanOrEqualTo(t *testing.T) {
+	tests := []struct {
+		A    cty.Value
+		B    cty.Value
+		Want cty.Value
+	}{
+		{
+			cty.NumberIntVal(1),
+			cty.NumberIntVal(2),
+			cty.False,
+		},
+		{
+			cty.NumberIntVal(2),
+			cty.NumberIntVal(1),
+			cty.True,
+		},
+		{
+			cty.NumberIntVal(2),
+			cty.NumberIntVal(2),
+			cty.True,
+		},
+		{
+			cty.NumberIntVal(1),
+			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Bool),
+		},
+		{
+			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Bool),
+		},
+		{
+			cty.NumberIntVal(1),
+			cty.DynamicVal,
+			cty.UnknownVal(cty.Bool),
+		},
+		{
+			cty.DynamicVal,
+			cty.DynamicVal,
+			cty.UnknownVal(cty.Bool),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("GreaterThanOrEqualTo(%#v,%#v)", test.A, test.B), func(t *testing.T) {
+			got, err := GreaterThanOrEqualTo(test.A, test.B)
+
+			if err != nil {
+				t.Fatalf("unexpected error: %s", err)
+			}
+
+			if !got.RawEquals(test.Want) {
+				t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, test.Want)
+			}
+		})
+	}
+}
+
 func TestMin(t *testing.T) {
 	tests := []struct {
 		Inputs []cty.Value
