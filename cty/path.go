@@ -104,6 +104,17 @@ func (p Path) LastStep(val Value) (Value, PathStep, error) {
 	return val, p[len(p)-1], nil
 }
 
+// Copy makes a shallow copy of the receiver. Often when paths are passed to
+// caller code they come with the constraint that they are valid only until
+// the caller returns, due to how they are constructed internally. Callers
+// can use Copy to conveniently produce a copy of the value that _they_ control
+// the validity of.
+func (p Path) Copy() Path {
+	ret := make(Path, len(p))
+	copy(ret, p)
+	return ret
+}
+
 // IndexStep is a Step implementation representing applying the index operation
 // to a value, which must be of either a list, map, or set type.
 //
