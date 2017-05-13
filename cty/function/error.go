@@ -15,14 +15,14 @@ type ArgError struct {
 	Index int
 }
 
-func argErrorf(i int, f string, args ...interface{}) error {
+func NewArgErrorf(i int, f string, args ...interface{}) error {
 	return ArgError{
 		error: fmt.Errorf(f, args...),
 		Index: i,
 	}
 }
 
-func argError(i int, err error) error {
+func NewArgError(i int, err error) error {
 	return ArgError{
 		error: err,
 		Index: i,

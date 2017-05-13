@@ -143,7 +143,7 @@ func (f Function) ReturnTypeForValues(args []cty.Value) (ty cty.Type, err error)
 		val := posArgs[i]
 
 		if val.IsNull() && !spec.AllowNull {
-			return cty.Type{}, argErrorf(i, "must not be null")
+			return cty.Type{}, NewArgErrorf(i, "must not be null")
 		}
 
 		// AllowUnknown is ignored for type-checking, since we expect to be
@@ -159,7 +159,7 @@ func (f Function) ReturnTypeForValues(args []cty.Value) (ty cty.Type, err error)
 			// For now we'll just return the first error in the set, since
 			// we don't have a good way to return the whole list here.
 			// Would be good to do something better at some point...
-			return cty.Type{}, argError(i, errs[0])
+			return cty.Type{}, NewArgError(i, errs[0])
 		}
 	}
 
@@ -169,7 +169,7 @@ func (f Function) ReturnTypeForValues(args []cty.Value) (ty cty.Type, err error)
 			realI := i + len(posArgs)
 
 			if val.IsNull() && !spec.AllowNull {
-				return cty.Type{}, argErrorf(realI, "must not be null")
+				return cty.Type{}, NewArgErrorf(realI, "must not be null")
 			}
 
 			if val.Type() == cty.DynamicPseudoType {
@@ -180,7 +180,7 @@ func (f Function) ReturnTypeForValues(args []cty.Value) (ty cty.Type, err error)
 				// For now we'll just return the first error in the set, since
 				// we don't have a good way to return the whole list here.
 				// Would be good to do something better at some point...
-				return cty.Type{}, argError(i, errs[0])
+				return cty.Type{}, NewArgError(i, errs[0])
 			}
 		}
 	}
