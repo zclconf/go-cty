@@ -82,6 +82,29 @@ type RemoveChange struct {
 	OldValue cty.Value
 }
 
+// NestedDiff is a Change implementation that applies a nested diff to a
+// value.
+//
+// A NestedDiff is similar to a ReplaceChange, except that rather than
+// providing a literal new value the replacement value is instead the result
+// of applying the diff to the old value.
+//
+// The Paths in the nested diff are relative to the path of the NestedDiff
+// node, so the absolute paths of the affected elements are the concatenation
+// of the two.
+//
+// This is primarily useful for representing updates to set elements. Since
+// set elements are addressed by their own value, it convenient to specify
+// the value path only once and apply a number of other operations to it.
+// However, it's acceptable to use NestedDiff on any value type as long as
+// the nested diff is valid for that type.
+type NestedDiff struct {
+	changeImpl
+	Path     cty.Path
+	OldValue cty.Value
+	Diff     Diff
+}
+
 // Context is a funny sort of Change implementation that doesn't actually
 // change anything but fails if the value at the given path doesn't match
 // the given value.
