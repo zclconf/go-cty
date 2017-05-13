@@ -60,7 +60,16 @@ func getConversionKnown(in cty.Type, out cty.Type, unsafe bool) conversion {
 	case out.IsListType() && (in.IsListType() || in.IsSetType()):
 		inEty := in.ElementType()
 		outEty := out.ElementType()
+		if inEty.Equals(outEty) {
+			// This indicates that we're converting from list to set with
+			// the same element type, so we don't need an element converter.
+			return conversionCollectionToList(outEty, nil)
+		}
+
 		convEty := getConversion(inEty, outEty, unsafe)
+		if convEty == nil {
+			return nil
+		}
 		return conversionCollectionToList(outEty, convEty)
 
 	default:

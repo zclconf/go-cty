@@ -16,8 +16,11 @@ func conversionCollectionToList(ety cty.Type, conv conversion) conversion {
 		elems := make([]cty.Value, 0, val.LengthInt())
 		i := int64(0)
 		path = append(path, nil)
-		var err error
-		val.ForEachElement(func(key cty.Value, val cty.Value) bool {
+		it := val.ElementIterator()
+		for it.Next() {
+			_, val := it.Element()
+			var err error
+
 			path[len(path)-1] = cty.IndexStep{
 				Key: cty.NumberIntVal(i),
 			}
@@ -25,16 +28,12 @@ func conversionCollectionToList(ety cty.Type, conv conversion) conversion {
 			if conv != nil {
 				val, err = conv(val, path)
 				if err != nil {
-					return true
+					return cty.NilVal, err
 				}
 			}
 			elems = append(elems, val)
 
 			i++
-			return false
-		})
-		if err != nil {
-			return cty.NilVal, err
 		}
 
 		if len(elems) == 0 {
