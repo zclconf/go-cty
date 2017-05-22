@@ -269,3 +269,23 @@ func (f Function) Proxy() ProxyFunc {
 		return f.Call(args)
 	}
 }
+
+// Params returns information about the function's fixed positional parameters.
+// This does not include information about any variadic arguments accepted;
+// for that, call VarParam.
+func (f Function) Params() []Parameter {
+	new := make([]Parameter, len(f.spec.Params))
+	copy(new, f.spec.Params)
+	return new
+}
+
+// VarParam returns information about the variadic arguments the function
+// expects, or nil if the function is not variadic.
+func (f Function) VarParam() *Parameter {
+	if f.spec.VarParam == nil {
+		return nil
+	}
+
+	ret := *f.spec.VarParam
+	return &ret
+}
