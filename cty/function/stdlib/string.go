@@ -3,11 +3,10 @@ package stdlib
 import (
 	"strings"
 
-	"golang.org/x/text/unicode/norm"
-
 	"github.com/apparentlymart/go-cty/cty"
 	"github.com/apparentlymart/go-cty/cty/function"
 	"github.com/apparentlymart/go-cty/cty/gocty"
+	"github.com/apparentlymart/go-textseg/textseg"
 )
 
 var UpperFunc = function.New(&function.Spec{
@@ -56,8 +55,9 @@ var ReverseFunc = function.New(&function.Spec{
 		out := make([]byte, len(in))
 		pos := len(out)
 
+		inB := []byte(in)
 		for i := 0; i < len(in); {
-			d := norm.NFC.NextBoundary(in[i:], true)
+			d, _, _ := textseg.ScanGraphemeClusters(inB[i:], true)
 			cluster := in[i : i+d]
 			pos -= len(cluster)
 			copy(out[pos:], cluster)
@@ -81,8 +81,9 @@ var StrlenFunc = function.New(&function.Spec{
 		in := args[0].AsString()
 		l := 0
 
+		inB := []byte(in)
 		for i := 0; i < len(in); {
-			d := norm.NFC.NextBoundaryInString(in[i:], true)
+			d, _, _ := textseg.ScanGraphemeClusters(inB[i:], true)
 			l++
 			i += d
 		}
@@ -148,7 +149,7 @@ var SubstrFunc = function.New(&function.Spec{
 		// First we'll seek forward to our offset
 		if offset > 0 {
 			for i = 0; i < len(sub); {
-				d := norm.NFC.NextBoundary(sub[i:], true)
+				d, _, _ := textseg.ScanGraphemeClusters(sub[i:], true)
 				i += d
 				pos++
 				if pos == offset {
@@ -172,7 +173,7 @@ var SubstrFunc = function.New(&function.Spec{
 		// reach the length we want.
 		pos = 0
 		for i = 0; i < len(sub); {
-			d := norm.NFC.NextBoundary(sub[i:], true)
+			d, _, _ := textseg.ScanGraphemeClusters(sub[i:], true)
 			i += d
 			pos++
 			if pos == length {
