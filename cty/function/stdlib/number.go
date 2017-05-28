@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/apparentlymart/go-cty/cty"
-	"github.com/apparentlymart/go-cty/cty/function"
+	"github.com/zclconf/go-cty/cty"
+	"github.com/zclconf/go-cty/cty/function"
 )
 
 var AbsoluteFunc = function.New(&function.Spec{

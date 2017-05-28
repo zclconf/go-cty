@@ -1,7 +1,7 @@
 package diff
 
 import (
-	"github.com/apparentlymart/go-cty/cty"
+	"github.com/zclconf/go-cty/cty"
 )
 
 // Change is an abstract type representing a single change operation as

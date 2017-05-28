@@ -3,7 +3,7 @@ package stdlib
 import (
 	"testing"
 
-	"github.com/apparentlymart/go-cty/cty"
+	"github.com/zclconf/go-cty/cty"
 )
 
 func TestUpper(t *testing.T) {

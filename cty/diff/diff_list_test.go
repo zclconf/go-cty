@@ -6,7 +6,7 @@ import (
 
 	"reflect"
 
-	"github.com/apparentlymart/go-cty/cty"
+	"github.com/zclconf/go-cty/cty"
 	"github.com/kylelemons/godebug/pretty"
 )
 

@@ -1,6 +1,6 @@
 package diff
 
-import "github.com/apparentlymart/go-cty/cty"
+import "github.com/zclconf/go-cty/cty"
 
 // diffListsShallow takes two values that must be known, non-null lists of the
 // same element type and returns a shallow diff that adds and removes only

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/apparentlymart/go-cty/cty"
+	"github.com/zclconf/go-cty/cty"
 )
 
 func TestCompareTypes(t *testing.T) {

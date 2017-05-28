@@ -3,7 +3,7 @@ package cty
 import (
 	"sort"
 
-	"github.com/apparentlymart/go-cty/cty/set"
+	"github.com/zclconf/go-cty/cty/set"
 )
 
 // ElementIterator is the interface type returned by Value.ElementIterator to

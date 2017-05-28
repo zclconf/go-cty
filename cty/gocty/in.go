@@ -4,8 +4,8 @@ import (
 	"math/big"
 	"reflect"
 
-	"github.com/apparentlymart/go-cty/cty"
-	"github.com/apparentlymart/go-cty/cty/set"
+	"github.com/zclconf/go-cty/cty"
+	"github.com/zclconf/go-cty/cty/set"
 )
 
 // ToCtyValue produces a cty.Value from a Go value. The result will conform

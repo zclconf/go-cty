@@ -5,7 +5,7 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/apparentlymart/go-cty/cty"
+	"github.com/zclconf/go-cty/cty"
 )
 
 func TestAbsolute(t *testing.T) {

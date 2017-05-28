@@ -3,8 +3,8 @@ package json
 import (
 	"bytes"
 
-	"github.com/apparentlymart/go-cty/cty"
-	"github.com/apparentlymart/go-cty/cty/convert"
+	"github.com/zclconf/go-cty/cty"
+	"github.com/zclconf/go-cty/cty/convert"
 )
 
 // Marshal produces a JSON representation of the given value that can later

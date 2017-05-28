@@ -4,7 +4,7 @@ import (
 	"encoding/gob"
 	"math/big"
 
-	"github.com/apparentlymart/go-cty/cty/set"
+	"github.com/zclconf/go-cty/cty/set"
 )
 
 // InternalTypesToRegister is a slice of values that covers all of the

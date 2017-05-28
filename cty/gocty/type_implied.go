@@ -3,7 +3,7 @@ package gocty
 import (
 	"reflect"
 
-	"github.com/apparentlymart/go-cty/cty"
+	"github.com/zclconf/go-cty/cty"
 )
 
 // ImpliedType takes an arbitrary Go value (as an interface{}) and attempts

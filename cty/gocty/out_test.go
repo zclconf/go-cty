@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/apparentlymart/go-cty/cty"
+	"github.com/zclconf/go-cty/cty"
 )
 
 func TestOut(t *testing.T) {

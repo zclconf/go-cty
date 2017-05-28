@@ -3,7 +3,7 @@ package diff
 import (
 	"errors"
 
-	"github.com/apparentlymart/go-cty/cty"
+	"github.com/zclconf/go-cty/cty"
 )
 
 // Diff represents a sequence of changes to transform one Value into another

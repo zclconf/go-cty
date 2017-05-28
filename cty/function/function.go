@@ -3,7 +3,7 @@ package function
 import (
 	"fmt"
 
-	"github.com/apparentlymart/go-cty/cty"
+	"github.com/zclconf/go-cty/cty"
 )
 
 // Function represents a function. This is the main type in this package.

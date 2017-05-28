@@ -1,7 +1,7 @@
 package convert
 
 import (
-	"github.com/apparentlymart/go-cty/cty"
+	"github.com/zclconf/go-cty/cty"
 )
 
 // dynamicFixup deals with just-in-time conversions of values that were

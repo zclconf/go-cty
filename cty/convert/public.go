@@ -3,7 +3,7 @@ package convert
 import (
 	"fmt"
 
-	"github.com/apparentlymart/go-cty/cty"
+	"github.com/zclconf/go-cty/cty"
 )
 
 // This file contains the public interface of this package, which is intended

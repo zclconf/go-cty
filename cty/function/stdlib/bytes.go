@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/apparentlymart/go-cty/cty"
-	"github.com/apparentlymart/go-cty/cty/function"
-	"github.com/apparentlymart/go-cty/cty/gocty"
+	"github.com/zclconf/go-cty/cty"
+	"github.com/zclconf/go-cty/cty/function"
+	"github.com/zclconf/go-cty/cty/gocty"
 )
 
 // Bytes is a capsule type that can be used with the binary functions to

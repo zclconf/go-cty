@@ -6,7 +6,7 @@ import (
 
 	"math"
 
-	"github.com/apparentlymart/go-cty/cty"
+	"github.com/zclconf/go-cty/cty"
 )
 
 // FromCtyValue assigns a cty.Value to a reflect.Value, which must be a pointer,

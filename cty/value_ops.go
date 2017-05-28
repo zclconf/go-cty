@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/apparentlymart/go-cty/cty/set"
+	"github.com/zclconf/go-cty/cty/set"
 )
 
 func (val Value) GoString() string {

@@ -1,6 +1,6 @@
 package diff
 
-import "github.com/apparentlymart/go-cty/cty"
+import "github.com/zclconf/go-cty/cty"
 
 // longestCommonSubsequence finds a sequence of values that are common to both
 // x and y, with the same relative ordering as in both collections.

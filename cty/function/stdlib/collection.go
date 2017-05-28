@@ -3,9 +3,9 @@ package stdlib
 import (
 	"fmt"
 
-	"github.com/apparentlymart/go-cty/cty"
-	"github.com/apparentlymart/go-cty/cty/function"
-	"github.com/apparentlymart/go-cty/cty/gocty"
+	"github.com/zclconf/go-cty/cty"
+	"github.com/zclconf/go-cty/cty/function"
+	"github.com/zclconf/go-cty/cty/gocty"
 )
 
 var HasIndexFunc = function.New(&function.Spec{
