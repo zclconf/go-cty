@@ -31,6 +31,29 @@ var EqualFunc = function.New(&function.Spec{
 	},
 })
 
+var NotEqualFunc = function.New(&function.Spec{
+	Params: []function.Parameter{
+		{
+			Name:             "a",
+			Type:             cty.DynamicPseudoType,
+			AllowUnknown:     true,
+			AllowDynamicType: true,
+			AllowNull:        true,
+		},
+		{
+			Name:             "b",
+			Type:             cty.DynamicPseudoType,
+			AllowUnknown:     true,
+			AllowDynamicType: true,
+			AllowNull:        true,
+		},
+	},
+	Type: function.StaticReturnType(cty.Bool),
+	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
+		return args[0].Equals(args[1]).Not(), nil
+	},
+})
+
 var CoalesceFunc = function.New(&function.Spec{
 	Params: []function.Parameter{},
 	VarParam: &function.Parameter{
@@ -70,6 +93,11 @@ var CoalesceFunc = function.New(&function.Spec{
 // bool value.
 func Equal(a cty.Value, b cty.Value) (cty.Value, error) {
 	return EqualFunc.Call([]cty.Value{a, b})
+}
+
+// NotEqual is the opposite of Equal.
+func NotEqual(a cty.Value, b cty.Value) (cty.Value, error) {
+	return NotEqualFunc.Call([]cty.Value{a, b})
 }
 
 // Coalesce returns the first of the given arguments that is not null. If
