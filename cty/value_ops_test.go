@@ -1408,6 +1408,22 @@ func TestValueForEachElement(t *testing.T) {
 			},
 			true,
 		},
+		{
+			EmptyObjectVal,
+			[]call{},
+			false,
+		},
+		{
+			ObjectVal(map[string]Value{
+				"bool":   True,
+				"string": StringVal("hello"),
+			}),
+			[]call{
+				{StringVal("bool"), True},
+				{StringVal("string"), StringVal("hello")},
+			},
+			false,
+		},
 	}
 
 	for _, test := range tests {

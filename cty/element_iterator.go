@@ -21,6 +21,23 @@ type ElementIterator interface {
 	Element() (key Value, value Value)
 }
 
+func canElementIterator(val Value) bool {
+	switch {
+	case val.ty.IsListType():
+		return true
+	case val.ty.IsMapType():
+		return true
+	case val.ty.IsSetType():
+		return true
+	case val.ty.IsTupleType():
+		return true
+	case val.ty.IsObjectType():
+		return true
+	default:
+		return false
+	}
+}
+
 func elementIterator(val Value) ElementIterator {
 	switch {
 	case val.ty.IsListType():
@@ -56,6 +73,22 @@ func elementIterator(val Value) ElementIterator {
 			etys: val.ty.TupleElementTypes(),
 			vals: val.v.([]interface{}),
 			idx:  -1,
+		}
+	case val.ty.IsObjectType():
+		// We iterate the keys in a predictable lexicographical order so
+		// that results will always be stable given the same object type.
+		atys := val.ty.AttributeTypes()
+		keys := make([]string, 0, len(atys))
+		for key := range atys {
+			keys = append(keys, key)
+		}
+		sort.Strings(keys)
+
+		return &objectElementIterator{
+			atys:      atys,
+			vals:      val.v.(map[string]interface{}),
+			attrNames: keys,
+			idx:       -1,
 		}
 	default:
 		panic("attempt to iterate on non-collection, non-tuple type")
@@ -135,4 +168,24 @@ func (it *tupleElementIterator) Element() (Value, Value) {
 func (it *tupleElementIterator) Next() bool {
 	it.idx++
 	return it.idx < len(it.vals)
+}
+
+type objectElementIterator struct {
+	atys      map[string]Type
+	vals      map[string]interface{}
+	attrNames []string
+	idx       int
+}
+
+func (it *objectElementIterator) Element() (Value, Value) {
+	key := it.attrNames[it.idx]
+	return StringVal(key), Value{
+		ty: it.atys[key],
+		v:  it.vals[key],
+	}
+}
+
+func (it *objectElementIterator) Next() bool {
+	it.idx++
+	return it.idx < len(it.attrNames)
 }

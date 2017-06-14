@@ -689,8 +689,8 @@ func (val Value) LengthInt() int {
 }
 
 // ElementIterator returns an ElementIterator for iterating the elements
-// of the receiver, which must be a collection type or a tuple type. If called
-// on a method of any other type, this method will panic.
+// of the receiver, which must be a collection type, a tuple type, or an object
+// type. If called on a method of any other type, this method will panic.
 //
 // The value must be Known and non-Null, or this method will panic.
 //
@@ -707,6 +707,9 @@ func (val Value) LengthInt() int {
 // If the receiver is of a tuple type, the returned keys will be of type Number
 // and the value will be of the corresponding element's type.
 //
+// If the receiver is of an object type, the returned keys will be of type
+// String and the value will be of the corresponding attributes's type.
+//
 // ElementIterator is an integration method, so it cannot handle Unknown
 // values. This method will panic if the receiver is Unknown.
 func (val Value) ElementIterator() ElementIterator {
@@ -717,6 +720,12 @@ func (val Value) ElementIterator() ElementIterator {
 		panic("can't use ElementIterator on null value")
 	}
 	return elementIterator(val)
+}
+
+// CanIterateElements returns true if the receiver can support the
+// ElementIterator method (and by extension, ForEachElement) without panic.
+func (val Value) CanIterateElements() bool {
+	return canElementIterator(val)
 }
 
 // ForEachElement executes a given callback function for each element of
