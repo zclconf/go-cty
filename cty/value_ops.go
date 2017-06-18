@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"math/big"
 
+	"reflect"
+
 	"github.com/zclconf/go-cty/cty/set"
 )
 
@@ -270,9 +272,6 @@ func (val Value) False() bool {
 // It returns a primitive Go bool rather than a Value to remind us that it
 // is not a first-class value operation.
 func (val Value) RawEquals(other Value) bool {
-	// First some exceptions to skip over the short-circuit behavior we'd
-	// normally expect, thus ensuring we can call Equals and reliably get
-	// back a known Bool.
 	if !val.ty.Equals(other.ty) {
 		return false
 	}
@@ -282,12 +281,119 @@ func (val Value) RawEquals(other Value) bool {
 	if (val.IsKnown() && !other.IsKnown()) || (other.IsKnown() && !val.IsKnown()) {
 		return false
 	}
+	if val.IsNull() && other.IsNull() {
+		return true
+	}
+	if (val.IsNull() && !other.IsNull()) || (other.IsNull() && !val.IsNull()) {
+		return false
+	}
 	if val.ty == DynamicPseudoType && other.ty == DynamicPseudoType {
 		return true
 	}
 
-	result := val.Equals(other)
-	return result.v.(bool)
+	ty := val.ty
+	switch {
+	case ty == Number || ty == Bool || ty == String || ty == DynamicPseudoType:
+		return val.Equals(other).True()
+	case ty.IsObjectType():
+		oty := ty.typeImpl.(typeObject)
+		for attr, aty := range oty.AttrTypes {
+			lhs := Value{
+				ty: aty,
+				v:  val.v.(map[string]interface{})[attr],
+			}
+			rhs := Value{
+				ty: aty,
+				v:  other.v.(map[string]interface{})[attr],
+			}
+			eq := lhs.RawEquals(rhs)
+			if !eq {
+				return false
+			}
+		}
+		return true
+	case ty.IsTupleType():
+		tty := ty.typeImpl.(typeTuple)
+		for i, ety := range tty.ElemTypes {
+			lhs := Value{
+				ty: ety,
+				v:  val.v.([]interface{})[i],
+			}
+			rhs := Value{
+				ty: ety,
+				v:  other.v.([]interface{})[i],
+			}
+			eq := lhs.RawEquals(rhs)
+			if !eq {
+				return false
+			}
+		}
+		return true
+	case ty.IsListType():
+		ety := ty.typeImpl.(typeList).ElementTypeT
+		if len(val.v.([]interface{})) == len(other.v.([]interface{})) {
+			for i := range val.v.([]interface{}) {
+				lhs := Value{
+					ty: ety,
+					v:  val.v.([]interface{})[i],
+				}
+				rhs := Value{
+					ty: ety,
+					v:  other.v.([]interface{})[i],
+				}
+				eq := lhs.RawEquals(rhs)
+				if !eq {
+					return false
+				}
+			}
+			return true
+		}
+		return false
+	case ty.IsSetType():
+		s1 := val.v.(set.Set)
+		s2 := other.v.(set.Set)
+
+		// Since we're intentionally ignoring our rule that two unknowns
+		// are never equal, we can cheat here.
+		// (This isn't 100% right since e.g. it will fail if the set contains
+		// numbers that are infinite, which DeepEqual can't compare properly.
+		// We're accepting that limitation for simplicity here, since this
+		// function is here primarily for testing.)
+		return reflect.DeepEqual(s1, s2)
+
+	case ty.IsMapType():
+		ety := ty.typeImpl.(typeMap).ElementTypeT
+		if len(val.v.(map[string]interface{})) == len(other.v.(map[string]interface{})) {
+			for k := range val.v.(map[string]interface{}) {
+				if _, ok := other.v.(map[string]interface{})[k]; !ok {
+					return false
+				}
+				lhs := Value{
+					ty: ety,
+					v:  val.v.(map[string]interface{})[k],
+				}
+				rhs := Value{
+					ty: ety,
+					v:  other.v.(map[string]interface{})[k],
+				}
+				eq := lhs.RawEquals(rhs)
+				if !eq {
+					return false
+				}
+			}
+			return true
+		}
+		return false
+	case ty.IsCapsuleType():
+		// A capsule type's encapsulated value is a pointer to a value of its
+		// native type, so we can just compare these to get the identity test
+		// we need.
+		return val.v == other.v
+
+	default:
+		// should never happen
+		panic(fmt.Errorf("unsupported value type %#v in RawEquals", ty))
+	}
 }
 
 // Add returns the sum of the receiver and the given other value. Both values
