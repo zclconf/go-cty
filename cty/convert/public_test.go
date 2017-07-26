@@ -136,6 +136,50 @@ func TestConvert(t *testing.T) {
 				cty.StringVal("10"),
 			}),
 		},
+		{
+			Value: cty.TupleVal([]cty.Value{
+				cty.NumberIntVal(5),
+				cty.StringVal("hello"),
+			}),
+			Type: cty.List(cty.String),
+			Want: cty.ListVal([]cty.Value{
+				cty.StringVal("5"),
+				cty.StringVal("hello"),
+			}),
+		},
+		{
+			Value: cty.TupleVal([]cty.Value{
+				cty.NumberIntVal(5),
+				cty.StringVal("12"),
+			}),
+			Type: cty.List(cty.Number),
+			Want: cty.ListVal([]cty.Value{
+				cty.NumberIntVal(5),
+				cty.NumberIntVal(12),
+			}),
+		},
+		{
+			Value: cty.TupleVal([]cty.Value{
+				cty.NumberIntVal(5),
+				cty.NumberIntVal(10),
+			}),
+			Type: cty.List(cty.DynamicPseudoType),
+			Want: cty.ListVal([]cty.Value{
+				cty.NumberIntVal(5),
+				cty.NumberIntVal(10),
+			}),
+		},
+		{
+			Value: cty.TupleVal([]cty.Value{
+				cty.NumberIntVal(5),
+				cty.StringVal("hello"),
+			}),
+			Type: cty.List(cty.DynamicPseudoType),
+			Want: cty.ListVal([]cty.Value{
+				cty.StringVal("5"),
+				cty.StringVal("hello"),
+			}),
+		},
 	}
 
 	for _, test := range tests {

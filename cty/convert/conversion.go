@@ -72,6 +72,10 @@ func getConversionKnown(in cty.Type, out cty.Type, unsafe bool) conversion {
 		}
 		return conversionCollectionToList(outEty, convEty)
 
+	case out.IsListType() && in.IsTupleType():
+		outEty := out.ElementType()
+		return conversionTupleToList(in, outEty, unsafe)
+
 	default:
 		return nil
 
