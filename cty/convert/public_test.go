@@ -180,6 +180,80 @@ func TestConvert(t *testing.T) {
 				cty.StringVal("hello"),
 			}),
 		},
+		{
+			Value: cty.ObjectVal(map[string]cty.Value{
+				"num": cty.NumberIntVal(5),
+				"str": cty.StringVal("hello"),
+			}),
+			Type: cty.Map(cty.String),
+			Want: cty.MapVal(map[string]cty.Value{
+				"num": cty.StringVal("5"),
+				"str": cty.StringVal("hello"),
+			}),
+		},
+		{
+			Value: cty.ObjectVal(map[string]cty.Value{
+				"num": cty.NumberIntVal(5),
+				"str": cty.StringVal("12"),
+			}),
+			Type: cty.Map(cty.Number),
+			Want: cty.MapVal(map[string]cty.Value{
+				"num": cty.NumberIntVal(5),
+				"str": cty.NumberIntVal(12),
+			}),
+		},
+		{
+			Value: cty.ObjectVal(map[string]cty.Value{
+				"num1": cty.NumberIntVal(5),
+				"num2": cty.NumberIntVal(10),
+			}),
+			Type: cty.Map(cty.DynamicPseudoType),
+			Want: cty.MapVal(map[string]cty.Value{
+				"num1": cty.NumberIntVal(5),
+				"num2": cty.NumberIntVal(10),
+			}),
+		},
+		{
+			Value: cty.ObjectVal(map[string]cty.Value{
+				"num": cty.NumberIntVal(5),
+				"str": cty.StringVal("hello"),
+			}),
+			Type: cty.Map(cty.DynamicPseudoType),
+			Want: cty.MapVal(map[string]cty.Value{
+				"num": cty.StringVal("5"),
+				"str": cty.StringVal("hello"),
+			}),
+		},
+		{
+			Value: cty.ObjectVal(map[string]cty.Value{
+				"list":  cty.ListValEmpty(cty.Bool),
+				"tuple": cty.EmptyTupleVal,
+			}),
+			Type: cty.Map(cty.DynamicPseudoType),
+			Want: cty.MapVal(map[string]cty.Value{
+				"list":  cty.ListValEmpty(cty.Bool),
+				"tuple": cty.ListValEmpty(cty.Bool),
+			}),
+		},
+		{
+			Value: cty.ObjectVal(map[string]cty.Value{
+				"map": cty.MapValEmpty(cty.String),
+				"obj": cty.EmptyObjectVal,
+			}),
+			Type: cty.Map(cty.DynamicPseudoType),
+			Want: cty.MapVal(map[string]cty.Value{
+				"map": cty.MapValEmpty(cty.String),
+				"obj": cty.MapValEmpty(cty.String),
+			}),
+		},
+		{
+			Value: cty.ObjectVal(map[string]cty.Value{
+				"num":  cty.NumberIntVal(5),
+				"bool": cty.True,
+			}),
+			Type:      cty.Map(cty.DynamicPseudoType),
+			WantError: true, // no common base type to unify to
+		},
 	}
 
 	for _, test := range tests {
