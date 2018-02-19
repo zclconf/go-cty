@@ -95,6 +95,14 @@ func TestFormat(t *testing.T) {
 			``,
 		},
 		{
+			cty.StringVal("tuple with unknown %v"),
+			[]cty.Value{cty.TupleVal([]cty.Value{
+				cty.UnknownVal(cty.String),
+			})},
+			cty.UnknownVal(cty.String),
+			``,
+		},
+		{
 			cty.StringVal("%%%v"),
 			[]cty.Value{cty.False},
 			cty.StringVal("%false"),

@@ -31,6 +31,14 @@ var FormatFunc = function.New(&function.Spec{
 	},
 	Type: function.StaticReturnType(cty.String),
 	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
+		for _, arg := range args[1:] {
+			if !arg.IsWhollyKnown() {
+				// We require all nested values to be known because the only
+				// thing we can do for a collection/structural type is print
+				// it as JSON and that requires it to be wholly known.
+				return cty.UnknownVal(cty.String), nil
+			}
+		}
 		str, err := formatFSM(args[0].AsString(), args[1:])
 		return cty.StringVal(str), err
 	},
