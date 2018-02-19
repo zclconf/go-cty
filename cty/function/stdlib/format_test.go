@@ -553,3 +553,225 @@ func TestFormat(t *testing.T) {
 		})
 	}
 }
+func TestFormatList(t *testing.T) {
+	tests := []struct {
+		Format  cty.Value
+		Args    []cty.Value
+		Want    cty.Value
+		WantErr string
+	}{
+		{
+			cty.StringVal(""),
+			nil,
+			cty.ListVal([]cty.Value{
+				cty.StringVal(""),
+			}),
+			``,
+		},
+		{
+			cty.StringVal("hello"),
+			nil,
+			cty.ListVal([]cty.Value{
+				cty.StringVal("hello"),
+			}),
+			``,
+		},
+		{
+			cty.StringVal("100%% successful"),
+			nil,
+			cty.ListVal([]cty.Value{
+				cty.StringVal("100% successful"),
+			}),
+			``,
+		},
+		{
+			cty.StringVal("100%%"),
+			nil,
+			cty.ListVal([]cty.Value{
+				cty.StringVal("100%"),
+			}),
+			``,
+		},
+
+		{
+			cty.StringVal("%s"),
+			[]cty.Value{cty.StringVal("hello")},
+			cty.ListVal([]cty.Value{
+				cty.StringVal("hello"),
+			}),
+			``,
+		},
+		{
+			cty.StringVal("%s"),
+			[]cty.Value{
+				cty.ListVal([]cty.Value{
+					cty.StringVal("hello"),
+				}),
+			},
+			cty.ListVal([]cty.Value{
+				cty.StringVal("hello"),
+			}),
+			``,
+		},
+		{
+			cty.StringVal("%s"),
+			[]cty.Value{
+				cty.ListVal([]cty.Value{
+					cty.StringVal("hello"),
+					cty.StringVal("world"),
+				}),
+			},
+			cty.ListVal([]cty.Value{
+				cty.StringVal("hello"),
+				cty.StringVal("world"),
+			}),
+			``,
+		},
+		{
+			cty.StringVal("%s %s"),
+			[]cty.Value{
+				cty.ListVal([]cty.Value{
+					cty.StringVal("hello"),
+					cty.StringVal("goodbye"),
+				}),
+				cty.ListVal([]cty.Value{
+					cty.StringVal("world"),
+					cty.StringVal("universe"),
+				}),
+			},
+			cty.ListVal([]cty.Value{
+				cty.StringVal("hello world"),
+				cty.StringVal("goodbye universe"),
+			}),
+			``,
+		},
+		{
+			cty.StringVal("%s %s"),
+			[]cty.Value{
+				cty.ListVal([]cty.Value{
+					cty.StringVal("hello"),
+					cty.StringVal("goodbye"),
+				}),
+				cty.StringVal("world"),
+			},
+			cty.ListVal([]cty.Value{
+				cty.StringVal("hello world"),
+				cty.StringVal("goodbye world"),
+			}),
+			``,
+		},
+		{
+			cty.StringVal("%s %s"),
+			[]cty.Value{
+				cty.StringVal("hello"),
+				cty.ListVal([]cty.Value{
+					cty.StringVal("world"),
+					cty.StringVal("universe"),
+				}),
+			},
+			cty.ListVal([]cty.Value{
+				cty.StringVal("hello world"),
+				cty.StringVal("hello universe"),
+			}),
+			``,
+		},
+		{
+			cty.StringVal("%s %s"),
+			[]cty.Value{
+				cty.ListVal([]cty.Value{
+					cty.StringVal("hello"),
+					cty.StringVal("goodbye"),
+				}),
+				cty.ListVal([]cty.Value{
+					cty.StringVal("world"),
+				}),
+			},
+			cty.ListValEmpty(cty.String),
+			`argument 2 has length 1, which is inconsistent with argument 1 of length 2`,
+		},
+		{
+			cty.StringVal("%s"),
+			[]cty.Value{cty.EmptyObjectVal},
+			cty.ListValEmpty(cty.String),
+			`error on format iteration 0: unsupported value for "%s" at 0: incorrect type; string required`,
+		},
+		{
+			cty.StringVal("%v"),
+			[]cty.Value{cty.EmptyTupleVal},
+			cty.ListValEmpty(cty.String), // no items because our given tuple is empty
+			``,
+		},
+		{
+			cty.StringVal("%v"),
+			[]cty.Value{cty.NullVal(cty.List(cty.String))},
+			cty.ListVal([]cty.Value{
+				cty.StringVal("null"), // single item because a null list is interpreted as a single null
+			}),
+			``,
+		},
+
+		{
+			cty.UnknownVal(cty.String),
+			[]cty.Value{
+				cty.True,
+			},
+			cty.UnknownVal(cty.List(cty.String)),
+			``,
+		},
+		{
+			cty.StringVal("%v"),
+			[]cty.Value{
+				cty.UnknownVal(cty.String),
+			},
+			cty.ListVal([]cty.Value{
+				cty.UnknownVal(cty.String),
+			}),
+			``,
+		},
+		{
+			cty.StringVal("%v"),
+			[]cty.Value{
+				cty.ListVal([]cty.Value{
+					cty.TupleVal([]cty.Value{cty.StringVal("hello")}),
+					cty.TupleVal([]cty.Value{cty.UnknownVal(cty.String)}),
+					cty.TupleVal([]cty.Value{cty.StringVal("world")}),
+				}),
+			},
+			cty.ListVal([]cty.Value{
+				cty.StringVal(`["hello"]`),
+				cty.UnknownVal(cty.String),
+				cty.StringVal(`["world"]`),
+			}),
+			``,
+		},
+	}
+
+	for i, test := range tests {
+		t.Run(fmt.Sprintf("%02d-%#v", i, test.Format), func(t *testing.T) {
+			got, err := FormatList(test.Format, test.Args...)
+
+			if test.WantErr == "" {
+				if err != nil {
+					t.Fatalf("unexpected error: %s", err)
+				}
+			} else {
+				if err == nil {
+					t.Fatalf("no error; want %q", test.WantErr)
+				}
+				errStr := err.Error()
+				if errStr != test.WantErr {
+					t.Fatalf("wrong error\ngot:  %s\nwant: %s", errStr, test.WantErr)
+				}
+				return
+			}
+
+			if test.Want != cty.NilVal {
+				if !got.RawEquals(test.Want) {
+					t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, test.Want)
+				}
+			} else {
+				t.Errorf("unexpected success %#v; want error", got)
+			}
+		})
+	}
+}

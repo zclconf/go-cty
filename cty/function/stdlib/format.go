@@ -44,6 +44,120 @@ var FormatFunc = function.New(&function.Spec{
 	},
 })
 
+var FormatListFunc = function.New(&function.Spec{
+	Params: []function.Parameter{
+		{
+			Name: "format",
+			Type: cty.String,
+		},
+	},
+	VarParam: &function.Parameter{
+		Name:         "args",
+		Type:         cty.DynamicPseudoType,
+		AllowNull:    true,
+		AllowUnknown: true,
+	},
+	Type: function.StaticReturnType(cty.List(cty.String)),
+	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
+		fmtVal := args[0]
+		args = args[1:]
+
+		if len(args) == 0 {
+			// With no arguments, this function is equivalent to Format, but
+			// returning a single-element list result.
+			result, err := Format(fmtVal, args...)
+			return cty.ListVal([]cty.Value{result}), err
+		}
+
+		fmtStr := fmtVal.AsString()
+
+		// Each of our arguments will be dealt with either as an iterator
+		// or as a single value. Iterators are used for sequence-type values
+		// (lists, sets, tuples) while everything else is treated as a
+		// single value. The sequences we iterate over are required to be
+		// all the same length.
+		iterLen := -1
+		lenChooser := -1
+		iterators := make([]cty.ElementIterator, len(args))
+		singleVals := make([]cty.Value, len(args))
+		for i, arg := range args {
+			argTy := arg.Type()
+			switch {
+			case (argTy.IsListType() || argTy.IsSetType() || argTy.IsTupleType()) && !arg.IsNull():
+				thisLen := arg.LengthInt()
+				if iterLen == -1 {
+					iterLen = thisLen
+					lenChooser = i
+				} else {
+					if thisLen != iterLen {
+						return cty.NullVal(cty.List(cty.String)), function.NewArgErrorf(
+							i+1,
+							"argument %d has length %d, which is inconsistent with argument %d of length %d",
+							i+1, thisLen,
+							lenChooser+1, iterLen,
+						)
+					}
+				}
+				iterators[i] = arg.ElementIterator()
+			default:
+				singleVals[i] = arg
+			}
+		}
+
+		if iterLen == 0 {
+			// If our sequences are all empty then our result must be empty.
+			return cty.ListValEmpty(cty.String), nil
+		}
+
+		if iterLen == -1 {
+			// If we didn't encounter any iterables at all then we're going
+			// to just do one iteration with items from singleVals.
+			iterLen = 1
+		}
+
+		ret := make([]cty.Value, 0, iterLen)
+		fmtArgs := make([]cty.Value, len(iterators))
+	Results:
+		for iterIdx := 0; iterIdx < iterLen; iterIdx++ {
+
+			// Construct our arguments for a single format call
+			for i := range fmtArgs {
+				switch {
+				case iterators[i] != nil:
+					iterator := iterators[i]
+					iterator.Next()
+					_, val := iterator.Element()
+					fmtArgs[i] = val
+				default:
+					fmtArgs[i] = singleVals[i]
+				}
+
+				// If any of the arguments to this call would be unknown then
+				// this particular result is unknown, but we'll keep going
+				// to see if any other iterations can produce known values.
+				if !fmtArgs[i].IsWhollyKnown() {
+					// We require all nested values to be known because the only
+					// thing we can do for a collection/structural type is print
+					// it as JSON and that requires it to be wholly known.
+					ret = append(ret, cty.UnknownVal(cty.String))
+					continue Results
+				}
+			}
+
+			str, err := formatFSM(fmtStr, fmtArgs)
+			if err != nil {
+				return cty.NullVal(cty.List(cty.String)), fmt.Errorf(
+					"error on format iteration %d: %s", iterIdx, err,
+				)
+			}
+
+			ret = append(ret, cty.StringVal(str))
+		}
+
+		return cty.ListVal(ret), nil
+	},
+})
+
 // Format produces a string representation of zero or more values using a
 // format string similar to the "printf" function in C.
 //
@@ -127,6 +241,21 @@ func Format(format cty.Value, vals ...cty.Value) (cty.Value, error) {
 	args = append(args, format)
 	args = append(args, vals...)
 	return FormatFunc.Call(args)
+}
+
+// FormatList applies the same formatting behavior as Format, but accepts
+// a mixture of list and non-list values as arguments. Any list arguments
+// passed must have the same length, which dictates the length of the
+// resulting list.
+//
+// Any non-list arguments are used repeatedly for each iteration over the
+// list arguments. The list arguments are iterated in order by key, so
+// corresponding items are formatted together.
+func FormatList(format cty.Value, vals ...cty.Value) (cty.Value, error) {
+	args := make([]cty.Value, 0, len(vals)+1)
+	args = append(args, format)
+	args = append(args, vals...)
+	return FormatListFunc.Call(args)
 }
 
 type formatVerb struct {
