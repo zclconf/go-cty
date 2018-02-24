@@ -59,8 +59,17 @@ func NumberFloatVal(v float64) Value {
 func StringVal(v string) Value {
 	return Value{
 		ty: String,
-		v:  norm.NFC.String(v),
+		v:  NormalizeString(v),
 	}
+}
+
+// NormalizeString applies the same normalization that cty applies when
+// constructing string values.
+//
+// A return value from this function can be meaningfully compared byte-for-byte
+// with a Value.AsString result.
+func NormalizeString(s string) string {
+	return norm.NFC.String(s)
 }
 
 // ObjectVal returns a Value of an object type whose structure is defined
