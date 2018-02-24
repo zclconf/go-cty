@@ -79,6 +79,7 @@ func ObjectVal(attrs map[string]Value) Value {
 	attrVals := make(map[string]interface{}, len(attrs))
 
 	for attr, val := range attrs {
+		attr = NormalizeString(attr)
 		attrTypes[attr] = val.ty
 		attrVals[attr] = val.v
 	}
@@ -171,7 +172,7 @@ func MapVal(vals map[string]Value) Value {
 			))
 		}
 
-		rawMap[key] = val.v
+		rawMap[NormalizeString(key)] = val.v
 	}
 
 	return Value{

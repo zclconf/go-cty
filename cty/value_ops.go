@@ -540,6 +540,8 @@ func (val Value) GetAttr(name string) Value {
 	if !val.ty.IsObjectType() {
 		panic("value is not an object")
 	}
+
+	name = NormalizeString(name)
 	if !val.ty.HasAttribute(name) {
 		panic("value has no attribute of that name")
 	}
