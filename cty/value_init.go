@@ -224,6 +224,21 @@ func SetVal(vals []Value) Value {
 	}
 }
 
+// SetValFromValueSet returns a Value of set type based on an already-constructed
+// ValueSet.
+//
+// The element type of the returned value is the element type of the given
+// set.
+func SetValFromValueSet(s ValueSet) Value {
+	ety := s.ElementType()
+	rawVal := s.s.Copy() // copy so caller can't mutate what we wrap
+
+	return Value{
+		ty: Set(ety),
+		v:  rawVal,
+	}
+}
+
 // SetValEmpty returns an empty set of the given element type.
 func SetValEmpty(element Type) Value {
 	return Value{
