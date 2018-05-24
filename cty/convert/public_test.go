@@ -111,11 +111,35 @@ func TestConvert(t *testing.T) {
 			}),
 		},
 		{
+			Value: cty.ListVal([]cty.Value{
+				cty.NumberIntVal(5),
+				cty.NumberIntVal(10),
+			}),
+			Type: cty.List(cty.DynamicPseudoType),
+			Want: cty.ListVal([]cty.Value{
+				cty.NumberIntVal(5),
+				cty.NumberIntVal(10),
+			}),
+		},
+		{
 			Value: cty.SetVal([]cty.Value{
 				cty.StringVal("5"),
 				cty.StringVal("10"),
 			}),
 			Type: cty.List(cty.String),
+			Want: cty.ListVal([]cty.Value{
+				// NOTE: This results depends on the traversal order of the
+				// set, which may change if the set implementation changes.
+				cty.StringVal("10"),
+				cty.StringVal("5"),
+			}),
+		},
+		{
+			Value: cty.SetVal([]cty.Value{
+				cty.StringVal("5"),
+				cty.StringVal("10"),
+			}),
+			Type: cty.List(cty.DynamicPseudoType),
 			Want: cty.ListVal([]cty.Value{
 				// NOTE: This results depends on the traversal order of the
 				// set, which may change if the set implementation changes.
@@ -265,6 +289,28 @@ func TestConvert(t *testing.T) {
 			}),
 			Type:      cty.Map(cty.DynamicPseudoType),
 			WantError: true, // no common base type to unify to
+		},
+		{
+			Value: cty.MapVal(map[string]cty.Value{
+				"greeting": cty.StringVal("Hello"),
+				"name":     cty.StringVal("John"),
+			}),
+			Type: cty.Map(cty.DynamicPseudoType),
+			Want: cty.MapVal(map[string]cty.Value{
+				"greeting": cty.StringVal("Hello"),
+				"name":     cty.StringVal("John"),
+			}),
+		},
+		{
+			Value: cty.MapVal(map[string]cty.Value{
+				"a": cty.NumberIntVal(2),
+				"b": cty.NumberIntVal(5),
+			}),
+			Type: cty.Map(cty.String),
+			Want: cty.MapVal(map[string]cty.Value{
+				"a": cty.StringVal("2"),
+				"b": cty.StringVal("5"),
+			}),
 		},
 	}
 
