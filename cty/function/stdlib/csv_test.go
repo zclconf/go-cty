@@ -2,6 +2,7 @@ package stdlib
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/zclconf/go-cty/cty"
@@ -89,7 +90,7 @@ func TestCSVDecode(t *testing.T) {
 			if err != nil {
 				errStr = err.Error()
 			}
-			if errStr != test.WantErr {
+			if !strings.Contains(errStr, test.WantErr) {
 				t.Fatalf("wrong error\ngot:  %s\nwant: %s", errStr, test.WantErr)
 			}
 			if err != nil {
