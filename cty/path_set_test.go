@@ -53,4 +53,19 @@ func TestPathSet(t *testing.T) {
 		t.Errorf("set does not have foo; should have it")
 	}
 
+	new := NewPathSet(s.List()...)
+	if got, want := s.Equal(new), true; got != want {
+		t.Errorf("new set does not equal original; want equal sets")
+	}
+	new.Remove(helloWorld)
+	if got, want := s.Equal(new), false; got != want {
+		t.Errorf("new set equals original; want non-equal sets")
+	}
+	new.Add(Path{
+		GetAttrStep{Name: "goodbye"},
+		GetAttrStep{Name: "world"},
+	})
+	if got, want := s.Equal(new), false; got != want {
+		t.Errorf("new set equals original; want non-equal sets")
+	}
 }
