@@ -121,6 +121,14 @@ func (p Path) Copy() Path {
 	return ret
 }
 
+func (p Path) Append(step PathStep) Path {
+	return append(p, step)
+}
+
+func (p Path) Prepend(step PathStep) Path {
+	return append(Path{step}, p...)
+}
+
 func (p Path) String() string {
 	parts := make([]string, 0)
 	i := 0

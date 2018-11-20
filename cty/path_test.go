@@ -48,3 +48,23 @@ func TestPathString(t *testing.T) {
 		})
 	}
 }
+
+func TestPathPrepend(t *testing.T) {
+	p := Path{
+		GetAttrStep{Name: "key"},
+	}
+	given := p.Prepend(GetAttrStep{Name: "parent"})
+	if given.String() != "parent.key" {
+		t.Fatalf("Expected: %q, given: %q", "parent.key", given.String())
+	}
+}
+
+func TestPathAppend(t *testing.T) {
+	p := Path{
+		GetAttrStep{Name: "key"},
+	}
+	given := p.Append(GetAttrStep{Name: "subkey"})
+	if given.String() != "key.subkey" {
+		t.Fatalf("Expected: %q, given: %q", "key.subkey", given.String())
+	}
+}
