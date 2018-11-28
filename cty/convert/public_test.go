@@ -425,6 +425,11 @@ func TestConvert(t *testing.T) {
 			}),
 			WantError: true, // recursive conversion from bool to number is impossible
 		},
+		{
+			Value: cty.NullVal(cty.String),
+			Type:  cty.DynamicPseudoType,
+			Want:  cty.NullVal(cty.String),
+		},
 	}
 
 	for _, test := range tests {
