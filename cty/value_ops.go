@@ -70,13 +70,59 @@ func (val Value) GoString() string {
 // Equals returns True if the receiver and the given other value have the
 // same type and are exactly equal in value.
 //
-// The usual short-circuit rules apply, so the result can be unknown or typed
-// as dynamic if either of the given values are. Use RawEquals to compare
-// if two values are equal *ignoring* the short-circuit rules.
+// As a special case, two null values are always equal regardless of type.
+//
+// The usual short-circuit rules apply, so the result will be unknown if
+// either of the given values are.
+//
+// Use RawEquals to compare if two values are equal *ignoring* the
+// short-circuit rules and the exception for null values.
 func (val Value) Equals(other Value) Value {
-	// If only one is null, then we know this must be false
-	// val.IsNull() XOR other.IsNull()
-	if (val.IsNull() || other.IsNull()) && !(val.IsNull() && other.IsNull()) {
+	// Start by handling Unknown values before considering types.
+	// This needs to be done since Null values are always equal regardless of
+	// type.
+	switch {
+	case !val.IsKnown() && !other.IsKnown():
+		// both unknown
+		return UnknownVal(Bool)
+	case val.IsKnown() && !other.IsKnown():
+		switch {
+		case val.IsNull(), other.ty.HasDynamicTypes():
+			// If known is Null, we need to wait for the unkown value since
+			// nulls of any type are equal.
+			// An unkown with a dynamic type compares as unknown, which we need
+			// to check before the type comparison below.
+			return UnknownVal(Bool)
+		case !val.ty.Equals(other.ty):
+			// There is no null comparison or dynamic types, so unequal types
+			// will never be equal.
+			return False
+		default:
+			return UnknownVal(Bool)
+		}
+	case other.IsKnown() && !val.IsKnown():
+		switch {
+		case other.IsNull(), val.ty.HasDynamicTypes():
+			// If known is Null, we need to wait for the unkown value since
+			// nulls of any type are equal.
+			// An unkown with a dynamic type compares as unknown, which we need
+			// to check before the type comparison below.
+			return UnknownVal(Bool)
+		case !other.ty.Equals(val.ty):
+			// There's no null comparison or dynamic types, so unequal types
+			// will never be equal.
+			return False
+		default:
+			return UnknownVal(Bool)
+		}
+	}
+
+	switch {
+	case val.IsNull() && other.IsNull():
+		// Nulls are always equal, regardless of type
+		return BoolVal(true)
+	case val.IsNull() || other.IsNull():
+		// If only one is null then the result must be false
 		return BoolVal(false)
 	}
 
@@ -86,15 +132,6 @@ func (val Value) Equals(other Value) Value {
 
 	if !val.ty.Equals(other.ty) {
 		return BoolVal(false)
-	}
-
-	if !(val.IsKnown() && other.IsKnown()) {
-		return UnknownVal(Bool)
-	}
-
-	// The types are equal, so the Nulls are equal.
-	if val.IsNull() && other.IsNull() {
-		return BoolVal(true)
 	}
 
 	ty := val.ty

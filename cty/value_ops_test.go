@@ -576,7 +576,7 @@ func TestValueEquals(t *testing.T) {
 		{
 			NullVal(String),
 			NullVal(DynamicPseudoType),
-			UnknownVal(Bool),
+			True,
 		},
 		{
 			NullVal(String),
@@ -586,7 +586,7 @@ func TestValueEquals(t *testing.T) {
 		{
 			UnknownVal(String),
 			UnknownVal(Number),
-			False,
+			UnknownVal(Bool),
 		},
 		{
 			StringVal(""),
@@ -606,12 +606,32 @@ func TestValueEquals(t *testing.T) {
 		{
 			NullVal(DynamicPseudoType),
 			NullVal(DynamicPseudoType),
-			UnknownVal(Bool),
+			True,
 		},
 		{
-			StringVal(""),
+			NullVal(String),
 			UnknownVal(Number),
-			False,
+			UnknownVal(Bool), // because second operand might eventually be null
+		},
+		{
+			UnknownVal(String),
+			NullVal(Number),
+			UnknownVal(Bool), // because first operand might eventually be null
+		},
+		{
+			UnknownVal(String),
+			UnknownVal(Number),
+			UnknownVal(Bool), // because both operands might eventually be null
+		},
+		{
+			StringVal("hello"),
+			UnknownVal(Number),
+			False, // because no number value -- even null -- can be equal to a non-null string
+		},
+		{
+			UnknownVal(String),
+			NumberIntVal(1),
+			False, // because no string value -- even null -- can be equal to a non-null number
 		},
 	}
 
