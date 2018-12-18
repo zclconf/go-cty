@@ -435,6 +435,42 @@ func TestConvert(t *testing.T) {
 			Type:  cty.DynamicPseudoType,
 			Want:  cty.UnknownVal(cty.String),
 		},
+		{
+			Value: cty.TupleVal([]cty.Value{
+				cty.StringVal("hello"),
+			}),
+			Type: cty.Tuple([]cty.Type{
+				cty.String,
+			}),
+			Want: cty.TupleVal([]cty.Value{
+				cty.StringVal("hello"),
+			}),
+		},
+		{
+			Value: cty.TupleVal([]cty.Value{
+				cty.True,
+			}),
+			Type: cty.Tuple([]cty.Type{
+				cty.String,
+			}),
+			Want: cty.TupleVal([]cty.Value{
+				cty.StringVal("true"),
+			}),
+		},
+		{
+			Value: cty.TupleVal([]cty.Value{
+				cty.True,
+			}),
+			Type:      cty.EmptyTuple,
+			WantError: true,
+		},
+		{
+			Value: cty.EmptyTupleVal,
+			Type: cty.Tuple([]cty.Type{
+				cty.String,
+			}),
+			WantError: true,
+		},
 	}
 
 	for _, test := range tests {
