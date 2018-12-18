@@ -430,6 +430,11 @@ func TestConvert(t *testing.T) {
 			Type:  cty.DynamicPseudoType,
 			Want:  cty.NullVal(cty.String),
 		},
+		{
+			Value: cty.UnknownVal(cty.String),
+			Type:  cty.DynamicPseudoType,
+			Want:  cty.UnknownVal(cty.String),
+		},
 	}
 
 	for _, test := range tests {
