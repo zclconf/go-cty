@@ -4,7 +4,7 @@ While `cty` provides a representation of values within its own type system,
 a calling application will inevitably need to eventually pass values
 to a native Go API, using native Go types.
 
-[The `gocty` package](https://godoc.org/github.com/apparentlymart/go-cty/cty/gocty)
+[The `gocty` package](https://godoc.org/github.com/zclconf/go-cty/cty/gocty)
 aims to make conversions between `cty` values and Go values as convenient as
 possible, using an approach similar to that used by `encoding/json` where
 the `reflect` package is used to define the desired structure using Go
