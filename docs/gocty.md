@@ -92,7 +92,7 @@ type Example struct {
 ```
 
 For the mapping to be valid, there must be a one-to-one correspondence between
-object attributes and tagged struct fields. The presence or absense of attribute
+object attributes and tagged struct fields. The presence or absence of attribute
 tags in the struct is used to define which attributes are valid, and so error
 messages will be generated for any extraneous or missing attributes. Additional
 fields may be present without tags, but all fields with tags must be public.
