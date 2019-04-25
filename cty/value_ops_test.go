@@ -2072,3 +2072,145 @@ func TestGreaterThanOrEqualTo(t *testing.T) {
 		})
 	}
 }
+
+func TestValueGoString(t *testing.T) {
+	tests := []struct {
+		Value Value
+		Want  string
+	}{
+		{
+			NullVal(DynamicPseudoType),
+			`cty.NullVal(cty.DynamicPseudoType)`,
+		},
+		{
+			NullVal(String),
+			`cty.NullVal(cty.String)`,
+		},
+		{
+			NullVal(Tuple([]Type{String, Bool})),
+			`cty.NullVal(cty.Tuple([]cty.Type{cty.String, cty.Bool}))`,
+		},
+		{
+			UnknownVal(DynamicPseudoType),
+			`cty.DynamicVal`,
+		},
+		{
+			UnknownVal(String),
+			`cty.UnknownVal(cty.String)`,
+		},
+		{
+			UnknownVal(Tuple([]Type{String, Bool})),
+			`cty.UnknownVal(cty.Tuple([]cty.Type{cty.String, cty.Bool}))`,
+		},
+
+		{
+			StringVal(""),
+			`cty.StringVal("")`,
+		},
+		{
+			StringVal("hello"),
+			`cty.StringVal("hello")`,
+		},
+
+		{
+			Zero,
+			`cty.NumberIntVal(0)`,
+		},
+		{
+			NumberFloatVal(1.2),
+			`cty.NumberFloatVal(1.2)`,
+		},
+		{
+			NumberFloatVal(1.0),
+			`cty.NumberIntVal(1)`, // the "float-ness" of the input is lost because its value is a whole number
+		},
+		{
+			MustParseNumberVal("3.14159265358979323846264338327950288419716939937510582097494459"),
+			`cty.MustParseNumberVal("3.14159265358979323846264338327950288419716939937510582097494459")`,
+		},
+
+		{
+			True,
+			`cty.True`,
+		},
+		{
+			False,
+			`cty.False`,
+		},
+
+		{
+			ListValEmpty(String),
+			`cty.ListValEmpty(cty.String)`,
+		},
+		{
+			ListValEmpty(List(String)),
+			`cty.ListValEmpty(cty.List(cty.String))`,
+		},
+		{
+			ListVal([]Value{True}),
+			`cty.ListVal([]cty.Value{cty.True})`,
+		},
+
+		{
+			SetValEmpty(String),
+			`cty.SetValEmpty(cty.String)`,
+		},
+		{
+			SetValEmpty(Map(String)),
+			`cty.SetValEmpty(cty.Map(cty.String))`,
+		},
+		{
+			SetVal([]Value{True}),
+			`cty.SetVal([]cty.Value{cty.True})`,
+		},
+
+		{
+			EmptyTupleVal,
+			`cty.EmptyTupleVal`,
+		},
+		{
+			TupleVal(nil),
+			`cty.EmptyTupleVal`,
+		},
+		{
+			TupleVal([]Value{True}),
+			`cty.TupleVal([]cty.Value{cty.True})`,
+		},
+
+		{
+			MapValEmpty(String),
+			`cty.MapValEmpty(cty.String)`,
+		},
+		{
+			MapValEmpty(Set(String)),
+			`cty.MapValEmpty(cty.Set(cty.String))`,
+		},
+		{
+			MapVal(map[string]Value{"boop": True}),
+			`cty.MapVal(map[string]cty.Value{"boop":cty.True})`,
+		},
+
+		{
+			EmptyObjectVal,
+			`cty.EmptyObjectVal`,
+		},
+		{
+			ObjectVal(nil),
+			`cty.EmptyObjectVal`,
+		},
+		{
+			ObjectVal(map[string]Value{"foo": True}),
+			`cty.ObjectVal(map[string]cty.Value{"foo":cty.True})`,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.Value.GoString(), func(t *testing.T) {
+			got := test.Value.GoString()
+			want := test.Want
+			if got != want {
+				t.Errorf("wrong result\ngot:  %s\nwant: %s", got, want)
+			}
+		})
+	}
+}
