@@ -1428,13 +1428,14 @@ func TestValueForEachElement(t *testing.T) {
 		{
 			SetVal([]Value{
 				NumberIntVal(1),
+				NumberIntVal(10),
 				NumberIntVal(2),
 			}),
 			[]call{
-				// Ordering is arbitrary but consistent, so future changes
-				// to the set implementation may reorder these.
-				{NumberIntVal(2), NumberIntVal(2)},
+				// Numbers in sets are always iterated in numerical order.
 				{NumberIntVal(1), NumberIntVal(1)},
+				{NumberIntVal(2), NumberIntVal(2)},
+				{NumberIntVal(10), NumberIntVal(10)},
 			},
 			false,
 		},
@@ -1442,11 +1443,10 @@ func TestValueForEachElement(t *testing.T) {
 			SetVal([]Value{
 				StringVal("hi"),
 				StringVal("stop"),
-				StringVal("hey"),
+				StringVal("zzz"),
 			}),
 			[]call{
-				// Ordering is arbitrary but consistent, so future changes
-				// to the set implementation may reorder these.
+				// Strings in sets are always iterated in lexicographical order.
 				{StringVal("hi"), StringVal("hi")},
 				{StringVal("stop"), StringVal("stop")},
 			},
