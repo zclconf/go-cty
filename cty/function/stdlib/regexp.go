@@ -116,7 +116,7 @@ var RegexAllFunc = function.New(&function.Spec{
 //     keys are the named groups and whose values are their sub-matches, or
 //     null if a particular sub-group was inside another group that didn't
 //     match.
-//   - If all of the capture groups are named, the result is a tuple whose
+//   - If none of the capture groups are named, the result is a tuple whose
 //     elements are the sub-groups in order and whose values are their
 //     sub-matches, or null if a particular sub-group was inside another group
 //     that didn't match.
