@@ -49,44 +49,63 @@ var RegexFunc = function.New(&function.Spec{
 			return cty.NilVal, fmt.Errorf("pattern did not match any part of the given string")
 		}
 
-		switch {
-		case retType == cty.String:
-			start, end := captureIdxs[0], captureIdxs[1]
-			return cty.StringVal(str[start:end]), nil
-		case retType.IsTupleType():
-			captureIdxs = captureIdxs[2:] // index 0 is the whole pattern span, which we ignore by skipping one pair
-			vals := make([]cty.Value, len(captureIdxs)/2)
-			for i := range vals {
-				start, end := captureIdxs[i*2], captureIdxs[i*2+1]
-				if start < 0 || end < 0 {
-					vals[i] = cty.NullVal(cty.String) // Did not match anything because containing group didn't match
-					continue
-				}
-				vals[i] = cty.StringVal(str[start:end])
-			}
-			return cty.TupleVal(vals), nil
-		case retType.IsObjectType():
-			captureIdxs = captureIdxs[2:] // index 0 is the whole pattern span, which we ignore by skipping one pair
-			vals := make(map[string]cty.Value, len(captureIdxs)/2)
-			names := re.SubexpNames()[1:]
-			for i, name := range names {
-				start, end := captureIdxs[i*2], captureIdxs[i*2+1]
-				if start < 0 || end < 0 {
-					vals[name] = cty.NullVal(cty.String) // Did not match anything because containing group didn't match
-					continue
-				}
-				vals[name] = cty.StringVal(str[start:end])
-			}
-			return cty.ObjectVal(vals), nil
-		default:
-			// Should never happen
-			return cty.NilVal, fmt.Errorf("invalid return type: %s", retType.FriendlyNameForConstraint())
+		return regexPatternResult(re, str, captureIdxs, retType), nil
+	},
+})
+
+var RegexAllFunc = function.New(&function.Spec{
+	Params: []function.Parameter{
+		{
+			Name: "pattern",
+			Type: cty.String,
+		},
+		{
+			Name: "string",
+			Type: cty.String,
+		},
+	},
+	Type: func(args []cty.Value) (cty.Type, error) {
+		if !args[0].IsKnown() {
+			// We can't predict our type without seeing our pattern,
+			// but we do know it'll always be a list of something.
+			return cty.List(cty.DynamicPseudoType), nil
 		}
+
+		retTy, err := regexPatternResultType(args[0].AsString())
+		if err != nil {
+			err = function.NewArgError(0, err)
+		}
+		return cty.List(retTy), err
+	},
+	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
+		ety := retType.ElementType()
+		if ety == cty.DynamicPseudoType {
+			return cty.DynamicVal, nil
+		}
+
+		re, err := regexp.Compile(args[0].AsString())
+		if err != nil {
+			// Should never happen, since we checked this in the Type function above.
+			return cty.NilVal, function.NewArgErrorf(0, "error parsing pattern: %s", err)
+		}
+		str := args[1].AsString()
+
+		captureIdxsEach := re.FindAllStringSubmatchIndex(str, -1)
+		if len(captureIdxsEach) == 0 {
+			return cty.ListValEmpty(ety), nil
+		}
+
+		elems := make([]cty.Value, len(captureIdxsEach))
+		for i, captureIdxs := range captureIdxsEach {
+			elems[i] = regexPatternResult(re, str, captureIdxs, ety)
+		}
+		return cty.ListVal(elems), nil
 	},
 })
 
 // Regex is a function that extracts one or more substrings from a given
-// string by applying a regular expression pattern.
+// string by applying a regular expression pattern, describing the first
+// match.
 //
 // The return type depends on the composition of the capture groups (if any)
 // in the pattern:
@@ -103,8 +122,23 @@ var RegexFunc = function.New(&function.Spec{
 //     that didn't match.
 //   - It is invalid to use both named and un-named capture groups together in
 //     the same pattern.
+//
+// If the pattern doesn't match, this function returns an error. To test for
+// a match, call RegexAll and check if the length of the result is greater
+// than zero.
 func Regex(pattern, str cty.Value) (cty.Value, error) {
 	return RegexFunc.Call([]cty.Value{pattern, str})
+}
+
+// RegexAll is similar to Regex but it finds all of the non-overlapping matches
+// in the given string and returns a list of them.
+//
+// The result type is always a list, whose element type is deduced from the
+// pattern in the same way as the return type for Regex is decided.
+//
+// If the pattern doesn't match at all, this function returns an empty list.
+func RegexAll(pattern, str cty.Value) (cty.Value, error) {
+	return RegexAllFunc.Call([]cty.Value{pattern, str})
 }
 
 // regexPatternResultType parses the given regular expression pattern and
@@ -159,5 +193,41 @@ func regexPatternResultType(pattern string) (cty.Type, error) {
 			atys[name] = cty.String
 		}
 		return cty.Object(atys), nil
+	}
+}
+
+func regexPatternResult(re *regexp.Regexp, str string, captureIdxs []int, retType cty.Type) cty.Value {
+	switch {
+	case retType == cty.String:
+		start, end := captureIdxs[0], captureIdxs[1]
+		return cty.StringVal(str[start:end])
+	case retType.IsTupleType():
+		captureIdxs = captureIdxs[2:] // index 0 is the whole pattern span, which we ignore by skipping one pair
+		vals := make([]cty.Value, len(captureIdxs)/2)
+		for i := range vals {
+			start, end := captureIdxs[i*2], captureIdxs[i*2+1]
+			if start < 0 || end < 0 {
+				vals[i] = cty.NullVal(cty.String) // Did not match anything because containing group didn't match
+				continue
+			}
+			vals[i] = cty.StringVal(str[start:end])
+		}
+		return cty.TupleVal(vals)
+	case retType.IsObjectType():
+		captureIdxs = captureIdxs[2:] // index 0 is the whole pattern span, which we ignore by skipping one pair
+		vals := make(map[string]cty.Value, len(captureIdxs)/2)
+		names := re.SubexpNames()[1:]
+		for i, name := range names {
+			start, end := captureIdxs[i*2], captureIdxs[i*2+1]
+			if start < 0 || end < 0 {
+				vals[name] = cty.NullVal(cty.String) // Did not match anything because containing group didn't match
+				continue
+			}
+			vals[name] = cty.StringVal(str[start:end])
+		}
+		return cty.ObjectVal(vals)
+	default:
+		// Should never happen
+		panic(fmt.Sprintf("invalid return type %#v", retType))
 	}
 }
