@@ -1,8 +1,6 @@
 package diff
 
 import (
-	"errors"
-
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -37,7 +35,15 @@ func NewDiff(source, target cty.Value) Diff {
 // source value. If any one change fails then the entire operation is
 // considered to have failed.
 func (d Diff) Apply(source cty.Value) (cty.Value, error) {
-	return cty.NullVal(source.Type()), errors.New("not yet implemented")
+	val := source
+	for _, c := range d {
+		v, err := c.apply(val)
+		if err != nil {
+			return cty.NilVal, err
+		}
+		val = v
+	}
+	return val, nil
 }
 
 // Replace returns a copy of the receiver with a ReplaceChange appended.
