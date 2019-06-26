@@ -114,6 +114,24 @@ func TestUnify(t *testing.T) {
 			[]cty.Type{
 				cty.Tuple([]cty.Type{cty.String}),
 				cty.Tuple([]cty.Type{cty.Number}),
+				cty.DynamicPseudoType,
+			},
+			cty.Tuple([]cty.Type{cty.String}),
+			[]bool{false, true, true},
+		},
+		{
+			[]cty.Type{
+				cty.DynamicPseudoType,
+				cty.Tuple([]cty.Type{cty.String}),
+				cty.Tuple([]cty.Type{cty.Number}),
+			},
+			cty.Tuple([]cty.Type{cty.String}),
+			[]bool{true, false, true},
+		},
+		{
+			[]cty.Type{
+				cty.Tuple([]cty.Type{cty.String}),
+				cty.Tuple([]cty.Type{cty.Number}),
 			},
 			cty.Tuple([]cty.Type{cty.String}),
 			[]bool{false, true},
@@ -147,16 +165,34 @@ func TestUnify(t *testing.T) {
 				cty.DynamicPseudoType,
 				cty.Tuple([]cty.Type{cty.Number}),
 			},
-			cty.DynamicPseudoType,
-			[]bool{true, true},
+			cty.Tuple([]cty.Type{cty.Number}),
+			[]bool{true, false},
 		},
 		{
 			[]cty.Type{
 				cty.DynamicPseudoType,
 				cty.Object(map[string]cty.Type{"num": cty.Number}),
 			},
-			cty.DynamicPseudoType,
-			[]bool{true, true},
+			cty.Object(map[string]cty.Type{"num": cty.Number}),
+			[]bool{true, false},
+		},
+		{
+			[]cty.Type{
+				cty.Tuple([]cty.Type{cty.Number}),
+				cty.DynamicPseudoType,
+				cty.Tuple([]cty.Type{cty.Number}),
+			},
+			cty.Tuple([]cty.Type{cty.Number}),
+			[]bool{false, true, false},
+		},
+		{
+			[]cty.Type{
+				cty.DynamicPseudoType,
+				cty.Object(map[string]cty.Type{"num": cty.Number}),
+				cty.DynamicPseudoType,
+			},
+			cty.Object(map[string]cty.Type{"num": cty.Number}),
+			[]bool{true, false, true},
 		},
 		{
 			[]cty.Type{

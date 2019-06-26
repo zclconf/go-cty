@@ -28,15 +28,15 @@ func unify(types []cty.Type, unsafe bool) (cty.Type, []Conversion) {
 	// a subset of that type, which would be a much less useful conversion for
 	// unification purposes.
 	{
-		objectCt := 0
-		tupleCt := 0
+		objects := []cty.Type{}
+		tuples := []cty.Type{}
 		dynamicCt := 0
 		for _, ty := range types {
 			switch {
 			case ty.IsObjectType():
-				objectCt++
+				objects = append(objects, ty)
 			case ty.IsTupleType():
-				tupleCt++
+				tuples = append(tuples, ty)
 			case ty == cty.DynamicPseudoType:
 				dynamicCt++
 			default:
@@ -44,13 +44,46 @@ func unify(types []cty.Type, unsafe bool) (cty.Type, []Conversion) {
 			}
 		}
 		switch {
-		case objectCt > 0 && (objectCt+dynamicCt) == len(types):
-			return unifyObjectTypes(types, unsafe, dynamicCt > 0)
-		case tupleCt > 0 && (tupleCt+dynamicCt) == len(types):
-			return unifyTupleTypes(types, unsafe, dynamicCt > 0)
-		case objectCt > 0 && tupleCt > 0:
+		case len(objects) > 0 && len(tuples) > 0:
 			// Can never unify object and tuple types since they have incompatible kinds
 			return cty.NilType, nil
+
+		case len(objects) > 0 && (len(objects)+dynamicCt) == len(types),
+			len(tuples) > 0 && (len(tuples)+dynamicCt) == len(types):
+			var ty cty.Type
+			var cs []Conversion
+
+			switch {
+			case len(objects) > 0:
+				ty, cs = unifyObjectTypes(objects, unsafe)
+			case len(tuples) > 0:
+				ty, cs = unifyTupleTypes(tuples, unsafe)
+			}
+
+			// If there was no unified type, there are no conversions to return.
+			if ty == cty.NilType {
+				return ty, nil
+			}
+
+			// We have a valid unified type, and we now need to add back in any
+			// dynamic conversions.
+			var convs []Conversion
+			var c Conversion
+			for _, tty := range types {
+				if tty == cty.DynamicPseudoType {
+					convs = append(convs, GetConversionUnsafe(tty, ty))
+					continue
+				}
+				// take the next conversion if it exists, otherwise insert a
+				// nil placeholder
+				if len(cs) > 0 {
+					c, cs = cs[0], cs[1:]
+					convs = append(convs, c)
+				} else {
+					convs = append(convs, nil)
+				}
+			}
+			return ty, convs
 		}
 	}
 
@@ -95,14 +128,7 @@ Preferences:
 	return cty.NilType, nil
 }
 
-func unifyObjectTypes(types []cty.Type, unsafe bool, hasDynamic bool) (cty.Type, []Conversion) {
-	// If we had any dynamic types in the input here then we can't predict
-	// what path we'll take through here once these become known types, so
-	// we'll conservatively produce DynamicVal for these.
-	if hasDynamic {
-		return unifyAllAsDynamic(types)
-	}
-
+func unifyObjectTypes(types []cty.Type, unsafe bool) (cty.Type, []Conversion) {
 	// There are two different ways we can succeed here:
 	// - If all of the given object types have the same set of attribute names
 	//   and the corresponding types are all unifyable, then we construct that
@@ -206,14 +232,7 @@ func unifyObjectTypesToMap(types []cty.Type, unsafe bool) (cty.Type, []Conversio
 	return retTy, conversions
 }
 
-func unifyTupleTypes(types []cty.Type, unsafe bool, hasDynamic bool) (cty.Type, []Conversion) {
-	// If we had any dynamic types in the input here then we can't predict
-	// what path we'll take through here once these become known types, so
-	// we'll conservatively produce DynamicVal for these.
-	if hasDynamic {
-		return unifyAllAsDynamic(types)
-	}
-
+func unifyTupleTypes(types []cty.Type, unsafe bool) (cty.Type, []Conversion) {
 	// There are two different ways we can succeed here:
 	// - If all of the given tuple types have the same sequence of element types
 	//   and the corresponding types are all unifyable, then we construct that
