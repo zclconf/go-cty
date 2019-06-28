@@ -6,6 +6,8 @@ import (
 
 var stringTrue = cty.StringVal("true")
 var stringFalse = cty.StringVal("false")
+var numberTrue = cty.NumberIntVal(1)
+var numberFalse = cty.NumberIntVal(0)
 
 var primitiveConversionsSafe = map[cty.Type]map[cty.Type]conversion{
 	cty.Number: {
@@ -20,6 +22,13 @@ var primitiveConversionsSafe = map[cty.Type]map[cty.Type]conversion{
 				return stringTrue, nil
 			} else {
 				return stringFalse, nil
+			}
+		},
+		cty.Number: func(val cty.Value, path cty.Path) (cty.Value, error) {
+			if val.True() {
+				return numberTrue, nil
+			} else {
+				return numberFalse, nil
 			}
 		},
 	},

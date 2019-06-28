@@ -80,6 +80,16 @@ func TestConvert(t *testing.T) {
 			Want:  cty.StringVal("false"),
 		},
 		{
+			Value: cty.True,
+			Type:  cty.Number,
+			Want:  cty.NumberIntVal(1),
+		},
+		{
+			Value: cty.False,
+			Type:  cty.Number,
+			Want:  cty.NumberIntVal(0),
+		},
+		{
 			Value: cty.UnknownVal(cty.String),
 			Type:  cty.Number,
 			Want:  cty.UnknownVal(cty.Number),
@@ -321,7 +331,11 @@ func TestConvert(t *testing.T) {
 				"bool": cty.True,
 			}),
 			Type:      cty.Map(cty.DynamicPseudoType),
-			WantError: true, // no common base type to unify to
+			WantError: false,
+			Want: cty.MapVal(map[string]cty.Value{
+				"num":  cty.NumberIntVal(5),
+				"bool": cty.NumberIntVal(1),
+			}),
 		},
 		{
 			Value: cty.MapVal(map[string]cty.Value{
@@ -436,7 +450,10 @@ func TestConvert(t *testing.T) {
 			Type: cty.Object(map[string]cty.Type{
 				"foo": cty.Number,
 			}),
-			WantError: true, // recursive conversion from bool to number is impossible
+			WantError: false,
+			Want: cty.ObjectVal(map[string]cty.Value{
+				"foo": cty.NumberIntVal(1),
+			}),
 		},
 		{
 			Value: cty.ObjectVal(map[string]cty.Value{
@@ -445,7 +462,10 @@ func TestConvert(t *testing.T) {
 			Type: cty.Object(map[string]cty.Type{
 				"foo": cty.Number,
 			}),
-			WantError: true, // recursive conversion from bool to number is impossible
+			WantError: false,
+			Want: cty.ObjectVal(map[string]cty.Value{
+				"foo": cty.UnknownVal(cty.Number),
+			}),
 		},
 		{
 			Value: cty.NullVal(cty.String),

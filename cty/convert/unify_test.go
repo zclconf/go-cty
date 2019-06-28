@@ -51,8 +51,13 @@ func TestUnify(t *testing.T) {
 		},
 		{
 			[]cty.Type{cty.Bool, cty.Number},
-			cty.NilType,
-			nil,
+			cty.Number,
+			[]bool{true, false},
+		},
+		{
+			[]cty.Type{cty.Number, cty.Bool},
+			cty.Number,
+			[]bool{false, true},
 		},
 		{
 			[]cty.Type{
@@ -91,16 +96,16 @@ func TestUnify(t *testing.T) {
 				cty.Object(map[string]cty.Type{"foo": cty.Bool}),
 				cty.Object(map[string]cty.Type{"bar": cty.Number}),
 			},
-			cty.NilType,
-			nil,
+			cty.Map(cty.Number),
+			[]bool{true, true},
 		},
 		{
 			[]cty.Type{
 				cty.Object(map[string]cty.Type{"foo": cty.Bool}),
 				cty.Object(map[string]cty.Type{"foo": cty.Number}),
 			},
-			cty.NilType,
-			nil,
+			cty.Object(map[string]cty.Type{"foo": cty.Number}),
+			[]bool{true, false},
 		},
 		{
 			[]cty.Type{
@@ -139,8 +144,8 @@ func TestUnify(t *testing.T) {
 				cty.Tuple([]cty.Type{cty.Bool}),
 				cty.Tuple([]cty.Type{cty.Number}),
 			},
-			cty.NilType,
-			nil,
+			cty.Tuple([]cty.Type{cty.Number}),
+			[]bool{true, false},
 		},
 		{
 			[]cty.Type{
