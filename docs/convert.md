@@ -110,10 +110,10 @@ other two primitive types have safe conversions to string. The full
 matrix for primitive types is as follows:
 
 |         | string | number | boolean |
-|---------|:------:|:------:|:-------:|
-| string  |   n/a  | unsafe |  unsafe |
-| number  |  safe  |   n/a  |   none  |
-| boolean |  safe  |  none  |   n/a   |
+| ------- | :----: | :----: | :-----: |
+| string  |  n/a   | unsafe | unsafe  |
+| number  |  safe  |  n/a   |  none   |
+| boolean |  safe  |  safe  |   n/a   |
 
 The conversions for compound types are then derived from the above foundation.
 For example, a list of numbers can convert to a list of strings
@@ -121,13 +121,13 @@ because a number can convert to a string.
 
 The compound type kinds themselves have some available conversions, though:
 
-|        |  tuple | object | list |   map  |     set    |
-|--------|:------:|:------:|:----:|:------:|:----------:|
-| tuple  |   n/a  |  none  | safe |  none  | safe+lossy |
-| object |  none  |   n/a  | none |  safe  |    none    |
-| list   | unsafe |  none  |  n/a |  none  | safe+lossy |
-| map    |  none  | unsafe | none |   n/a  |    none    |
-| set    | unsafe |  none  | safe |  none  |     n/a    |
+|        | tuple  | object | list  |  map  |    set     |
+| ------ | :----: | :----: | :---: | :---: | :--------: |
+| tuple  |  n/a   |  none  | safe  | none  | safe+lossy |
+| object |  none  |  n/a   | none  | safe  |    none    |
+| list   | unsafe |  none  |  n/a  | none  | safe+lossy |
+| map    |  none  | unsafe | none  |  n/a  |    none    |
+| set    | unsafe |  none  | safe  | none  |    n/a     |
 
 Conversions between compound kinds, as shown above, are possible only
 if their respective elements/attributes also have conversions available.
