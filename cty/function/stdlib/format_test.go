@@ -313,7 +313,7 @@ func TestFormat(t *testing.T) {
 			``,
 		},
 		{
-			cty.StringVal("%d green bottles standing on the wall xxx"),
+			cty.StringVal("%d green bottles standing on the wall"),
 			[]cty.Value{cty.True},
 			cty.StringVal("1 green bottles standing on the wall"),
 			``,
