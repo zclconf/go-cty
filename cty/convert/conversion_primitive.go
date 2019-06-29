@@ -20,16 +20,14 @@ var primitiveConversionsSafe = map[cty.Type]map[cty.Type]conversion{
 		cty.String: func(val cty.Value, path cty.Path) (cty.Value, error) {
 			if val.True() {
 				return stringTrue, nil
-			} else {
-				return stringFalse, nil
 			}
+			return stringFalse, nil
 		},
 		cty.Number: func(val cty.Value, path cty.Path) (cty.Value, error) {
 			if val.True() {
 				return numberTrue, nil
-			} else {
-				return numberFalse, nil
 			}
+			return numberFalse, nil
 		},
 	},
 }
