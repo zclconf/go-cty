@@ -313,10 +313,10 @@ func TestFormat(t *testing.T) {
 			``,
 		},
 		{
-			cty.StringVal("%d green bottles standing on the wall"),
+			cty.StringVal("%d green bottles standing on the wall xxx"),
 			[]cty.Value{cty.True},
-			cty.NilVal,
-			`unsupported value for "%d" at 0: number required`,
+			cty.StringVal("1 green bottles standing on the wall"),
+			``,
 		},
 		{
 			cty.StringVal("%b"),
