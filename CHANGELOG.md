@@ -1,4 +1,4 @@
-# 1.1.0 (Unreleased)
+# 1.1.0 (July 25, 2019)
 
 * New method `Path.Equals` for robustly comparing `cty.Path` values. Previously
   callers might've used `reflect.DeepEqual` or similar, but that is not
