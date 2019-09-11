@@ -1,3 +1,8 @@
+# 1.1.1 (Unreleased)
+
+* `function/stdlib`: The `formatlist` function will no longer panic if given
+  an unknown tuple as one of its arguments.
+
 # 1.1.0 (July 25, 2019)
 
 * New method `Path.Equals` for robustly comparing `cty.Path` values. Previously
