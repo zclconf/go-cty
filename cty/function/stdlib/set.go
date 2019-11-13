@@ -100,7 +100,7 @@ var SetSymmetricDifferenceFunc = function.New(&function.Spec{
 	},
 	Type: setOperationReturnType,
 	Impl: setOperationImpl(func(s1, s2 cty.ValueSet) cty.ValueSet {
-		return s1.Subtract(s2)
+		return s1.SymmetricDifference(s2)
 	}),
 })
 
