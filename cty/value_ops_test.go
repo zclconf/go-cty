@@ -6,16 +6,35 @@ import (
 	"testing"
 )
 
+type testCase struct {
+	LHS      Value
+	RHS      Value
+	Expected Value
+}
+
+var numbers = []testCase{
+	{
+		NumberIntVal(1),
+		NumberIntVal(2),
+		BoolVal(false),
+	},
+	{
+		NumberIntVal(2),
+		NumberIntVal(2),
+		BoolVal(true),
+	},
+}
+
+func TestNumbersEquals(t *testing.T) {
+	testEquals(t, numbers)
+}
+
 func TestValueEquals(t *testing.T) {
 	capsuleA := CapsuleVal(capsuleTestType1, &capsuleTestType1Native{"capsuleA"})
 	capsuleB := CapsuleVal(capsuleTestType1, &capsuleTestType1Native{"capsuleB"})
 	capsuleC := CapsuleVal(capsuleTestType2, &capsuleTestType2Native{"capsuleC"})
 
-	tests := []struct {
-		LHS      Value
-		RHS      Value
-		Expected Value
-	}{
+	tests := []testCase{
 		// Booleans
 		{
 			BoolVal(true),
@@ -31,18 +50,6 @@ func TestValueEquals(t *testing.T) {
 			BoolVal(true),
 			BoolVal(false),
 			BoolVal(false),
-		},
-
-		// Numbers
-		{
-			NumberIntVal(1),
-			NumberIntVal(2),
-			BoolVal(false),
-		},
-		{
-			NumberIntVal(2),
-			NumberIntVal(2),
-			BoolVal(true),
 		},
 
 		// Strings
@@ -635,6 +642,10 @@ func TestValueEquals(t *testing.T) {
 		},
 	}
 
+	testEquals(t, tests)
+}
+
+func testEquals(t *testing.T, tests []testCase) {
 	for _, test := range tests {
 		t.Run(fmt.Sprintf("%#v.Equals(%#v)", test.LHS, test.RHS), func(t *testing.T) {
 			got := test.LHS.Equals(test.RHS)
@@ -646,11 +657,7 @@ func TestValueEquals(t *testing.T) {
 }
 
 func TestValueAdd(t *testing.T) {
-	tests := []struct {
-		LHS      Value
-		RHS      Value
-		Expected Value
-	}{
+	tests := []testCase{
 		{
 			NumberIntVal(1),
 			NumberIntVal(2),
@@ -699,11 +706,7 @@ func TestValueAdd(t *testing.T) {
 }
 
 func TestValueSubtract(t *testing.T) {
-	tests := []struct {
-		LHS      Value
-		RHS      Value
-		Expected Value
-	}{
+	tests := []testCase{
 		{
 			NumberIntVal(1),
 			NumberIntVal(2),
@@ -785,11 +788,7 @@ func TestValueNegate(t *testing.T) {
 }
 
 func TestValueMultiply(t *testing.T) {
-	tests := []struct {
-		LHS      Value
-		RHS      Value
-		Expected Value
-	}{
+	tests := []testCase{
 		{
 			NumberIntVal(4),
 			NumberIntVal(2),
@@ -838,11 +837,7 @@ func TestValueMultiply(t *testing.T) {
 }
 
 func TestValueDivide(t *testing.T) {
-	tests := []struct {
-		LHS      Value
-		RHS      Value
-		Expected Value
-	}{
+	tests := []testCase{
 		{
 			NumberIntVal(10),
 			NumberIntVal(2),
@@ -901,11 +896,7 @@ func TestValueDivide(t *testing.T) {
 }
 
 func TestValueModulo(t *testing.T) {
-	tests := []struct {
-		LHS      Value
-		RHS      Value
-		Expected Value
-	}{
+	tests := []testCase{
 		{
 			NumberIntVal(10),
 			NumberIntVal(2),
