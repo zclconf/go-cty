@@ -647,6 +647,7 @@ func TestValueEquals(t *testing.T) {
 
 func testEquals(t *testing.T, tests []testCase) {
 	for _, test := range tests {
+		test := test
 		t.Run(fmt.Sprintf("%#v.Equals(%#v)", test.LHS, test.RHS), func(t *testing.T) {
 			got := test.LHS.Equals(test.RHS)
 			if !got.RawEquals(test.Expected) {
