@@ -48,6 +48,24 @@ type CapsuleOps struct {
 	// If RawEquals is nil, values of the corresponding type are compared by
 	// pointer identity of the encapsulated value.
 	RawEquals func(a, b interface{}) bool
+
+	// ConversionFrom can provide conversions from the corresponding type to
+	// some other type when values of the corresponding type are used with
+	// the "convert" package. (The main cty package does not use this operation.)
+	//
+	// This function itself returns a function, allowing it to switch its
+	// behavior depending on the given source type. Return nil to indicate
+	// that no such conversion is available.
+	ConversionFrom func(src Type) func(interface{}, Path) (Value, error)
+
+	// ConversionTo can provide conversions to the corresponding type from
+	// some other type when values of the corresponding type are used with
+	// the "convert" package. (The main cty package does not use this operation.)
+	//
+	// This function itself returns a function, allowing it to switch its
+	// behavior depending on the given destination type. Return nil to indicate
+	// that no such conversion is available.
+	ConversionTo func(dst Type) func(Value, Path) (interface{}, error)
 }
 
 // noCapsuleOps is a pointer to a CapsuleOps with no functions set, which
