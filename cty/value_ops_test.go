@@ -697,6 +697,7 @@ func TestValueAdd(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		test := test
 		t.Run(fmt.Sprintf("%#v.Add(%#v)", test.LHS, test.RHS), func(t *testing.T) {
 			got := test.LHS.Add(test.RHS)
 			if !got.RawEquals(test.Expected) {
@@ -746,6 +747,7 @@ func TestValueSubtract(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		test := test
 		t.Run(fmt.Sprintf("%#v.Subtract(%#v)", test.LHS, test.RHS), func(t *testing.T) {
 			got := test.LHS.Subtract(test.RHS)
 			if !got.RawEquals(test.Expected) {
@@ -779,6 +781,7 @@ func TestValueNegate(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		test := test
 		t.Run(fmt.Sprintf("%#v.Negate()", test.Receiver), func(t *testing.T) {
 			got := test.Receiver.Negate()
 			if !got.RawEquals(test.Expected) {
@@ -887,6 +890,7 @@ func TestValueDivide(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		test := test
 		t.Run(fmt.Sprintf("%#v.Divide(%#v)", test.LHS, test.RHS), func(t *testing.T) {
 			got := test.LHS.Divide(test.RHS)
 			if !got.RawEquals(test.Expected) {
@@ -966,6 +970,7 @@ func TestValueModulo(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		test := test
 		t.Run(fmt.Sprintf("%#v.Modulo(%#v)", test.LHS, test.RHS), func(t *testing.T) {
 			got := test.LHS.Modulo(test.RHS)
 			if !got.RawEquals(test.Expected) {
@@ -1015,6 +1020,7 @@ func TestValueAbsolute(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		test := test
 		t.Run(fmt.Sprintf("%#v.Absolute()", test.Receiver), func(t *testing.T) {
 			got := test.Receiver.Absolute()
 			if !got.RawEquals(test.Expected) {
@@ -1059,6 +1065,7 @@ func TestValueGetAttr(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		test := test
 		t.Run(fmt.Sprintf("%#v.GetAttr(%q)", test.Object, test.AttrName), func(t *testing.T) {
 			got := test.Object.GetAttr(test.AttrName)
 			if !got.RawEquals(test.Expected) {
@@ -1182,6 +1189,7 @@ func TestValueIndex(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		test := test
 		t.Run(fmt.Sprintf("%#v.Index(%q)", test.Collection, test.Key), func(t *testing.T) {
 			got := test.Collection.Index(test.Key)
 			if !got.RawEquals(test.Expected) {
@@ -1365,6 +1373,7 @@ func TestValueHasIndex(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		test := test
 		t.Run(fmt.Sprintf("%#v.HasIndex(%q)", test.Collection, test.Key), func(t *testing.T) {
 			got := test.Collection.HasIndex(test.Key)
 			if !got.RawEquals(test.Expected) {
@@ -1514,6 +1523,7 @@ func TestValueForEachElement(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		test := test
 		t.Run(fmt.Sprintf("%#v.ForEachElement()", test.Receiver), func(t *testing.T) {
 			calls := make([]call, 0)
 			stopped := test.Receiver.ForEachElement(
@@ -1568,6 +1578,7 @@ func TestValueNot(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		test := test
 		t.Run(fmt.Sprintf("%#v.Not()", test.Receiver), func(t *testing.T) {
 			got := test.Receiver.Not()
 			if !got.RawEquals(test.Expected) {
@@ -1636,6 +1647,7 @@ func TestValueAnd(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		test := test
 		t.Run(fmt.Sprintf("%#v.And(%#v)", test.Receiver, test.Other), func(t *testing.T) {
 			got := test.Receiver.And(test.Other)
 			if !got.RawEquals(test.Expected) {
@@ -1704,6 +1716,7 @@ func TestValueOr(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		test := test
 		t.Run(fmt.Sprintf("%#v.Or(%#v)", test.Receiver, test.Other), func(t *testing.T) {
 			got := test.Receiver.Or(test.Other)
 			if !got.RawEquals(test.Expected) {
@@ -1792,6 +1805,7 @@ func TestLessThan(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		test := test
 		t.Run(fmt.Sprintf("%#v.LessThan(%#v)", test.Receiver, test.Other), func(t *testing.T) {
 			got := test.Receiver.LessThan(test.Other)
 			if !got.RawEquals(test.Expected) {
@@ -1880,6 +1894,7 @@ func TestGreaterThan(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		test := test
 		t.Run(fmt.Sprintf("%#v.GreaterThan(%#v)", test.Receiver, test.Other), func(t *testing.T) {
 			got := test.Receiver.GreaterThan(test.Other)
 			if !got.RawEquals(test.Expected) {
@@ -1968,6 +1983,7 @@ func TestLessThanOrEqualTo(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		test := test
 		t.Run(fmt.Sprintf("%#v.LessThanOrEqualTo(%#v)", test.Receiver, test.Other), func(t *testing.T) {
 			got := test.Receiver.LessThanOrEqualTo(test.Other)
 			if !got.RawEquals(test.Expected) {
@@ -2056,6 +2072,7 @@ func TestGreaterThanOrEqualTo(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		test := test
 		t.Run(fmt.Sprintf("%#v.GreaterThanOrEqualTo(%#v)", test.Receiver, test.Other), func(t *testing.T) {
 			got := test.Receiver.GreaterThanOrEqualTo(test.Other)
 			if !got.RawEquals(test.Expected) {
@@ -2197,6 +2214,7 @@ func TestValueGoString(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		test := test
 		t.Run(test.Value.GoString(), func(t *testing.T) {
 			got := test.Value.GoString()
 			want := test.Want
