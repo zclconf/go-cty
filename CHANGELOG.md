@@ -1,3 +1,5 @@
+# 1.1.2 (Unreleased)
+
 # 1.1.1 (November 26, 2019)
 
 * `cty`: Fixed a panic situation when trying to round-trip `cty.Number` values
