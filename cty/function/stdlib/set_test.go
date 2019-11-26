@@ -133,3 +133,55 @@ func TestSetIntersection(t *testing.T) {
 		})
 	}
 }
+
+func TestSetSubtract(t *testing.T) {
+	tests := []struct {
+		InputA cty.Value
+		InputB cty.Value
+		Want   cty.Value
+	}{
+		{
+			cty.SetValEmpty(cty.String),
+			cty.SetValEmpty(cty.String),
+			cty.SetValEmpty(cty.String),
+		},
+		{
+			cty.SetVal([]cty.Value{cty.True}),
+			cty.SetValEmpty(cty.String),
+			cty.SetVal([]cty.Value{cty.StringVal("true")}),
+		},
+		{
+			cty.SetVal([]cty.Value{cty.True}),
+			cty.SetVal([]cty.Value{cty.False}),
+			cty.SetVal([]cty.Value{cty.True}),
+		},
+		{
+			cty.SetVal([]cty.Value{
+				cty.StringVal("a"),
+				cty.StringVal("b"),
+				cty.StringVal("c"),
+			}),
+			cty.SetVal([]cty.Value{
+				cty.StringVal("a"),
+				cty.StringVal("c"),
+			}),
+			cty.SetVal([]cty.Value{
+				cty.StringVal("b"),
+			}),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("SetSubtract(%#v, %#v)", test.InputA, test.InputB), func(t *testing.T) {
+			got, err := SetSubtract(test.InputA, test.InputB)
+
+			if err != nil {
+				t.Fatalf("unexpected error: %s", err)
+			}
+
+			if !got.RawEquals(test.Want) {
+				t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, test.Want)
+			}
+		})
+	}
+}
