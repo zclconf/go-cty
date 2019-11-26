@@ -1,4 +1,4 @@
-# 1.1.1 (Unreleased)
+# 1.1.1 (November 26, 2019)
 
 * `cty`: Fixed a panic situation when trying to round-trip `cty.Number` values
   through `encoding/gob`. ([#32](https://github.com/zclconf/go-cty/pull/32))
