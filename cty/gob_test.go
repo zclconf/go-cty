@@ -18,6 +18,21 @@ func TestGobabilty(t *testing.T) {
 		SetVal([]Value{True}),
 		TupleVal([]Value{True}),
 		ObjectVal(map[string]Value{"true": True}),
+
+		// Numbers are particularly tricky because big.Float.GobEncode is
+		// implemented as a pointer method and thus big floats lose their
+		// "pointerness" during gob round-trip. For that reason, we're testing
+		// all of the containers with nested numbers inside to make sure that
+		// our fixup step is working correctly for all of them.
+		ListVal([]Value{NumberIntVal(1)}),
+		MapVal(map[string]Value{
+			"num": NumberIntVal(1),
+		}),
+		SetVal([]Value{NumberIntVal(1)}),
+		TupleVal([]Value{NumberIntVal(1)}),
+		ObjectVal(map[string]Value{
+			"num": NumberIntVal(1),
+		}),
 	}
 
 	for _, testValue := range tests {
