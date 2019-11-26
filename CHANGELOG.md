@@ -2,6 +2,7 @@
 
 * `cty`: Fixed a panic situation when trying to round-trip `cty.Number` values
   through `encoding/gob`. ([#32](https://github.com/zclconf/go-cty/pull/32))
+* `convert`: Invalid string conversions to bool that use incorrect case will now give more actionable feedback. ([#29](https://github.com/zclconf/go-cty/pull/29))
 * `function/stdlib`: The `formatlist` function will no longer panic if given
   an unknown tuple as one of its arguments.
 
