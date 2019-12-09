@@ -516,6 +516,14 @@ func TestConvert(t *testing.T) {
 			Want:  cty.ListVal([]cty.Value{cty.StringVal("hello").Mark(1)}),
 		},
 		{
+			Value: cty.SetVal([]cty.Value{
+				cty.StringVal("hello").Mark(1),
+				cty.StringVal("hello").Mark(2),
+			}),
+			Type: cty.Set(cty.String),
+			Want: cty.SetVal([]cty.Value{cty.StringVal("hello")}).WithMarks(cty.NewValueMarks(1, 2)),
+		},
+		{
 			Value: cty.ObjectVal(map[string]cty.Value{"foo": cty.StringVal("hello").Mark(1)}),
 			Type:  cty.Map(cty.String),
 			Want:  cty.MapVal(map[string]cty.Value{"foo": cty.StringVal("hello").Mark(1)}),

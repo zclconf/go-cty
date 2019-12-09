@@ -182,6 +182,24 @@ func (val Value) Unmark() (Value, ValueMarks) {
 	}, marks
 }
 
+// UnmarkDeep is similar to Unmark, but it works with an entire nested structure
+// rather than just the given value directly.
+//
+// The result is guaranteed to contain no nested values that are marked, and
+// the returned marks set includes the superset of all of the marks encountered
+// during the operation.
+func (val Value) UnmarkDeep() (Value, ValueMarks) {
+	marks := make(ValueMarks)
+	ret, _ := Transform(val, func(_ Path, v Value) (Value, error) {
+		unmarkedV, valueMarks := val.Unmark()
+		for m, s := range valueMarks {
+			marks[m] = s
+		}
+		return unmarkedV, nil
+	})
+	return ret, marks
+}
+
 func (val Value) unmarkForce() Value {
 	unw, _ := val.Unmark()
 	return unw

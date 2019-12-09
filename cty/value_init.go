@@ -240,8 +240,13 @@ func SetVal(vals []Value) Value {
 	}
 	elementType := DynamicPseudoType
 	rawList := make([]interface{}, len(vals))
+	var markSets []ValueMarks
 
 	for i, val := range vals {
+		if unmarkedVal, marks := val.UnmarkDeep(); len(marks) > 0 {
+			val = unmarkedVal
+			markSets = append(markSets, marks)
+		}
 		if val.ContainsMarked() {
 			// FIXME: Allow this, but unmark the values and apply the
 			// marking to the set itself instead.
@@ -264,7 +269,7 @@ func SetVal(vals []Value) Value {
 	return Value{
 		ty: Set(elementType),
 		v:  rawVal,
-	}
+	}.WithMarks(markSets...)
 }
 
 // SetValFromValueSet returns a Value of set type based on an already-constructed
