@@ -75,6 +75,12 @@ func (val Value) IsMarked() bool {
 	return ok
 }
 
+func (val Value) assertUnmarked() {
+	if val.IsMarked() {
+		panic("value is marked, so must be unmarked first")
+	}
+}
+
 // Marks returns a map (representing a set) of all of the mark values
 // associated with the receiving value, without changing the marks. Returns nil
 // if the value is not marked at all.
@@ -88,6 +94,20 @@ func (val Value) Marks() ValueMarks {
 		return ret
 	}
 	return nil
+}
+
+// HasSameMarks returns true if an only if the receiver and the given other
+// value have identical marks.
+func (val Value) HasSameMarks(other Value) bool {
+	vm, vmOK := val.v.(marker)
+	om, omOK := other.v.(marker)
+	if vmOK != omOK {
+		return false
+	}
+	if vmOK {
+		return vm.marks.Equal(om.marks)
+	}
+	return true
 }
 
 // Mark returns a new value that as the same type and underlying value as
@@ -143,6 +163,11 @@ func (val Value) Unmark() (Value, ValueMarks) {
 		ty: val.ty,
 		v:  mr.realV,
 	}, marks
+}
+
+func (val Value) unmarkForce() Value {
+	unw, _ := val.Unmark()
+	return unw
 }
 
 // WithMarks returns a new value that has the same type and underlying value

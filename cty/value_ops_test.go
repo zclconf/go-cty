@@ -633,13 +633,30 @@ func TestValueEquals(t *testing.T) {
 			NumberIntVal(1),
 			False, // because no string value -- even null -- can be equal to a non-null number
 		},
+
+		// Marks
+		{
+			StringVal("a").Mark(1),
+			StringVal("b"),
+			False.Mark(1),
+		},
+		{
+			StringVal("a"),
+			StringVal("b").Mark(2),
+			False.Mark(2),
+		},
+		{
+			StringVal("a").Mark(1),
+			StringVal("b").Mark(2),
+			False.WithMarks(NewValueMarks(1, 2)),
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(fmt.Sprintf("%#v.Equals(%#v)", test.LHS, test.RHS), func(t *testing.T) {
 			got := test.LHS.Equals(test.RHS)
 			if !got.RawEquals(test.Expected) {
-				t.Fatalf("Equals returned %#v; want %#v", got, test.Expected)
+				t.Fatalf("wrong Equals result\ngot:  %#v\nwant: %#v", got, test.Expected)
 			}
 		})
 	}
@@ -685,6 +702,21 @@ func TestValueAdd(t *testing.T) {
 			DynamicVal,
 			DynamicVal,
 			UnknownVal(Number),
+		},
+		{
+			Zero.Mark(1),
+			Zero,
+			Zero.Mark(1),
+		},
+		{
+			Zero,
+			Zero.Mark(2),
+			Zero.Mark(2),
+		},
+		{
+			Zero.Mark(1),
+			Zero.Mark(2),
+			Zero.WithMarks(NewValueMarks(1, 2)),
 		},
 	}
 
@@ -739,6 +771,21 @@ func TestValueSubtract(t *testing.T) {
 			DynamicVal,
 			UnknownVal(Number),
 		},
+		{
+			Zero.Mark(1),
+			Zero,
+			Zero.Mark(1),
+		},
+		{
+			Zero,
+			Zero.Mark(2),
+			Zero.Mark(2),
+		},
+		{
+			Zero.Mark(1),
+			Zero.Mark(2),
+			Zero.WithMarks(NewValueMarks(1, 2)),
+		},
 	}
 
 	for _, test := range tests {
@@ -771,6 +818,10 @@ func TestValueNegate(t *testing.T) {
 		{
 			DynamicVal,
 			UnknownVal(Number),
+		},
+		{
+			Zero.Mark(1),
+			Zero.Mark(1),
 		},
 	}
 
@@ -824,6 +875,21 @@ func TestValueMultiply(t *testing.T) {
 			DynamicVal,
 			DynamicVal,
 			UnknownVal(Number),
+		},
+		{
+			Zero.Mark(1),
+			Zero,
+			Zero.Mark(1),
+		},
+		{
+			Zero,
+			Zero.Mark(2),
+			Zero.Mark(2),
+		},
+		{
+			Zero.Mark(1),
+			Zero.Mark(2),
+			Zero.WithMarks(NewValueMarks(1, 2)),
 		},
 	}
 
@@ -887,6 +953,21 @@ func TestValueDivide(t *testing.T) {
 			DynamicVal,
 			DynamicVal,
 			UnknownVal(Number),
+		},
+		{
+			Zero.Mark(1),
+			NumberIntVal(1),
+			Zero.Mark(1),
+		},
+		{
+			Zero,
+			NumberIntVal(1).Mark(2),
+			Zero.Mark(2),
+		},
+		{
+			Zero.Mark(1),
+			NumberIntVal(1).Mark(2),
+			Zero.WithMarks(NewValueMarks(1, 2)),
 		},
 	}
 
@@ -971,6 +1052,21 @@ func TestValueModulo(t *testing.T) {
 			DynamicVal,
 			UnknownVal(Number),
 		},
+		{
+			NumberIntVal(10).Mark(1),
+			NumberIntVal(10),
+			Zero.Mark(1),
+		},
+		{
+			NumberIntVal(10),
+			NumberIntVal(10).Mark(2),
+			Zero.Mark(2),
+		},
+		{
+			NumberIntVal(10).Mark(1),
+			NumberIntVal(10).Mark(2),
+			Zero.WithMarks(NewValueMarks(1, 2)),
+		},
 	}
 
 	for _, test := range tests {
@@ -1020,6 +1116,10 @@ func TestValueAbsolute(t *testing.T) {
 			DynamicVal,
 			UnknownVal(Number),
 		},
+		{
+			NumberIntVal(-1).Mark(1),
+			NumberIntVal(1).Mark(1),
+		},
 	}
 
 	for _, test := range tests {
@@ -1063,6 +1163,13 @@ func TestValueGetAttr(t *testing.T) {
 			DynamicVal,
 			"hello",
 			DynamicVal,
+		},
+		{
+			ObjectVal(map[string]Value{
+				"greeting": StringVal("hello"),
+			}).Mark(1),
+			"greeting",
+			StringVal("hello").Mark(1),
 		},
 	}
 
@@ -1186,6 +1293,16 @@ func TestValueIndex(t *testing.T) {
 			UnknownVal(Tuple([]Type{String})),
 			NumberIntVal(0),
 			UnknownVal(String),
+		},
+		{
+			ListVal([]Value{StringVal("hello")}).Mark(1),
+			NumberIntVal(0),
+			StringVal("hello").Mark(1),
+		},
+		{
+			ListVal([]Value{StringVal("hello")}),
+			NumberIntVal(0).Mark(1),
+			StringVal("hello").Mark(1),
 		},
 	}
 
@@ -1369,6 +1486,16 @@ func TestValueHasIndex(t *testing.T) {
 			DynamicVal,
 			NumberIntVal(0),
 			UnknownVal(Bool),
+		},
+		{
+			ListVal([]Value{StringVal("hello")}).Mark(1),
+			NumberIntVal(0),
+			True.Mark(1),
+		},
+		{
+			ListVal([]Value{StringVal("hello")}),
+			NumberIntVal(0).Mark(1),
+			True.Mark(1),
 		},
 	}
 
@@ -1573,6 +1700,10 @@ func TestValueNot(t *testing.T) {
 			DynamicVal,
 			UnknownVal(Bool),
 		},
+		{
+			True.Mark(1),
+			False.Mark(1),
+		},
 	}
 
 	for _, test := range tests {
@@ -1641,6 +1772,21 @@ func TestValueAnd(t *testing.T) {
 			True,
 			UnknownVal(Bool),
 		},
+		{
+			True.Mark(1),
+			True,
+			True.Mark(1),
+		},
+		{
+			True,
+			True.Mark(1),
+			True.Mark(1),
+		},
+		{
+			True.Mark(1),
+			True.Mark(1),
+			True.Mark(1),
+		},
 	}
 
 	for _, test := range tests {
@@ -1708,6 +1854,21 @@ func TestValueOr(t *testing.T) {
 			DynamicVal,
 			True,
 			UnknownVal(Bool),
+		},
+		{
+			True.Mark(1),
+			False,
+			True.Mark(1),
+		},
+		{
+			True,
+			False.Mark(1),
+			True.Mark(1),
+		},
+		{
+			True.Mark(1),
+			False.Mark(1),
+			True.Mark(1),
 		},
 	}
 
@@ -1797,6 +1958,21 @@ func TestLessThan(t *testing.T) {
 			NumberIntVal(1),
 			UnknownVal(Bool),
 		},
+		{
+			NumberIntVal(0).Mark(1),
+			NumberIntVal(1),
+			True.Mark(1),
+		},
+		{
+			NumberIntVal(0),
+			NumberIntVal(1).Mark(1),
+			True.Mark(1),
+		},
+		{
+			NumberIntVal(0).Mark(1),
+			NumberIntVal(1).Mark(1),
+			True.Mark(1),
+		},
 	}
 
 	for _, test := range tests {
@@ -1884,6 +2060,21 @@ func TestGreaterThan(t *testing.T) {
 			DynamicVal,
 			NumberIntVal(1),
 			UnknownVal(Bool),
+		},
+		{
+			NumberIntVal(1).Mark(1),
+			NumberIntVal(0),
+			True.Mark(1),
+		},
+		{
+			NumberIntVal(1),
+			NumberIntVal(0).Mark(1),
+			True.Mark(1),
+		},
+		{
+			NumberIntVal(1).Mark(1),
+			NumberIntVal(0).Mark(1),
+			True.Mark(1),
 		},
 	}
 
@@ -1973,6 +2164,21 @@ func TestLessThanOrEqualTo(t *testing.T) {
 			NumberIntVal(1),
 			UnknownVal(Bool),
 		},
+		{
+			NumberIntVal(0).Mark(1),
+			NumberIntVal(1),
+			True.Mark(1),
+		},
+		{
+			NumberIntVal(0),
+			NumberIntVal(1).Mark(1),
+			True.Mark(1),
+		},
+		{
+			NumberIntVal(0).Mark(1),
+			NumberIntVal(1).Mark(1),
+			True.Mark(1),
+		},
 	}
 
 	for _, test := range tests {
@@ -2060,6 +2266,21 @@ func TestGreaterThanOrEqualTo(t *testing.T) {
 			DynamicVal,
 			NumberIntVal(1),
 			UnknownVal(Bool),
+		},
+		{
+			NumberIntVal(0).Mark(1),
+			NumberIntVal(1),
+			False.Mark(1),
+		},
+		{
+			NumberIntVal(0),
+			NumberIntVal(1).Mark(1),
+			False.Mark(1),
+		},
+		{
+			NumberIntVal(0).Mark(1),
+			NumberIntVal(1).Mark(1),
+			False.Mark(1),
 		},
 	}
 
