@@ -75,6 +75,23 @@ func (val Value) IsMarked() bool {
 	return ok
 }
 
+// ContainsMarked returns true if the receiving value or any value within it
+// is marked.
+//
+// This operation is relatively expensive. If you only need a shallow result,
+// use IsMarked instead.
+func (val Value) ContainsMarked() bool {
+	ret := false
+	Walk(val, func(_ Path, v Value) (bool, error) {
+		if v.IsMarked() {
+			ret = true
+			return false, nil
+		}
+		return true, nil
+	})
+	return ret
+}
+
 func (val Value) assertUnmarked() {
 	if val.IsMarked() {
 		panic("value is marked, so must be unmarked first")

@@ -242,6 +242,11 @@ func SetVal(vals []Value) Value {
 	rawList := make([]interface{}, len(vals))
 
 	for i, val := range vals {
+		if val.ContainsMarked() {
+			// FIXME: Allow this, but unmark the values and apply the
+			// marking to the set itself instead.
+			panic("set cannot contain marked values")
+		}
 		if elementType == DynamicPseudoType {
 			elementType = val.ty
 		} else if val.ty != DynamicPseudoType && !elementType.Equals(val.ty) {
