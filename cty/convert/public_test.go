@@ -498,6 +498,44 @@ func TestConvert(t *testing.T) {
 			Type:  cty.Set(cty.String),
 			Want:  cty.SetValEmpty(cty.String),
 		},
+
+		// Marks on values should propagate, even deeply.
+		{
+			Value: cty.StringVal("hello").Mark(1),
+			Type:  cty.String,
+			Want:  cty.StringVal("hello").Mark(1),
+		},
+		{
+			Value: cty.StringVal("true").Mark(1),
+			Type:  cty.Bool,
+			Want:  cty.True.Mark(1),
+		},
+		{
+			Value: cty.TupleVal([]cty.Value{cty.StringVal("hello").Mark(1)}),
+			Type:  cty.List(cty.String),
+			Want:  cty.ListVal([]cty.Value{cty.StringVal("hello").Mark(1)}),
+		},
+		{
+			Value: cty.ObjectVal(map[string]cty.Value{"foo": cty.StringVal("hello").Mark(1)}),
+			Type:  cty.Map(cty.String),
+			Want:  cty.MapVal(map[string]cty.Value{"foo": cty.StringVal("hello").Mark(1)}),
+		},
+		{
+			Value: cty.ObjectVal(map[string]cty.Value{
+				"foo": cty.StringVal("hello").Mark(1),
+				"bar": cty.StringVal("world").Mark(1),
+			}),
+			Type: cty.Object(map[string]cty.Type{"foo": cty.String}),
+			Want: cty.ObjectVal(map[string]cty.Value{"foo": cty.StringVal("hello").Mark(1)}),
+		},
+		{
+			Value: cty.ObjectVal(map[string]cty.Value{
+				"foo": cty.StringVal("hello"),
+				"bar": cty.StringVal("world").Mark(1),
+			}),
+			Type: cty.Object(map[string]cty.Type{"foo": cty.String}),
+			Want: cty.ObjectVal(map[string]cty.Value{"foo": cty.StringVal("hello")}),
+		},
 	}
 
 	for _, test := range tests {
