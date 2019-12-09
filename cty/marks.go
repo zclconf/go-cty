@@ -75,6 +75,15 @@ func (val Value) IsMarked() bool {
 	return ok
 }
 
+// HasMark returns true if and only if the receiving value has the given mark.
+func (val Value) HasMark(mark interface{}) bool {
+	if mr, ok := val.v.(marker); ok {
+		_, ok := mr.marks[mark]
+		return ok
+	}
+	return false
+}
+
 // ContainsMarked returns true if the receiving value or any value within it
 // is marked.
 //

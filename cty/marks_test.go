@@ -33,6 +33,12 @@ func TestValueMarks(t *testing.T) {
 	if got, want := v1234.Marks(), NewValueMarks(1, 2, 3, 4); !want.Equal(got) {
 		t.Errorf("wrong v1234 marks\ngot:  %#v\nwant: %#v", got, want)
 	}
+	if !v1234.HasMark(2) {
+		t.Errorf("v1234 should have mark 2")
+	}
+	if v1234.HasMark(5) {
+		t.Errorf("v1234 should not have mark 5")
+	}
 
 	v, marks1234 := v1234.Unmark()
 	if got, want := v.Marks(), NewValueMarks(); !want.Equal(got) {
