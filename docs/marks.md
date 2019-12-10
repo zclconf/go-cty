@@ -82,12 +82,18 @@ setting `AllowMarks: true` on the definition of that parameter. If a function
 opts in, it is therefore responsible for correctly propagating any marks onto
 its result.
 
-A function's `Type` implementation can receive marked values even if
-`AllowMarks` is not set, because we assume that `Type` functions most commonly
-work with the types of values, not the values themselves. In an application
-that uses marks, all functions which use specific values of arguments as part
-of their result type decisions must be prepared to deal with marked values,
-in a similar way to how they must deal with the possibility of unknown values.
+A function's `Type` implementation will receive automatically-unmarked values
+unless `AllowMarks` is set, which means that return-type checking alone will
+disregard any marks unless `AllowMarks` is set. Because type checking does not
+return a value, there is no way for type checking alone to communicate which
+marks it encountered during its work.
+
+If you're using marks in a use-case around obscuring sensitive values, beware
+that type checking of some functions could extract information without
+preserving the sensitivity mark. For example, if a string marked as sensitive
+were passed as the first argument to the stdlib `JSONDecode` function then
+type-checking of that function will betray the object property names inside
+that value as part of the inferred result type.
 
 ## Marks Under Serialization
 

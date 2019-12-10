@@ -106,6 +106,10 @@ func TestJSONDecode(t *testing.T) {
 			cty.DynamicVal,
 			cty.DynamicVal,
 		},
+		{
+			cty.StringVal(`true`).Mark(1),
+			cty.True.Mark(1),
+		},
 	}
 
 	for _, test := range tests {
