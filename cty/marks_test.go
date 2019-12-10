@@ -51,4 +51,14 @@ func TestValueMarks(t *testing.T) {
 		t.Errorf("wrong v after unmarking\ngot:  %#v\nwant: %#v", got, want)
 	}
 
+	// One more test for a more interesting/realistic situation involving
+	// a number of different operations.
+	a := NumberIntVal(2).Mark("a")
+	b := NumberIntVal(5).Mark("b")
+	c := NumberIntVal(1).Mark("c")
+	d := NumberIntVal(12).Mark("d")
+	result := a.Multiply(b).Subtract(c).GreaterThanOrEqualTo(d)
+	if got, want := result, False.WithMarks(NewValueMarks("a", "b", "c", "d")); !want.RawEquals(got) {
+		t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, want)
+	}
 }
