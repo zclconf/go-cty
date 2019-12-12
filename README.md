@@ -40,7 +40,6 @@ For more details, see the following documentation:
 * [Conversion to and from native Go values](./docs/gocty.md)
 * [JSON serialization](./docs/json.md)
 * [`cty` Functions system](./docs/functions.md)
-* [diff and patch for `cty` values](./docs/diff.md)
 
 ---
 
