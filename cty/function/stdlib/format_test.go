@@ -540,6 +540,25 @@ func TestFormat(t *testing.T) {
 			cty.NilVal,
 			`too many arguments; only 1 used by format string`,
 		},
+
+		{
+			cty.StringVal("hello %s").Mark(1),
+			[]cty.Value{cty.StringVal("world")},
+			cty.StringVal("hello world").Mark(1),
+			``,
+		},
+		{
+			cty.StringVal("hello %s"),
+			[]cty.Value{cty.StringVal("world").Mark(1)},
+			cty.StringVal("hello world").Mark(1),
+			``,
+		},
+		{
+			cty.StringVal("hello %s").Mark(0),
+			[]cty.Value{cty.StringVal("world").Mark(1)},
+			cty.StringVal("hello world").WithMarks(cty.NewValueMarks(0, 1)),
+			``,
+		},
 	}
 
 	for i, test := range tests {

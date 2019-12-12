@@ -57,6 +57,16 @@ func TestRegex(t *testing.T) {
 			cty.StringVal("135abc456def"),
 			cty.DynamicVal,
 		},
+		{
+			cty.StringVal("[a-z]+").Mark(1),
+			cty.StringVal("135abc456def789"),
+			cty.StringVal("abc").Mark(1),
+		},
+		{
+			cty.StringVal("[a-z]+"),
+			cty.StringVal("135abc456def789").Mark(2),
+			cty.StringVal("abc").Mark(2),
+		},
 	}
 
 	for _, test := range tests {

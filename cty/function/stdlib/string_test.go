@@ -55,6 +55,10 @@ func TestUpper(t *testing.T) {
 			cty.DynamicVal,
 			cty.UnknownVal(cty.String),
 		},
+		{
+			cty.StringVal("hello").Mark(1),
+			cty.StringVal("HELLO").Mark(1),
+		},
 	}
 
 	for _, test := range tests {

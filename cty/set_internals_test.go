@@ -8,32 +8,39 @@ import (
 
 func TestSetHashBytes(t *testing.T) {
 	tests := []struct {
-		value Value
-		want  string
+		value     Value
+		want      string
+		wantMarks ValueMarks
 	}{
 		{
 			UnknownVal(Number),
 			"?",
+			nil,
 		},
 		{
 			UnknownVal(String),
 			"?",
+			nil,
 		},
 		{
 			NullVal(Number),
 			"~",
+			nil,
 		},
 		{
 			NullVal(String),
 			"~",
+			nil,
 		},
 		{
 			DynamicVal,
 			"?",
+			nil,
 		},
 		{
 			NumberVal(big.NewFloat(12)),
 			"12",
+			nil,
 		},
 		{
 			// This weird case is an intentionally-invalid number value that
@@ -48,70 +55,87 @@ func TestSetHashBytes(t *testing.T) {
 				v:  *big.NewFloat(13),
 			},
 			"13",
+			nil,
 		},
 		{
 			StringVal(""),
 			`""`,
+			nil,
 		},
 		{
 			StringVal("pizza"),
 			`"pizza"`,
+			nil,
 		},
 		{
 			True,
 			"T",
+			nil,
 		},
 		{
 			False,
 			"F",
+			nil,
 		},
 		{
 			ListValEmpty(Bool),
 			"[]",
+			nil,
 		},
 		{
 			ListValEmpty(DynamicPseudoType),
 			"[]",
+			nil,
 		},
 		{
 			ListVal([]Value{True, False}),
 			"[T;F;]",
+			nil,
 		},
 		{
 			ListVal([]Value{UnknownVal(Bool)}),
 			"[?;]",
+			nil,
 		},
 		{
 			ListVal([]Value{ListValEmpty(Bool)}),
 			"[[];]",
+			nil,
 		},
 		{
 			MapValEmpty(Bool),
 			"{}",
+			nil,
 		},
 		{
 			MapVal(map[string]Value{"true": True, "false": False}),
 			`{"false":F;"true":T;}`,
+			nil,
 		},
 		{
 			MapVal(map[string]Value{"true": True, "unknown": UnknownVal(Bool), "dynamic": DynamicVal}),
 			`{"dynamic":?;"true":T;"unknown":?;}`,
+			nil,
 		},
 		{
 			SetValEmpty(Bool),
 			"[]",
+			nil,
 		},
 		{
 			SetVal([]Value{True, True, False}),
 			"[F;T;]",
+			nil,
 		},
 		{
 			SetVal([]Value{UnknownVal(Bool), UnknownVal(Bool)}),
 			"[?;?;]", // unknowns are never equal, so we can have multiple of them
+			nil,
 		},
 		{
 			EmptyObjectVal,
 			"<>",
+			nil,
 		},
 		{
 			ObjectVal(map[string]Value{
@@ -119,10 +143,12 @@ func TestSetHashBytes(t *testing.T) {
 				"age":  NumberVal(big.NewFloat(54)),
 			}),
 			`<54;"ermintrude";>`,
+			nil,
 		},
 		{
 			EmptyTupleVal,
 			"<>",
+			nil,
 		},
 		{
 			TupleVal([]Value{
@@ -130,14 +156,34 @@ func TestSetHashBytes(t *testing.T) {
 				NumberVal(big.NewFloat(54)),
 			}),
 			`<"ermintrude";54;>`,
+			nil,
+		},
+
+		// Marked values
+		{
+			StringVal("pizza").Mark(1),
+			`"pizza"`,
+			NewValueMarks(1),
+		},
+		{
+			ObjectVal(map[string]Value{
+				"name": StringVal("ermintrude").Mark(1),
+				"age":  NumberVal(big.NewFloat(54)).Mark(2),
+			}),
+			`<54;"ermintrude";>`,
+			NewValueMarks(1, 2),
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(gobDecodeFixNumberPtrVal(test.value).GoString(), func(t *testing.T) {
-			got := string(makeSetHashBytes(test.value))
+			gotRaw, gotMarks := makeSetHashBytes(test.value)
+			got := string(gotRaw)
 			if got != test.want {
 				t.Errorf("wrong result\ngot:  %s\nwant: %s", got, test.want)
+			}
+			if !test.wantMarks.Equal(gotMarks) {
+				t.Errorf("wrong result marks\ngot:  %#v\nwant: %#v", gotMarks, test.wantMarks)
 			}
 		})
 	}

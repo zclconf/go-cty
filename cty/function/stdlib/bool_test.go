@@ -28,6 +28,10 @@ func TestNot(t *testing.T) {
 			cty.DynamicVal,
 			cty.UnknownVal(cty.Bool),
 		},
+		{
+			cty.True.Mark(1),
+			cty.False.Mark(1),
+		},
 	}
 
 	for _, test := range tests {

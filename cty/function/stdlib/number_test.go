@@ -645,6 +645,10 @@ func TestMin(t *testing.T) {
 			[]cty.Value{cty.PositiveInfinity, cty.DynamicVal},
 			cty.UnknownVal(cty.Number),
 		},
+		{
+			[]cty.Value{cty.Zero.Mark(1), cty.NumberIntVal(1)},
+			cty.Zero.Mark(1),
+		},
 	}
 
 	for _, test := range tests {

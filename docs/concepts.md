@@ -135,4 +135,18 @@ to convert to and from `cty` values, the utility package
 [`gocty`](./gocty.html) provides a more convenient way to convert between
 Go native values and `cty` values.
 
+## Marks
 
+A `cty.Value` can optionally be _marked_, which causes it to carry around some
+additonal metadata along with its value. Marks are just normal Go values that
+are value to use as map keys, and are compared by equality.
+
+For example, an application might use marks to track the origin of a particular
+value in order to give better error messages, or to present the value in a
+different way in a UI.
+
+When a value is marked, operation methods using that value will propagate the
+marks to any result values. That makes marks "infectious" in the sense that
+they propagate through operations and accumulate in the result automatically.
+
+For more information on marks, see [the dedicated section on marks](./marks.md).
