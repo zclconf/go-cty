@@ -94,7 +94,11 @@ func (val Value) GoString() string {
 		vals := val.AsValueMap()
 		return fmt.Sprintf("cty.ObjectVal(%#v)", vals)
 	case val.ty.IsCapsuleType():
-		return fmt.Sprintf("cty.CapsuleVal(%#v, %#v)", val.ty, val.v)
+		impl := val.ty.CapsuleOps().GoString
+		if impl == nil {
+			return fmt.Sprintf("cty.CapsuleVal(%#v, %#v)", val.ty, val.v)
+		}
+		return impl(val.EncapsulatedValue())
 	}
 
 	// Default exposes implementation details, so should actually cover
@@ -306,10 +310,22 @@ func (val Value) Equals(other Value) Value {
 			}
 		}
 	case ty.IsCapsuleType():
-		// A capsule type's encapsulated value is a pointer to a value of its
-		// native type, so we can just compare these to get the identity test
-		// we need.
-		return BoolVal(val.v == other.v)
+		impl := val.ty.CapsuleOps().Equals
+		if impl == nil {
+			impl := val.ty.CapsuleOps().RawEquals
+			if impl == nil {
+				// A capsule type's encapsulated value is a pointer to a value of its
+				// native type, so we can just compare these to get the identity test
+				// we need.
+				return BoolVal(val.v == other.v)
+			}
+			return BoolVal(impl(val.v, other.v))
+		}
+		ret := impl(val.v, other.v)
+		if !ret.Type().Equals(Bool) {
+			panic(fmt.Sprintf("Equals for %#v returned %#v, not cty.Bool", ty, ret.Type()))
+		}
+		return ret
 
 	default:
 		// should never happen
@@ -474,10 +490,14 @@ func (val Value) RawEquals(other Value) bool {
 		}
 		return false
 	case ty.IsCapsuleType():
-		// A capsule type's encapsulated value is a pointer to a value of its
-		// native type, so we can just compare these to get the identity test
-		// we need.
-		return val.v == other.v
+		impl := val.ty.CapsuleOps().RawEquals
+		if impl == nil {
+			// A capsule type's encapsulated value is a pointer to a value of its
+			// native type, so we can just compare these to get the identity test
+			// we need.
+			return val.v == other.v
+		}
+		return impl(val.v, other.v)
 
 	default:
 		// should never happen

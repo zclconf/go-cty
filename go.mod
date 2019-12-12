@@ -3,6 +3,7 @@ module github.com/zclconf/go-cty
 require (
 	github.com/apparentlymart/go-textseg v1.0.0
 	github.com/golang/protobuf v1.1.0 // indirect
+	github.com/google/go-cmp v0.3.1
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/kylelemons/godebug v0.0.0-20170820004349-d65d576e9348
 	github.com/vmihailenco/msgpack v3.3.3+incompatible

@@ -327,3 +327,7 @@ by all of the other packages that build on the core `cty` API. They should
 be used with care and the documentation for other packages should be consulted
 for information about caveats and constraints relating to their use.
 
+It's possible for a calling application to write additional logic to make
+capsule types support a subset of operations that are generally expected to
+work for values of any type. For more information, see
+[capsule type operation definitions](./capsule-type-operations.md).
