@@ -58,3 +58,54 @@ implement parameterized capsule types.
 
 For more information on the available operations and the contract for
 implementing each one, see the documentation on the fields of `cty.CapsuleOps`.
+
+## Extension Data
+
+In addition to the operations that `cty` packages use directly as described
+above, `CapsuleOps` includes extra function `ExtensionData` which can be used
+for application-specific extensions.
+
+It creates an extensible namespace using arbitrary comparable values of named
+types, where an application can define a key in its own package namespace and
+then use it to retrieve values from cooperating capsule types.
+
+For example, if there were an application package called `happyapp` which
+defined an extension key `Frob`, a cooperating capsule type might implement
+`ExtensionData` like this:
+
+```go
+    ExtensionData: func (key interface{}) interface{} {
+        switch key {
+        case happyapp.Frob: // a value of some type belonging to "happyapp"
+            return "frob indeed"
+        default:
+            return nil
+        }
+    }
+```
+
+Package `happyapp` should define this `Frob` symbol as being of a named type
+belonging to its own package, so that the type can serve as a namespace:
+
+```go
+type frobType int
+
+var Frob frobType
+```
+
+`cty` itself doesn't do anything special with `ExtensionData`, but there is a
+convenience method `CapsuleExtensionData` on `cty.Type` that can be used with
+capsule types to attempt to access extension data keys without first retrieving
+the `CapsuleOps` and checking if it implements `ExtensionData`:
+
+```go
+// (in package happyapp)
+if frobValue, ok := givenType.CapsuleExtensionData(Frob).(string); ok {
+    // If we get in here then the capsule type correctly handles Frob,
+    // returning a string. If the capsule type does not handle Frob or
+    // if it returns the wrong type then we'll ignore it.
+    log.Printf("This capsule type has a Frob: %s", frobValue)
+}
+```
+
+`CapsuleExtensionData` will panic if called on a non-capsule type.

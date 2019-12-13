@@ -66,6 +66,28 @@ type CapsuleOps struct {
 	// behavior depending on the given destination type. Return nil to indicate
 	// that no such conversion is available.
 	ConversionTo func(dst Type) func(Value, Path) (interface{}, error)
+
+	// ExtensionData is an extension point for applications that wish to
+	// create their own extension features using capsule types.
+	//
+	// The key argument is any value that can be compared with Go's ==
+	// operator, but should be of a named type in a package belonging to the
+	// application defining the key. An ExtensionData implementation must
+	// check to see if the given key is familar to it, and if so return a
+	// suitable value for the key.
+	//
+	// If the given key is unrecognized, the ExtensionData function must
+	// return a nil interface. (Importantly, not an interface containing a nil
+	// pointer of some other type.)
+	// The common implementation of ExtensionData is a single switch statement
+	// over "key" which has a default case returning nil.
+	//
+	// The meaning of any given key is entirely up to the application that
+	// defines it. Applications consuming ExtensionData from capsule types
+	// should do so defensively: if the result of ExtensionData is not valid,
+	// prefer to ignore it or gracefully produce an error rather than causing
+	// a panic.
+	ExtensionData func(key interface{}) interface{}
 }
 
 // noCapsuleOps is a pointer to a CapsuleOps with no functions set, which
@@ -89,4 +111,22 @@ func (ty Type) CapsuleOps() *CapsuleOps {
 	}
 
 	return ty.typeImpl.(*capsuleType).Ops
+}
+
+// CapsuleExtensionData is a convenience interface to the ExtensionData
+// function that can be optionally implemented for a capsule type. It will
+// check to see if the underlying type implements ExtensionData and call it
+// if so. If not, it will return nil to indicate that the given key is not
+// supported.
+//
+// See the documentation for CapsuleOps.ExtensionData for more information
+// on the purpose of and usage of this mechanism.
+//
+// If CapsuleExtensionData is called on a non-capsule type then it will panic.
+func (ty Type) CapsuleExtensionData(key interface{}) interface{} {
+	ops := ty.CapsuleOps()
+	if ops.ExtensionData == nil {
+		return nil
+	}
+	return ops.ExtensionData(key)
 }

@@ -97,3 +97,40 @@ func TestCapsuleWithOps(t *testing.T) {
 	})
 
 }
+
+func TestCapsuleExtensionData(t *testing.T) {
+	ty := CapsuleWithOps("with extension data", reflect.TypeOf(0), &CapsuleOps{
+		ExtensionData: func(key interface{}) interface{} {
+			switch key {
+			// Note that this is a bad example of a key, just using a plain
+			// string for easier testing. Real-world extension keys should
+			// be named types belonging to a package in the application that
+			// is defining them.
+			case "hello":
+				return "world"
+			default:
+				return nil
+			}
+		},
+	})
+
+	got := ty.CapsuleExtensionData("hello")
+	want := interface{}("world")
+	if got != want {
+		t.Errorf("wrong result for 'hello'\ngot:  %#v\nwant: %#v", got, want)
+	}
+
+	got = ty.CapsuleExtensionData("nonexistent")
+	want = nil
+	if got != want {
+		t.Errorf("wrong result for 'nonexistent'\ngot:  %#v\nwant: %#v", got, want)
+	}
+
+	ty2 := Capsule("without extension data", reflect.TypeOf(0))
+	got = ty2.CapsuleExtensionData("hello")
+	want = nil
+	if got != want {
+		t.Errorf("wrong result for 'hello' without extension data\ngot:  %#v\nwant: %#v", got, want)
+	}
+
+}
