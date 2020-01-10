@@ -5,7 +5,7 @@ import (
 	"math/big"
 	"sort"
 
-	"github.com/vmihailenco/msgpack"
+	msgpack "github.com/vmihailenco/msgpack/v4"
 	"github.com/zclconf/go-cty/cty"
 	"github.com/zclconf/go-cty/cty/convert"
 )
