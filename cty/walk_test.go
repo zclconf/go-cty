@@ -101,11 +101,11 @@ func TestTransform(t *testing.T) {
 		"unknown_map":  UnknownVal(Map(Bool)),
 	})
 
-	gotVal, err := Transform(val, func(path Path, val Value) (Value, error) {
-		if val.Type().IsPrimitiveType() {
+	gotVal, err := Transform(val, func(path Path, v Value) (Value, error) {
+		if v.Type().IsPrimitiveType() {
 			return StringVal(fmt.Sprintf("%#v", path)), nil
 		}
-		return val, nil
+		return v, nil
 	})
 	if err != nil {
 		t.Fatalf("unexpected error: %s", err)
