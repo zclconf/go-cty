@@ -1,3 +1,6 @@
+# 1.2.2 (Unreleased)
+
+
 # 1.2.1 (January 10, 2020)
 
 * `cty`: Fixed an infinite recursion bug when working with sets containing nested data structures. ([#35](https://github.com/zclconf/go-cty/pull/35))
