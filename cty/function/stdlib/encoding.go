@@ -13,7 +13,7 @@ import (
 	"github.com/zclconf/go-cty/cty/function"
 )
 
-// Base64DecodeFunc constructs a function that decodes a string containing a base64 sequence.
+// Base64DecodeFunc is a function that decodes a string containing a base64 sequence.
 var Base64DecodeFunc = function.New(&function.Spec{
 	Params: []function.Parameter{
 		{
@@ -36,7 +36,7 @@ var Base64DecodeFunc = function.New(&function.Spec{
 	},
 })
 
-// Base64EncodeFunc constructs a function that encodes a string to a base64 sequence.
+// Base64EncodeFunc is a function that encodes a string to a base64 sequence.
 var Base64EncodeFunc = function.New(&function.Spec{
 	Params: []function.Parameter{
 		{
@@ -50,7 +50,7 @@ var Base64EncodeFunc = function.New(&function.Spec{
 	},
 })
 
-// Base64GzipFunc constructs a function that compresses a string with gzip and then encodes the result in
+// Base64GzipFunc is a function that compresses a string with gzip and then encodes the result in
 // Base64 encoding.
 var Base64GzipFunc = function.New(&function.Spec{
 	Params: []function.Parameter{
@@ -78,7 +78,7 @@ var Base64GzipFunc = function.New(&function.Spec{
 	},
 })
 
-// URLEncodeFunc constructs a function that applies URL encoding to a given string.
+// URLEncodeFunc is a function that applies URL encoding to a given string.
 var URLEncodeFunc = function.New(&function.Spec{
 	Params: []function.Parameter{
 		{

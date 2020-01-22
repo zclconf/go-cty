@@ -66,27 +66,27 @@ var UUIDV5Func = function.New(&function.Spec{
 	},
 })
 
-// Base64Sha256Func constructs a function that computes the SHA256 hash of a given string
+// Base64Sha256Func is a function that computes the SHA256 hash of a given string
 // and encodes it with Base64.
 var Base64Sha256Func = makeStringHashFunction(sha256.New, base64.StdEncoding.EncodeToString)
 
-// MakeFileBase64Sha256Func constructs a function that is like Base64Sha256Func but reads the
+// MakeFileBase64Sha256Func is a function that is like Base64Sha256Func but reads the
 // contents of a file rather than hashing a given literal string.
 func MakeFileBase64Sha256Func(baseDir string) function.Function {
 	return makeFileHashFunction(baseDir, sha256.New, base64.StdEncoding.EncodeToString)
 }
 
-// Base64Sha512Func constructs a function that computes the SHA256 hash of a given string
+// Base64Sha512Func is a function that computes the SHA256 hash of a given string
 // and encodes it with Base64.
 var Base64Sha512Func = makeStringHashFunction(sha512.New, base64.StdEncoding.EncodeToString)
 
-// MakeFileBase64Sha512Func constructs a function that is like Base64Sha512Func but reads the
+// MakeFileBase64Sha512Func is a function that is like Base64Sha512Func but reads the
 // contents of a file rather than hashing a given literal string.
 func MakeFileBase64Sha512Func(baseDir string) function.Function {
 	return makeFileHashFunction(baseDir, sha512.New, base64.StdEncoding.EncodeToString)
 }
 
-// BcryptFunc constructs a function that computes a hash of the given string using the Blowfish cipher.
+// BcryptFunc is a function that computes a hash of the given string using the Blowfish cipher.
 var BcryptFunc = function.New(&function.Spec{
 	Params: []function.Parameter{
 		{
@@ -124,16 +124,16 @@ var BcryptFunc = function.New(&function.Spec{
 	},
 })
 
-// Md5Func constructs a function that computes the MD5 hash of a given string and encodes it with hexadecimal digits.
+// Md5Func is a function that computes the MD5 hash of a given string and encodes it with hexadecimal digits.
 var Md5Func = makeStringHashFunction(md5.New, hex.EncodeToString)
 
-// MakeFileMd5Func constructs a function that is like Md5Func but reads the
+// MakeFileMd5Func is a function that is like Md5Func but reads the
 // contents of a file rather than hashing a given literal string.
 func MakeFileMd5Func(baseDir string) function.Function {
 	return makeFileHashFunction(baseDir, md5.New, hex.EncodeToString)
 }
 
-// RsaDecryptFunc constructs a function that decrypts an RSA-encrypted ciphertext.
+// RsaDecryptFunc is a function that decrypts an RSA-encrypted ciphertext.
 var RsaDecryptFunc = function.New(&function.Spec{
 	Params: []function.Parameter{
 		{
@@ -179,31 +179,31 @@ var RsaDecryptFunc = function.New(&function.Spec{
 	},
 })
 
-// Sha1Func contructs a function that computes the SHA1 hash of a given string
+// Sha1Func is a function that computes the SHA1 hash of a given string
 // and encodes it with hexadecimal digits.
 var Sha1Func = makeStringHashFunction(sha1.New, hex.EncodeToString)
 
-// MakeFileSha1Func constructs a function that is like Sha1Func but reads the
+// MakeFileSha1Func is a function that is like Sha1Func but reads the
 // contents of a file rather than hashing a given literal string.
 func MakeFileSha1Func(baseDir string) function.Function {
 	return makeFileHashFunction(baseDir, sha1.New, hex.EncodeToString)
 }
 
-// Sha256Func contructs a function that computes the SHA256 hash of a given string
+// Sha256Func is a function that computes the SHA256 hash of a given string
 // and encodes it with hexadecimal digits.
 var Sha256Func = makeStringHashFunction(sha256.New, hex.EncodeToString)
 
-// MakeFileSha256Func constructs a function that is like Sha256Func but reads the
+// MakeFileSha256Func is a function that is like Sha256Func but reads the
 // contents of a file rather than hashing a given literal string.
 func MakeFileSha256Func(baseDir string) function.Function {
 	return makeFileHashFunction(baseDir, sha256.New, hex.EncodeToString)
 }
 
-// Sha512Func contructs a function that computes the SHA512 hash of a given string
+// Sha512Func is a function that computes the SHA512 hash of a given string
 // and encodes it with hexadecimal digits.
 var Sha512Func = makeStringHashFunction(sha512.New, hex.EncodeToString)
 
-// MakeFileSha512Func constructs a function that is like Sha512Func but reads the
+// MakeFileSha512Func is a function that is like Sha512Func but reads the
 // contents of a file rather than hashing a given literal string.
 func MakeFileSha512Func(baseDir string) function.Function {
 	return makeFileHashFunction(baseDir, sha512.New, hex.EncodeToString)

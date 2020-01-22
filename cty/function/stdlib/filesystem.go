@@ -14,7 +14,7 @@ import (
 	"github.com/zclconf/go-cty/cty/function"
 )
 
-// MakeFileFunc constructs a function that takes a file path and returns the
+// MakeFileFunc is a function that takes a file path and returns the
 // contents of that file, either directly as a string (where valid UTF-8 is
 // required) or as a string containing base64 bytes.
 func MakeFileFunc(baseDir string, encBase64 bool) function.Function {
@@ -47,7 +47,7 @@ func MakeFileFunc(baseDir string, encBase64 bool) function.Function {
 	})
 }
 
-// MakeFileExistsFunc constructs a function that takes a path
+// MakeFileExistsFunc is a function that takes a path
 // and determines whether a file exists at that path
 func MakeFileExistsFunc(baseDir string) function.Function {
 	return function.New(&function.Spec{
@@ -90,7 +90,7 @@ func MakeFileExistsFunc(baseDir string) function.Function {
 	})
 }
 
-// MakeFileSetFunc constructs a function that takes a glob pattern
+// MakeFileSetFunc is a function that takes a glob pattern
 // and enumerates a file set from that pattern
 func MakeFileSetFunc(baseDir string) function.Function {
 	return function.New(&function.Spec{
@@ -158,7 +158,7 @@ func MakeFileSetFunc(baseDir string) function.Function {
 	})
 }
 
-// BasenameFunc constructs a function that takes a string containing a filesystem path
+// BasenameFunc is a function that takes a string containing a filesystem path
 // and removes all except the last portion from it.
 var BasenameFunc = function.New(&function.Spec{
 	Params: []function.Parameter{
@@ -173,7 +173,7 @@ var BasenameFunc = function.New(&function.Spec{
 	},
 })
 
-// DirnameFunc constructs a function that takes a string containing a filesystem path
+// DirnameFunc is a function that takes a string containing a filesystem path
 // and removes the last portion from it.
 var DirnameFunc = function.New(&function.Spec{
 	Params: []function.Parameter{
@@ -188,7 +188,7 @@ var DirnameFunc = function.New(&function.Spec{
 	},
 })
 
-// AbsPathFunc constructs a function that converts a filesystem path to an absolute path
+// AbsPathFunc is a function that converts a filesystem path to an absolute path
 var AbsPathFunc = function.New(&function.Spec{
 	Params: []function.Parameter{
 		{
@@ -203,7 +203,7 @@ var AbsPathFunc = function.New(&function.Spec{
 	},
 })
 
-// PathExpandFunc constructs a function that expands a leading ~ character to the current user's home directory.
+// PathExpandFunc is a function that expands a leading ~ character to the current user's home directory.
 var PathExpandFunc = function.New(&function.Spec{
 	Params: []function.Parameter{
 		{

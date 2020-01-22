@@ -203,7 +203,7 @@ var FormatDateFunc = function.New(&function.Spec{
 	},
 })
 
-// TimestampFunc constructs a function that returns a string representation of the current date and time.
+// TimestampFunc is a function that returns a string representation of the current date and time.
 var TimestampFunc = function.New(&function.Spec{
 	Params: []function.Parameter{},
 	Type:   function.StaticReturnType(cty.String),
@@ -212,7 +212,7 @@ var TimestampFunc = function.New(&function.Spec{
 	},
 })
 
-// TimeAddFunc constructs a function that adds a duration to a timestamp, returning a new timestamp.
+// TimeAddFunc is a function that adds a duration to a timestamp, returning a new timestamp.
 var TimeAddFunc = function.New(&function.Spec{
 	Params: []function.Parameter{
 		{

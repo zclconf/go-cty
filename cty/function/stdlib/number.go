@@ -360,7 +360,7 @@ var IntFunc = function.New(&function.Spec{
 	},
 })
 
-// CeilFunc contructs a function that returns the closest whole number greater
+// CeilFunc is a function that returns the closest whole number greater
 // than or equal to the given value.
 var CeilFunc = function.New(&function.Spec{
 	Params: []function.Parameter{
@@ -379,7 +379,7 @@ var CeilFunc = function.New(&function.Spec{
 	},
 })
 
-// FloorFunc contructs a function that returns the closest whole number lesser
+// FloorFunc is a function that returns the closest whole number lesser
 // than or equal to the given value.
 var FloorFunc = function.New(&function.Spec{
 	Params: []function.Parameter{
@@ -398,7 +398,7 @@ var FloorFunc = function.New(&function.Spec{
 	},
 })
 
-// LogFunc contructs a function that returns the logarithm of a given number in a given base.
+// LogFunc is a function that returns the logarithm of a given number in a given base.
 var LogFunc = function.New(&function.Spec{
 	Params: []function.Parameter{
 		{
@@ -426,7 +426,7 @@ var LogFunc = function.New(&function.Spec{
 	},
 })
 
-// PowFunc contructs a function that returns the logarithm of a given number in a given base.
+// PowFunc is a function that returns the logarithm of a given number in a given base.
 var PowFunc = function.New(&function.Spec{
 	Params: []function.Parameter{
 		{
@@ -454,8 +454,8 @@ var PowFunc = function.New(&function.Spec{
 	},
 })
 
-// SignumFunc contructs a function that returns the closest whole number greater
-// than or equal to the given value.
+// SignumFunc is a function that determines the sign of a number, returning a
+// number between -1 and 1 to represent the sign..
 var SignumFunc = function.New(&function.Spec{
 	Params: []function.Parameter{
 		{
@@ -480,7 +480,7 @@ var SignumFunc = function.New(&function.Spec{
 	},
 })
 
-// ParseIntFunc contructs a function that parses a string argument and returns an integer of the specified base.
+// ParseIntFunc is a function that parses a string argument and returns an integer of the specified base.
 var ParseIntFunc = function.New(&function.Spec{
 	Params: []function.Parameter{
 		{

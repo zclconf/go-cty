@@ -189,7 +189,7 @@ var ElementFunc = function.New(&function.Spec{
 	},
 })
 
-// CoalesceListFunc constructs a function that takes any number of list arguments
+// CoalesceListFunc is a function that takes any number of list arguments
 // and returns the first one that isn't empty.
 var CoalesceListFunc = function.New(&function.Spec{
 	Params: []function.Parameter{},
@@ -249,7 +249,7 @@ var CoalesceListFunc = function.New(&function.Spec{
 	},
 })
 
-// CompactFunc constructs a function that takes a list of strings and returns a new list
+// CompactFunc is a function that takes a list of strings and returns a new list
 // with any empty string elements removed.
 var CompactFunc = function.New(&function.Spec{
 	Params: []function.Parameter{
@@ -285,7 +285,7 @@ var CompactFunc = function.New(&function.Spec{
 	},
 })
 
-// ContainsFunc constructs a function that determines whether a given list or
+// ContainsFunc is a function that determines whether a given list or
 // set contains a given single value as one of its elements.
 var ContainsFunc = function.New(&function.Spec{
 	Params: []function.Parameter{
@@ -316,7 +316,7 @@ var ContainsFunc = function.New(&function.Spec{
 	},
 })
 
-// DistinctFunc constructs a function that takes a list and returns a new list
+// DistinctFunc is a function that takes a list and returns a new list
 // with any duplicate elements removed.
 var DistinctFunc = function.New(&function.Spec{
 	Params: []function.Parameter{
@@ -351,7 +351,7 @@ var DistinctFunc = function.New(&function.Spec{
 	},
 })
 
-// ChunklistFunc constructs a function that splits a single list into fixed-size chunks,
+// ChunklistFunc is a function that splits a single list into fixed-size chunks,
 // returning a list of lists.
 var ChunklistFunc = function.New(&function.Spec{
 	Params: []function.Parameter{
@@ -416,7 +416,7 @@ var ChunklistFunc = function.New(&function.Spec{
 	},
 })
 
-// FlattenFunc constructs a function that takes a list and replaces any elements
+// FlattenFunc is a function that takes a list and replaces any elements
 // that are lists with a flattened sequence of the list contents.
 var FlattenFunc = function.New(&function.Spec{
 	Params: []function.Parameter{
@@ -485,7 +485,7 @@ func flattener(flattenList cty.Value) ([]cty.Value, bool) {
 	return out, true
 }
 
-// KeysFunc constructs a function that takes a map and returns a sorted list of the map keys.
+// KeysFunc is a function that takes a map and returns a sorted list of the map keys.
 var KeysFunc = function.New(&function.Spec{
 	Params: []function.Parameter{
 		{
@@ -555,51 +555,7 @@ var KeysFunc = function.New(&function.Spec{
 	},
 })
 
-// ListFunc constructs a function that takes an arbitrary number of arguments
-// and returns a list containing those values in the same order.
-//
-// This function is deprecated in Terraform v0.12
-var ListFunc = function.New(&function.Spec{
-	Params: []function.Parameter{},
-	VarParam: &function.Parameter{
-		Name:             "vals",
-		Type:             cty.DynamicPseudoType,
-		AllowUnknown:     true,
-		AllowDynamicType: true,
-		AllowNull:        true,
-	},
-	Type: func(args []cty.Value) (ret cty.Type, err error) {
-		if len(args) == 0 {
-			return cty.NilType, errors.New("at least one argument is required")
-		}
-
-		argTypes := make([]cty.Type, len(args))
-
-		for i, arg := range args {
-			argTypes[i] = arg.Type()
-		}
-
-		retType, _ := convert.UnifyUnsafe(argTypes)
-		if retType == cty.NilType {
-			return cty.NilType, errors.New("all arguments must have the same type")
-		}
-
-		return cty.List(retType), nil
-	},
-	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
-		newList := make([]cty.Value, 0, len(args))
-
-		for _, arg := range args {
-			// We already know this will succeed because of the checks in our Type func above
-			arg, _ = convert.Convert(arg, retType.ElementType())
-			newList = append(newList, arg)
-		}
-
-		return cty.ListVal(newList), nil
-	},
-})
-
-// LookupFunc constructs a function that performs dynamic lookups of map types.
+// LookupFunc is a function that performs dynamic lookups of map types.
 var LookupFunc = function.New(&function.Spec{
 	Params: []function.Parameter{
 		{
@@ -689,164 +645,7 @@ var LookupFunc = function.New(&function.Spec{
 	},
 })
 
-// MapFunc constructs a function that takes an even number of arguments and
-// returns a map whose elements are constructed from consecutive pairs of arguments.
-//
-// This function is deprecated in Terraform v0.12
-var MapFunc = function.New(&function.Spec{
-	Params: []function.Parameter{},
-	VarParam: &function.Parameter{
-		Name:             "vals",
-		Type:             cty.DynamicPseudoType,
-		AllowUnknown:     true,
-		AllowDynamicType: true,
-		AllowNull:        true,
-	},
-	Type: func(args []cty.Value) (ret cty.Type, err error) {
-		if len(args) < 2 || len(args)%2 != 0 {
-			return cty.NilType, fmt.Errorf("map requires an even number of two or more arguments, got %d", len(args))
-		}
-
-		argTypes := make([]cty.Type, len(args)/2)
-		index := 0
-
-		for i := 0; i < len(args); i += 2 {
-			argTypes[index] = args[i+1].Type()
-			index++
-		}
-
-		valType, _ := convert.UnifyUnsafe(argTypes)
-		if valType == cty.NilType {
-			return cty.NilType, errors.New("all arguments must have the same type")
-		}
-
-		return cty.Map(valType), nil
-	},
-	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
-		for _, arg := range args {
-			if !arg.IsWhollyKnown() {
-				return cty.UnknownVal(retType), nil
-			}
-		}
-
-		outputMap := make(map[string]cty.Value)
-
-		for i := 0; i < len(args); i += 2 {
-
-			key := args[i].AsString()
-
-			err := gocty.FromCtyValue(args[i], &key)
-			if err != nil {
-				return cty.NilVal, err
-			}
-
-			val := args[i+1]
-
-			var variable cty.Value
-			err = gocty.FromCtyValue(val, &variable)
-			if err != nil {
-				return cty.NilVal, err
-			}
-
-			// We already know this will succeed because of the checks in our Type func above
-			variable, _ = convert.Convert(variable, retType.ElementType())
-
-			// Check for duplicate keys
-			if _, ok := outputMap[key]; ok {
-				return cty.NilVal, fmt.Errorf("argument %d is a duplicate key: %q", i+1, key)
-			}
-			outputMap[key] = variable
-		}
-
-		return cty.MapVal(outputMap), nil
-	},
-})
-
-// MatchkeysFunc constructs a function that constructs a new list by taking a
-// subset of elements from one list whose indexes match the corresponding
-// indexes of values in another list.
-var MatchkeysFunc = function.New(&function.Spec{
-	Params: []function.Parameter{
-		{
-			Name: "values",
-			Type: cty.List(cty.DynamicPseudoType),
-		},
-		{
-			Name: "keys",
-			Type: cty.List(cty.DynamicPseudoType),
-		},
-		{
-			Name: "searchset",
-			Type: cty.List(cty.DynamicPseudoType),
-		},
-	},
-	Type: func(args []cty.Value) (cty.Type, error) {
-		ty, _ := convert.UnifyUnsafe([]cty.Type{args[1].Type(), args[2].Type()})
-		if ty == cty.NilType {
-			return cty.NilType, errors.New("keys and searchset must be of the same type")
-		}
-
-		// the return type is based on args[0] (values)
-		return args[0].Type(), nil
-	},
-	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
-		if !args[0].IsKnown() {
-			return cty.UnknownVal(cty.List(retType.ElementType())), nil
-		}
-
-		if args[0].LengthInt() != args[1].LengthInt() {
-			return cty.ListValEmpty(retType.ElementType()), errors.New("length of keys and values should be equal")
-		}
-
-		output := make([]cty.Value, 0)
-		values := args[0]
-
-		// Keys and searchset must be the same type.
-		// We can skip error checking here because we've already verified that
-		// they can be unified in the Type function
-		ty, _ := convert.UnifyUnsafe([]cty.Type{args[1].Type(), args[2].Type()})
-		keys, _ := convert.Convert(args[1], ty)
-		searchset, _ := convert.Convert(args[2], ty)
-
-		// if searchset is empty, return an empty list.
-		if searchset.LengthInt() == 0 {
-			return cty.ListValEmpty(retType.ElementType()), nil
-		}
-
-		if !values.IsWhollyKnown() || !keys.IsWhollyKnown() {
-			return cty.UnknownVal(retType), nil
-		}
-
-		i := 0
-		for it := keys.ElementIterator(); it.Next(); {
-			_, key := it.Element()
-			for iter := searchset.ElementIterator(); iter.Next(); {
-				_, search := iter.Element()
-				eq, err := Equal(key, search)
-				if err != nil {
-					return cty.NilVal, err
-				}
-				if !eq.IsKnown() {
-					return cty.ListValEmpty(retType.ElementType()), nil
-				}
-				if eq.True() {
-					v := values.Index(cty.NumberIntVal(int64(i)))
-					output = append(output, v)
-					break
-				}
-			}
-			i++
-		}
-
-		// if we haven't matched any key, then output is an empty list.
-		if len(output) == 0 {
-			return cty.ListValEmpty(retType.ElementType()), nil
-		}
-		return cty.ListVal(output), nil
-	},
-})
-
-// MergeFunc constructs a function that takes an arbitrary number of maps and
+// MergeFunc is a function that takes an arbitrary number of maps and
 // returns a single map that contains a merged set of elements from all of the maps.
 //
 // If more than one given map defines the same key then the one that is later in
@@ -878,7 +677,7 @@ var MergeFunc = function.New(&function.Spec{
 	},
 })
 
-// ReverseFunc takes a sequence and produces a new sequence of the same length
+// ReverseListFunc takes a sequence and produces a new sequence of the same length
 // with all of the same elements as the given sequence but in reverse order.
 var ReverseListFunc = function.New(&function.Spec{
 	Params: []function.Parameter{
@@ -1044,7 +843,7 @@ var SetProductFunc = function.New(&function.Spec{
 	},
 })
 
-// SliceFunc constructs a function that extracts some consecutive elements
+// SliceFunc is a function that extracts some consecutive elements
 // from within a list.
 var SliceFunc = function.New(&function.Spec{
 	Params: []function.Parameter{
@@ -1160,61 +959,7 @@ func sliceIndexes(args []cty.Value) (int, int, bool, error) {
 	return startIndex, endIndex, startKnown && endKnown, nil
 }
 
-// TransposeFunc constructs a function that takes a map of lists of strings and
-// swaps the keys and values to produce a new map of lists of strings.
-var TransposeFunc = function.New(&function.Spec{
-	Params: []function.Parameter{
-		{
-			Name: "values",
-			Type: cty.Map(cty.List(cty.String)),
-		},
-	},
-	Type: function.StaticReturnType(cty.Map(cty.List(cty.String))),
-	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
-		inputMap := args[0]
-		if !inputMap.IsWhollyKnown() {
-			return cty.UnknownVal(retType), nil
-		}
-
-		outputMap := make(map[string]cty.Value)
-		tmpMap := make(map[string][]string)
-
-		for it := inputMap.ElementIterator(); it.Next(); {
-			inKey, inVal := it.Element()
-			for iter := inVal.ElementIterator(); iter.Next(); {
-				_, val := iter.Element()
-				if !val.Type().Equals(cty.String) {
-					return cty.MapValEmpty(cty.List(cty.String)), errors.New("input must be a map of lists of strings")
-				}
-
-				outKey := val.AsString()
-				if _, ok := tmpMap[outKey]; !ok {
-					tmpMap[outKey] = make([]string, 0)
-				}
-				outVal := tmpMap[outKey]
-				outVal = append(outVal, inKey.AsString())
-				sort.Strings(outVal)
-				tmpMap[outKey] = outVal
-			}
-		}
-
-		for outKey, outVal := range tmpMap {
-			values := make([]cty.Value, 0)
-			for _, v := range outVal {
-				values = append(values, cty.StringVal(v))
-			}
-			outputMap[outKey] = cty.ListVal(values)
-		}
-
-		if len(outputMap) == 0 {
-			return cty.MapValEmpty(cty.List(cty.String)), nil
-		}
-
-		return cty.MapVal(outputMap), nil
-	},
-})
-
-// ValuesFunc constructs a function that returns a list of the map values,
+// ValuesFunc is a function that returns a list of the map values,
 // in the order of the sorted keys.
 var ValuesFunc = function.New(&function.Spec{
 	Params: []function.Parameter{
@@ -1271,7 +1016,7 @@ var ValuesFunc = function.New(&function.Spec{
 	},
 })
 
-// ZipmapFunc constructs a function that constructs a map from a list of keys
+// ZipmapFunc is a function that constructs a map from a list of keys
 // and a corresponding list of values.
 var ZipmapFunc = function.New(&function.Spec{
 	Params: []function.Parameter{
@@ -1436,29 +1181,11 @@ func Keys(inputMap cty.Value) (cty.Value, error) {
 	return KeysFunc.Call([]cty.Value{inputMap})
 }
 
-// List takes any number of list arguments and returns a list containing those
-//  values in the same order.
-func List(args ...cty.Value) (cty.Value, error) {
-	return ListFunc.Call(args)
-}
-
 // Lookup performs a dynamic lookup into a map.
 // There are two required arguments, map and key, plus an optional default,
 // which is a value to return if no key is found in map.
 func Lookup(args ...cty.Value) (cty.Value, error) {
 	return LookupFunc.Call(args)
-}
-
-// Map takes an even number of arguments and returns a map whose elements are constructed
-// from consecutive pairs of arguments.
-func Map(args ...cty.Value) (cty.Value, error) {
-	return MapFunc.Call(args)
-}
-
-// Matchkeys constructs a new list by taking a subset of elements from one list
-// whose indexes match the corresponding indexes of values in another list.
-func Matchkeys(values, keys, searchset cty.Value) (cty.Value, error) {
-	return MatchkeysFunc.Call([]cty.Value{values, keys, searchset})
 }
 
 // Merge takes an arbitrary number of maps and returns a single map that contains
@@ -1473,7 +1200,7 @@ func Merge(maps ...cty.Value) (cty.Value, error) {
 // ReverseList takes a sequence and produces a new sequence of the same length
 // with all of the same elements as the given sequence but in reverse order.
 func ReverseList(list cty.Value) (cty.Value, error) {
-	return ReverseFunc.Call([]cty.Value{list})
+	return ReverseListFunc.Call([]cty.Value{list})
 }
 
 // SetProduct computes the Cartesian product of sets or sequences.
@@ -1484,12 +1211,6 @@ func SetProduct(sets ...cty.Value) (cty.Value, error) {
 // Slice extracts some consecutive elements from within a list.
 func Slice(list, start, end cty.Value) (cty.Value, error) {
 	return SliceFunc.Call([]cty.Value{list, start, end})
-}
-
-// Transpose takes a map of lists of strings and swaps the keys and values to
-// produce a new map of lists of strings.
-func Transpose(values cty.Value) (cty.Value, error) {
-	return TransposeFunc.Call([]cty.Value{values})
 }
 
 // Values returns a list of the map values, in the order of the sorted keys.
