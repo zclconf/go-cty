@@ -345,7 +345,45 @@ var IndentFunc = function.New(&function.Spec{
 
 // ReplaceFunc is a function that searches a given string for another given
 // substring, and replaces each occurence with a given replacement string.
+// The substr argument is a simple string.
 var ReplaceFunc = function.New(&function.Spec{
+	Params: []function.Parameter{
+		{
+			Name: "str",
+			Type: cty.String,
+		},
+		{
+			Name: "substr",
+			Type: cty.String,
+		},
+		{
+			Name: "replace",
+			Type: cty.String,
+		},
+		{
+			Name: "n",
+			Type: cty.Number,
+		},
+	},
+	Type: function.StaticReturnType(cty.String),
+	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
+		str := args[0].AsString()
+		substr := args[1].AsString()
+		replace := args[2].AsString()
+		var n int
+		err := gocty.FromCtyValue(args[2], &n)
+		if err != nil {
+			return cty.NilVal, err
+		}
+
+		return cty.StringVal(strings.Replace(str, substr, replace, n)), nil
+	},
+})
+
+// RegexpReplaceAllFunc is a function that searches a given string for another
+// given substring, and replaces each occurence with a given replacement
+// string. The substr argument must be a valid regular expression.
+var RegexpReplaceAllFunc = function.New(&function.Spec{
 	Params: []function.Parameter{
 		{
 			Name: "str",
@@ -366,18 +404,12 @@ var ReplaceFunc = function.New(&function.Spec{
 		substr := args[1].AsString()
 		replace := args[2].AsString()
 
-		// We search/replace using a regexp if the string is surrounded in
-		// forward slashes.
-		if len(substr) > 1 && substr[0] == '/' && substr[len(substr)-1] == '/' {
-			re, err := regexp.Compile(substr[1 : len(substr)-1])
-			if err != nil {
-				return cty.UnknownVal(cty.String), err
-			}
-
-			return cty.StringVal(re.ReplaceAllString(str, replace)), nil
+		re, err := regexp.Compile(substr[1 : len(substr)-1])
+		if err != nil {
+			return cty.UnknownVal(cty.String), err
 		}
 
-		return cty.StringVal(strings.Replace(str, substr, replace, -1)), nil
+		return cty.StringVal(re.ReplaceAllString(str, replace)), nil
 	},
 })
 
@@ -552,10 +584,18 @@ func Indent(spaces, str cty.Value) (cty.Value, error) {
 	return IndentFunc.Call([]cty.Value{spaces, str})
 }
 
-// Replace searches a given string for another given substring,
-// and replaces all occurences with a given replacement string.
-func Replace(str, substr, replace cty.Value) (cty.Value, error) {
-	return ReplaceFunc.Call([]cty.Value{str, substr, replace})
+func Replace(str, substr, replace, n cty.Value) (cty.Value, error) {
+	return ReplaceFunc.Call([]cty.Value{str, substr, replace, n})
+}
+
+// ReplaceAll searches a given string for another given substring,
+// and replaces all occurrences with a given replacement string.
+func ReplaceAll(str, substr, replace cty.Value) (cty.Value, error) {
+	return ReplaceFunc.Call([]cty.Value{str, substr, replace, cty.NumberIntVal(-1)})
+}
+
+func RegexpReplaceAll(str, substr, replace cty.Value) (cty.Value, error) {
+	return RegexpReplaceAllFunc.Call([]cty.Value{str, substr, replace})
 }
 
 // Title converts the first letter of each word in the given string to uppercase.
