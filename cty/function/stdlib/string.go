@@ -371,7 +371,7 @@ var ReplaceFunc = function.New(&function.Spec{
 		substr := args[1].AsString()
 		replace := args[2].AsString()
 		var n int
-		err := gocty.FromCtyValue(args[2], &n)
+		err := gocty.FromCtyValue(args[3], &n)
 		if err != nil {
 			return cty.NilVal, err
 		}
