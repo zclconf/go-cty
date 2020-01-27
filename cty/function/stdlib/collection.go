@@ -865,7 +865,7 @@ var SliceFunc = function.New(&function.Spec{
 		argTy := arg.Type()
 
 		if argTy.IsSetType() {
-			return cty.NilType, function.NewArgErrorf(0, "cannot slice a set, because its elements do not have indices; use the tolist function to force conversion to list if the ordering of the result is not important")
+			return cty.NilType, function.NewArgErrorf(0, "cannot slice a set, because its elements do not have indices; explicitly convert to a list if the ordering of the result is not important")
 		}
 		if !argTy.IsListType() && !argTy.IsTupleType() {
 			return cty.NilType, function.NewArgErrorf(0, "must be a list or tuple value")
