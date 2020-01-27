@@ -816,7 +816,7 @@ var SetProductFunc = function.New(&function.Spec{
 					if err != nil {
 						// Should never happen since we checked this in our
 						// type-checking function.
-						return cty.NilVal, fmt.Errorf("failed to convert argVals[%d][%d] to %s; this is a bug in Terraform", j, n, ty.FriendlyName())
+						return cty.NilVal, fmt.Errorf("failed to convert argVals[%d][%d] to %s; this is a bug in cty", j, n, ty.FriendlyName())
 					}
 				}
 				pi[j] = val
