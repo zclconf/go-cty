@@ -413,7 +413,7 @@ func startsDateFormatVerb(b byte) bool {
 
 // TimeAdd adds a duration to a timestamp, returning a new timestamp.
 //
-// In the Terraform language, timestamps are conventionally represented as
+// In the HCL language, timestamps are conventionally represented as
 // strings using RFC 3339 "Date and Time format" syntax. Timeadd requires
 // the timestamp argument to be a string conforming to this syntax.
 //
