@@ -138,6 +138,9 @@ func getConversionKnown(in cty.Type, out cty.Type, unsafe bool) conversion {
 		outEty := out.ElementType()
 		return conversionObjectToMap(in, outEty, unsafe)
 
+	case out.IsObjectType() && in.IsMapType():
+		return conversionMapToObject(in, out, unsafe)
+
 	case in.IsCapsuleType() || out.IsCapsuleType():
 		if !unsafe {
 			// Capsule types can only participate in "unsafe" conversions,

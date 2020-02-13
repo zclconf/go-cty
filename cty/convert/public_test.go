@@ -336,6 +336,41 @@ func TestConvert(t *testing.T) {
 		},
 		{
 			Value: cty.MapVal(map[string]cty.Value{
+				"greeting": cty.StringVal("Hello"),
+				"name":     cty.StringVal("John"),
+			}),
+			Type: cty.Object(map[string]cty.Type{
+				"greeting": cty.String,
+				"name":     cty.String,
+			}),
+			Want: cty.ObjectVal(map[string]cty.Value{
+				"greeting": cty.StringVal("Hello"),
+				"name":     cty.StringVal("John"),
+			}),
+		},
+		{
+			Value: cty.MapVal(map[string]cty.Value{
+				"greeting": cty.StringVal("Hello"),
+				"name":     cty.StringVal("John"),
+			}),
+			Type: cty.Object(map[string]cty.Type{
+				"greeting": cty.List(cty.String),
+				"name":     cty.String,
+			}),
+			WantError: true, // "greeting" cannot be converted
+		},
+		{
+			Value: cty.MapVal(map[string]cty.Value{
+				"greeting": cty.StringVal("Hello"),
+				"name":     cty.StringVal("John"),
+			}),
+			Type: cty.Object(map[string]cty.Type{
+				"name": cty.String,
+			}),
+			WantError: true, // object has no attribute "greeting"
+		},
+		{
+			Value: cty.MapVal(map[string]cty.Value{
 				"a": cty.NumberIntVal(2),
 				"b": cty.NumberIntVal(5),
 			}),
