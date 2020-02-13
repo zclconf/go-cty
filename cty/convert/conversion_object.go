@@ -14,9 +14,38 @@ import (
 // Shallow object conversions work the same for both safe and unsafe modes,
 // but the safety flag is passed on to recursive conversions and may thus
 // limit the above definition of "subset".
-func conversionObjectToObject(in, out cty.Type, unsafe bool) conversion {
+func conversionObjectToObject(in cty.Type, out cty.Type, unsafe bool) conversion {
 	inAtys := in.AttributeTypes()
 	outAtys := out.AttributeTypes()
+
+	return conversionObjectOrMapToObject(false, inAtys, outAtys, unsafe)
+}
+
+// conversionMapToObject works the same as conversionObjectToObject, however
+// at this point we don’t know if the input map has all the keys that the
+// output object requires. As such it is always unsafe.
+func conversionMapToObject(mapType cty.Type, objectType cty.Type, unsafe bool) conversion {
+	outAtys := objectType.AttributeTypes()
+	atyCount := len(outAtys)
+	inAtys := make(map[string]cty.Type, atyCount)
+
+	if atyCount != 0 {
+		mapEty := mapType.ElementType()
+
+		// For now we just assume the map will have all the necessary keys so at
+		// least we can fail early if we can’t convert from the map's element
+		// type to the output object's values.
+		for name := range outAtys {
+			inAtys[name] = mapEty
+		}
+	}
+
+	return conversionObjectOrMapToObject(true, inAtys, outAtys, unsafe)
+}
+
+// conversionObjectOrMapToObject first checks if the values in the input can
+// be converted to the output object's, and returns a conversion if successful.
+func conversionObjectOrMapToObject(inIsMap bool, inAtys map[string]cty.Type, outAtys map[string]cty.Type, unsafe bool) conversion {
 	attrConvs := make(map[string]conversion)
 
 	for name, outAty := range outAtys {
@@ -44,9 +73,24 @@ func conversionObjectToObject(in, out cty.Type, unsafe bool) conversion {
 	// If we get here then a conversion is possible, using the attribute
 	// conversions given in attrConvs.
 	return func(val cty.Value, path cty.Path) (cty.Value, error) {
-		attrVals := make(map[string]cty.Value, len(attrConvs))
 		path = append(path, nil)
 		pathStep := &path[len(path)-1]
+
+		if len(attrConvs) == 0 {
+			return cty.EmptyObjectVal, nil
+		}
+
+		if inIsMap {
+			// This is the first opportunity to check if the input map has all
+			// of the keys wanted in the output object.
+			for name := range outAtys {
+				if val.HasIndex(cty.StringVal(name)).False() {
+					return cty.NilVal, path.NewErrorf("missing required attribute %s", name)
+				}
+			}
+		}
+
+		attrVals := make(map[string]cty.Value, len(attrConvs))
 
 		for it := val.ElementIterator(); it.Next(); {
 			nameVal, val := it.Element()

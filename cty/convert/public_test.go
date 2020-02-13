@@ -448,6 +448,108 @@ func TestConvert(t *testing.T) {
 			WantError: true, // recursive conversion from bool to number is impossible
 		},
 		{
+			Value: cty.MapVal(map[string]cty.Value{
+				"foo": cty.StringVal("foo value"),
+				"bar": cty.StringVal("bar value"),
+			}),
+			Type: cty.Object(map[string]cty.Type{
+				"foo": cty.String,
+			}),
+			Want: cty.ObjectVal(map[string]cty.Value{
+				"foo": cty.StringVal("foo value"),
+			}),
+		},
+		{
+			Value: cty.MapVal(map[string]cty.Value{
+				"foo": cty.True,
+			}),
+			Type: cty.Object(map[string]cty.Type{
+				"foo": cty.String,
+			}),
+			Want: cty.ObjectVal(map[string]cty.Value{
+				"foo": cty.StringVal("true"),
+			}),
+		},
+		{
+			Value: cty.MapVal(map[string]cty.Value{
+				"foo": cty.DynamicVal,
+			}),
+			Type: cty.Object(map[string]cty.Type{
+				"foo": cty.String,
+			}),
+			Want: cty.ObjectVal(map[string]cty.Value{
+				"foo": cty.UnknownVal(cty.String),
+			}),
+		},
+		{
+			Value: cty.MapVal(map[string]cty.Value{
+				"foo": cty.NullVal(cty.String),
+			}),
+			Type: cty.Object(map[string]cty.Type{
+				"foo": cty.String,
+			}),
+			Want: cty.ObjectVal(map[string]cty.Value{
+				"foo": cty.NullVal(cty.String),
+			}),
+		},
+		{
+			Value: cty.MapVal(map[string]cty.Value{
+				"foo": cty.True,
+			}),
+			Type: cty.Object(map[string]cty.Type{
+				"foo": cty.DynamicPseudoType,
+			}),
+			Want: cty.ObjectVal(map[string]cty.Value{
+				"foo": cty.True,
+			}),
+		},
+		{
+			Value: cty.MapVal(map[string]cty.Value{
+				"bar": cty.StringVal("bar value"),
+			}),
+			Type: cty.Object(map[string]cty.Type{
+				"foo": cty.String,
+			}),
+			WantError: true, // given value must have superset object type
+		},
+		{
+			Value: cty.MapVal(map[string]cty.Value{
+				"bar": cty.StringVal("bar value"),
+			}),
+			Type: cty.Object(map[string]cty.Type{
+				"foo": cty.String,
+				"baz": cty.String,
+			}),
+			WantError: true, // given value must have superset object type
+		},
+		{
+			Value: cty.MapValEmpty(cty.String),
+			Type: cty.Object(map[string]cty.Type{
+				"foo": cty.String,
+				"bar": cty.String,
+				"baz": cty.String,
+			}),
+			WantError: true, // given value must have superset object type
+		},
+		{
+			Value: cty.MapVal(map[string]cty.Value{
+				"foo": cty.True,
+			}),
+			Type: cty.Object(map[string]cty.Type{
+				"foo": cty.Number,
+			}),
+			WantError: true, // recursive conversion from bool to number is impossible
+		},
+		{
+			Value: cty.MapVal(map[string]cty.Value{
+				"foo": cty.UnknownVal(cty.Bool),
+			}),
+			Type: cty.Object(map[string]cty.Type{
+				"foo": cty.Number,
+			}),
+			WantError: true, // recursive conversion from bool to number is impossible
+		},
+		{
 			Value: cty.NullVal(cty.String),
 			Type:  cty.DynamicPseudoType,
 			Want:  cty.NullVal(cty.String),
@@ -538,6 +640,22 @@ func TestConvert(t *testing.T) {
 		},
 		{
 			Value: cty.ObjectVal(map[string]cty.Value{
+				"foo": cty.StringVal("hello"),
+				"bar": cty.StringVal("world").Mark(1),
+			}),
+			Type: cty.Object(map[string]cty.Type{"foo": cty.String}),
+			Want: cty.ObjectVal(map[string]cty.Value{"foo": cty.StringVal("hello")}),
+		},
+		{
+			Value: cty.MapVal(map[string]cty.Value{
+				"foo": cty.StringVal("hello").Mark(1),
+				"bar": cty.StringVal("world").Mark(1),
+			}),
+			Type: cty.Object(map[string]cty.Type{"foo": cty.String}),
+			Want: cty.ObjectVal(map[string]cty.Value{"foo": cty.StringVal("hello").Mark(1)}),
+		},
+		{
+			Value: cty.MapVal(map[string]cty.Value{
 				"foo": cty.StringVal("hello"),
 				"bar": cty.StringVal("world").Mark(1),
 			}),
