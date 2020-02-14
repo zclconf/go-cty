@@ -36,7 +36,7 @@ func (t typeImplSigil) isTypeImpl() typeImplSigil {
 // Equals returns true if the other given Type exactly equals the receiver
 // type.
 func (t Type) Equals(other Type) bool {
-	return t.typeImpl.Equals(other)
+	return t.typeImpl != nil && t.typeImpl.Equals(other)
 }
 
 // FriendlyName returns a human-friendly *English* name for the given type.
