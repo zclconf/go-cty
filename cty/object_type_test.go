@@ -12,6 +12,11 @@ func TestObjectTypeEquals(t *testing.T) {
 		Expected bool
 	}{
 		{
+			NilType,
+			String,
+			false,
+		},
+		{
 			Object(map[string]Type{}),
 			Object(map[string]Type{}),
 			true,
