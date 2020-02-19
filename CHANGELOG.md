@@ -1,5 +1,37 @@
 # 1.2.2 (Unreleased)
 
+* `function/stdlib`: HashiCorp has contributed a number of additional functions to the standard library that were originally implemented directly inside their Terraform codebase:
+  * `Element`: take an element from a list or tuple by index, using modulo wrap-around.
+  * `CoalesceList`: return the first non-empty list argument.
+  * `Compact`: take a list of strings and return a new list of strings with all empty strings removed.
+  * `Contains`: returns true if a given value appears as an element in a list, tuple, or set.
+  * `Distinct`: filters duplicate elements from a list while retaining the order of remaining items.
+  * `ChunkList`: turn a list into a list-of-lists where each top-level list is a "chunk" of a particular size of elements from the input.
+  * `Flatten`: given a sequence that might contain other sequences, eliminate any intermediate sequences to produce a flat sequence.
+  * `Keys`: return a list of keys from a map or object value in lexical order.
+  * `Values`: return a list of values from a map in the same order as `Keys`.
+  * `Lookup`: conditional lookup of an element from a map if it's present, or a fallback value if not.
+  * `Merge`: given one or more maps or objects, merge them together into a single collection.
+  * `ReverseList`: given a list, return a new list with the same items in the opposite order.
+  * `SetProduct`: compute the cartesian product of one or more sets.
+  * `Slice`: extract a consecutive sub-list from a list.
+  * `Zipmap`: given a pair of lists of the same length, interpret the first as keys and the second as corresponding values to produce a map.
+  * A factory `MakeToFunc` to build functions that each convert to a particular type constraint.
+  * `TimeAdd`: add a duration to a timestamp to produce a new timestamp.
+  * `Ceil` and `Floor`: round a fractional value to the nearest integer, away from or towards zero respectively.
+  * `Log`: computes a logarithm in a given base.
+  * `Pow`: implements exponentiation.
+  * `ParseInt`: parses a string containing digits in a particular base to produce a whole number value.
+  * `Join`: concatenates the elements of a list of strings with a given separator to produce a string.
+  * `Split`: partitions a string by a given separator, returning a list of strings.
+  * `Sort`: sorts a list of strings into lexical order.
+  * `Chomp`: removes one or more newline characters from the end of a given string, producing a new string.
+  * `Indent`: prepends a number of spaces to all lines except the first in a given string, producing a new string.
+  * `Title`: converts a string to "title case".
+  * `TrimSpace`: trims spaces from the start and end of a given string.
+  * `Trim`: generalization of `TrimSpace` that allows user-specified trimming characters.
+  * `TrimPrefix`: like `Trim` but only at the start of the string.
+  * `TrimSuffix`: like `Trim` but only at the end of the string.
 
 # 1.2.1 (January 10, 2020)
 
