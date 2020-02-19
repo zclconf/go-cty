@@ -1,5 +1,6 @@
 # 1.2.2 (Unreleased)
 
+* `convert`: There are now conversions from map types to object types, as long as the given map type's element type is convertible to all of the object type's attribute types. ([#42](https://github.com/zclconf/go-cty/pull/42))
 * `function/stdlib`: HashiCorp has contributed a number of additional functions to the standard library that were originally implemented directly inside their Terraform codebase: ([#37](https://github.com/zclconf/go-cty/pull/37))
   * `Element`: take an element from a list or tuple by index, using modulo wrap-around.
   * `CoalesceList`: return the first non-empty list argument.
