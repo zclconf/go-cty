@@ -566,19 +566,12 @@ var LookupFunc = function.New(&function.Spec{
 			Name: "key",
 			Type: cty.String,
 		},
-	},
-	VarParam: &function.Parameter{
-		Name:             "default",
-		Type:             cty.DynamicPseudoType,
-		AllowUnknown:     true,
-		AllowDynamicType: true,
-		AllowNull:        true,
+		{
+			Name: "default",
+			Type: cty.DynamicPseudoType,
+		},
 	},
 	Type: func(args []cty.Value) (ret cty.Type, err error) {
-		if len(args) < 1 || len(args) > 3 {
-			return cty.NilType, fmt.Errorf("lookup() takes two or three arguments, got %d", len(args))
-		}
-
 		ty := args[0].Type()
 
 		switch {
@@ -609,13 +602,7 @@ var LookupFunc = function.New(&function.Spec{
 		}
 	},
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
-		var defaultVal cty.Value
-		defaultValueSet := false
-
-		if len(args) == 3 {
-			defaultVal = args[2]
-			defaultValueSet = true
-		}
+		defaultVal := args[2]
 
 		mapVar := args[0]
 		lookupKey := args[1].AsString()
@@ -632,16 +619,11 @@ var LookupFunc = function.New(&function.Spec{
 			return mapVar.Index(cty.StringVal(lookupKey)), nil
 		}
 
-		if defaultValueSet {
-			defaultVal, err = convert.Convert(defaultVal, retType)
-			if err != nil {
-				return cty.NilVal, err
-			}
-			return defaultVal, nil
+		defaultVal, err = convert.Convert(defaultVal, retType)
+		if err != nil {
+			return cty.NilVal, err
 		}
-
-		return cty.UnknownVal(cty.DynamicPseudoType), fmt.Errorf(
-			"lookup failed to find '%s'", lookupKey)
+		return defaultVal, nil
 	},
 })
 
@@ -1269,8 +1251,8 @@ func Keys(inputMap cty.Value) (cty.Value, error) {
 // Lookup performs a dynamic lookup into a map.
 // There are two required arguments, map and key, plus an optional default,
 // which is a value to return if no key is found in map.
-func Lookup(args ...cty.Value) (cty.Value, error) {
-	return LookupFunc.Call(args)
+func Lookup(inputMap, key, defaultValue cty.Value) (cty.Value, error) {
+	return LookupFunc.Call([]cty.Value{inputMap, key, defaultValue})
 }
 
 // Merge takes an arbitrary number of maps and returns a single map that contains

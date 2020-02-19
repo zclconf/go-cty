@@ -530,3 +530,41 @@ func TestLength(t *testing.T) {
 		})
 	}
 }
+
+func TestLookup(t *testing.T) {
+	tests := []struct {
+		Collection cty.Value
+		Key        cty.Value
+		Default    cty.Value
+		Want       cty.Value
+	}{
+		{
+			cty.MapValEmpty(cty.String),
+			cty.StringVal("baz"),
+			cty.StringVal("foo"),
+			cty.StringVal("foo"),
+		},
+		{
+			cty.MapVal(map[string]cty.Value{
+				"foo": cty.StringVal("bar"),
+			}),
+			cty.StringVal("foo"),
+			cty.StringVal("nope"),
+			cty.StringVal("bar"),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("Lookup(%#v,%#v,%#v)", test.Collection, test.Key, test.Default), func(t *testing.T) {
+			got, err := Lookup(test.Collection, test.Key, test.Default)
+
+			if err != nil {
+				t.Fatalf("unexpected error: %s", err)
+			}
+
+			if !got.RawEquals(test.Want) {
+				t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, test.Want)
+			}
+		})
+	}
+}

@@ -11,7 +11,7 @@
   * `Flatten`: given a sequence that might contain other sequences, eliminate any intermediate sequences to produce a flat sequence.
   * `Keys`: return a list of keys from a map or object value in lexical order.
   * `Values`: return a list of values from a map in the same order as `Keys`.
-  * `Lookup`: conditional lookup of an element from a map if it's present, or a fallback value if not.
+  * `Lookup`: conditional lookup of an element from a map if it's present, or a fallback value if not. (This one differs from its Terraform equivalent in that the default value argument is _required_.)
   * `Merge`: given one or more maps or objects, merge them together into a single collection.
   * `ReverseList`: given a list, return a new list with the same items in the opposite order.
   * `SetProduct`: compute the cartesian product of one or more sets.
