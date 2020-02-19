@@ -1,6 +1,6 @@
 # 1.2.2 (Unreleased)
 
-* `function/stdlib`: HashiCorp has contributed a number of additional functions to the standard library that were originally implemented directly inside their Terraform codebase:
+* `function/stdlib`: HashiCorp has contributed a number of additional functions to the standard library that were originally implemented directly inside their Terraform codebase: ([#37](https://github.com/zclconf/go-cty/pull/37))
   * `Element`: take an element from a list or tuple by index, using modulo wrap-around.
   * `CoalesceList`: return the first non-empty list argument.
   * `Compact`: take a list of strings and return a new list of strings with all empty strings removed.
