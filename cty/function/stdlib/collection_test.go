@@ -90,6 +90,138 @@ func TestHasIndex(t *testing.T) {
 	}
 }
 
+func TestContains(t *testing.T) {
+	listOfStrings := cty.ListVal([]cty.Value{
+		cty.StringVal("the"),
+		cty.StringVal("quick"),
+		cty.StringVal("brown"),
+		cty.StringVal("fox"),
+	})
+	listOfInts := cty.ListVal([]cty.Value{
+		cty.NumberIntVal(1),
+		cty.NumberIntVal(2),
+		cty.NumberIntVal(3),
+		cty.NumberIntVal(4),
+	})
+	listWithUnknown := cty.ListVal([]cty.Value{
+		cty.StringVal("the"),
+		cty.StringVal("quick"),
+		cty.StringVal("brown"),
+		cty.UnknownVal(cty.String),
+	})
+
+	tests := []struct {
+		List  cty.Value
+		Value cty.Value
+		Want  cty.Value
+		Err   bool
+	}{
+		{
+			listOfStrings,
+			cty.StringVal("the"),
+			cty.BoolVal(true),
+			false,
+		},
+		{
+			listWithUnknown,
+			cty.StringVal("the"),
+			cty.BoolVal(true),
+			false,
+		},
+		{
+			listWithUnknown,
+			cty.StringVal("orange"),
+			cty.UnknownVal(cty.Bool),
+			false,
+		},
+		{
+			listOfStrings,
+			cty.StringVal("penguin"),
+			cty.BoolVal(false),
+			false,
+		},
+		{
+			listOfInts,
+			cty.NumberIntVal(1),
+			cty.BoolVal(true),
+			false,
+		},
+		{
+			listOfInts,
+			cty.NumberIntVal(42),
+			cty.BoolVal(false),
+			false,
+		},
+		{ // And now we mix and match
+			listOfInts,
+			cty.StringVal("1"),
+			cty.BoolVal(false),
+			false,
+		},
+		{ // Check a list with an unknown value
+			cty.ListVal([]cty.Value{
+				cty.UnknownVal(cty.String),
+				cty.StringVal("quick"),
+				cty.StringVal("brown"),
+				cty.StringVal("fox"),
+			}),
+			cty.StringVal("quick"),
+			cty.BoolVal(true),
+			false,
+		},
+		{ // set val
+			cty.SetVal([]cty.Value{
+				cty.StringVal("quick"),
+				cty.StringVal("brown"),
+				cty.StringVal("fox"),
+			}),
+			cty.StringVal("quick"),
+			cty.BoolVal(true),
+			false,
+		},
+		{ // nested unknown
+			cty.ListVal([]cty.Value{
+				cty.ObjectVal(map[string]cty.Value{
+					"a": cty.UnknownVal(cty.String),
+				}),
+			}),
+			cty.ObjectVal(map[string]cty.Value{
+				"a": cty.StringVal("b"),
+			}),
+			cty.UnknownVal(cty.Bool),
+			false,
+		},
+		{ // tuple val
+			cty.TupleVal([]cty.Value{
+				cty.StringVal("quick"),
+				cty.StringVal("brown"),
+				cty.NumberIntVal(3),
+			}),
+			cty.NumberIntVal(3),
+			cty.BoolVal(true),
+			false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("contains(%#v, %#v)", test.List, test.Value), func(t *testing.T) {
+			got, err := Contains(test.List, test.Value)
+
+			if test.Err {
+				if err == nil {
+					t.Fatal("succeeded; want error")
+				}
+				return
+			} else if err != nil {
+				t.Fatalf("unexpected error: %s", err)
+			}
+
+			if !got.RawEquals(test.Want) {
+				t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, test.Want)
+			}
+		})
+	}
+}
 func TestMerge(t *testing.T) {
 	tests := []struct {
 		Values []cty.Value
