@@ -250,6 +250,16 @@ func TestConvert(t *testing.T) {
 			}),
 		},
 		{
+			Value: cty.ListValEmpty(cty.String),
+			Type:  cty.Set(cty.DynamicPseudoType),
+			Want:  cty.SetValEmpty(cty.String),
+		},
+		{
+			Value: cty.SetValEmpty(cty.String),
+			Type:  cty.List(cty.DynamicPseudoType),
+			Want:  cty.ListValEmpty(cty.String),
+		},
+		{
 			Value: cty.ObjectVal(map[string]cty.Value{
 				"num": cty.NumberIntVal(5),
 				"str": cty.StringVal("hello"),
@@ -580,6 +590,64 @@ func TestConvert(t *testing.T) {
 			}),
 			Type: cty.Object(map[string]cty.Type{"foo": cty.String}),
 			Want: cty.ObjectVal(map[string]cty.Value{"foo": cty.StringVal("hello")}),
+		},
+		// reduction of https://github.com/hashicorp/terraform/issues/23804
+		{
+			Value: cty.ObjectVal(map[string]cty.Value{
+				"a": cty.ObjectVal(map[string]cty.Value{
+					"x": cty.TupleVal([]cty.Value{cty.StringVal("foo")}),
+				}),
+				"b": cty.ObjectVal(map[string]cty.Value{
+					"x": cty.TupleVal([]cty.Value{cty.StringVal("bar")}),
+				}),
+				"c": cty.ObjectVal(map[string]cty.Value{
+					"x": cty.TupleVal([]cty.Value{cty.StringVal("foo"), cty.StringVal("bar")}),
+				}),
+			}),
+			Type: cty.Map(cty.Map(cty.DynamicPseudoType)),
+			Want: cty.MapVal(map[string]cty.Value{
+				"a": cty.MapVal(map[string]cty.Value{
+					"x": cty.ListVal([]cty.Value{cty.StringVal("foo")}),
+				}),
+				"b": cty.MapVal(map[string]cty.Value{
+					"x": cty.ListVal([]cty.Value{cty.StringVal("bar")}),
+				}),
+				"c": cty.MapVal(map[string]cty.Value{
+					"x": cty.ListVal([]cty.Value{cty.StringVal("foo"), cty.StringVal("bar")}),
+				}),
+			}),
+		},
+		// reduction of https://github.com/hashicorp/issues/24167
+		{
+			Value: cty.ObjectVal(map[string]cty.Value{
+				"a": cty.ObjectVal(map[string]cty.Value{
+					"x": cty.NullVal(cty.DynamicPseudoType),
+				}),
+				"b": cty.ObjectVal(map[string]cty.Value{
+					"x": cty.ObjectVal(map[string]cty.Value{
+						"c": cty.NumberIntVal(1),
+						"d": cty.NumberIntVal(2),
+					}),
+				}),
+			}),
+			Type:      cty.Map(cty.Map(cty.Object(map[string]cty.Type{"x": cty.Map(cty.DynamicPseudoType)}))),
+			WantError: true,
+		},
+		// reduction of https://github.com/hashicorp/terraform/issues/23431
+		{
+			Value: cty.ObjectVal(map[string]cty.Value{
+				"a": cty.ObjectVal(map[string]cty.Value{
+					"x": cty.StringVal("foo"),
+				}),
+				"b": cty.MapValEmpty(cty.DynamicPseudoType),
+			}),
+			Type: cty.Map(cty.Map(cty.DynamicPseudoType)),
+			Want: cty.MapVal(map[string]cty.Value{
+				"a": cty.MapVal(map[string]cty.Value{
+					"x": cty.StringVal("foo"),
+				}),
+				"b": cty.MapValEmpty(cty.String),
+			}),
 		},
 	}
 
