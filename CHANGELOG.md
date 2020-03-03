@@ -1,3 +1,6 @@
+# 1.4.0 (Unreleased)
+
+
 # 1.3.1 (March 3, 2020)
 
 * `convert`: Fix incorrect conversion rules for maps of maps that were leading to panics. This will now succeed in some more cases that ought to have been valid, and produce a proper error if there is no valid outcome. ([#47](https://github.com/zclconf/go-cty/pull/47))
