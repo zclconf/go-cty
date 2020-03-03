@@ -1,6 +1,7 @@
 # 1.4.0 (Unreleased)
 
 * `convert`: Fix incorrect conversion rules for maps of maps, leading to panics. This will now succeed in some more cases that ought to have been valid, and produce a proper error if there is no valid outcome. ([#47](https://github.com/zclconf/go-cty/pull/47))
+* `function/stdlib`: Fix an implementation error in the `Contains` function that was introduced in 1.3.0, so it will now produce a correct result rather than failing with a confusing error message. ([#46](https://github.com/zclconf/go-cty/pull/46))
 
 # 1.3.0 (February 19, 2020)
 
