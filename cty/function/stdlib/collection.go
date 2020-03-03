@@ -299,7 +299,7 @@ var ContainsFunc = function.New(&function.Spec{
 		},
 	},
 	Type: function.StaticReturnType(cty.Bool),
-	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
+	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
 		arg := args[0]
 		ty := arg.Type()
 
@@ -307,12 +307,39 @@ var ContainsFunc = function.New(&function.Spec{
 			return cty.NilVal, errors.New("argument must be list, tuple, or set")
 		}
 
-		_, err = Index(cty.TupleVal(arg.AsValueSlice()), args[1])
-		if err != nil {
+		if args[0].IsNull() {
+			return cty.NilVal, errors.New("cannot search a nil list or set")
+		}
+
+		if args[0].LengthInt() == 0 {
 			return cty.False, nil
 		}
 
-		return cty.True, nil
+		if !args[0].IsKnown() || !args[1].IsKnown() {
+			return cty.UnknownVal(cty.Bool), nil
+		}
+
+		containsUnknown := false
+		for it := args[0].ElementIterator(); it.Next(); {
+			_, v := it.Element()
+			eq := args[1].Equals(v)
+			if !eq.IsKnown() {
+				// We may have an unknown value which could match later, but we
+				// first need to continue checking all values for an exact
+				// match.
+				containsUnknown = true
+				continue
+			}
+			if eq.True() {
+				return cty.True, nil
+			}
+		}
+
+		if containsUnknown {
+			return cty.UnknownVal(cty.Bool), nil
+		}
+
+		return cty.False, nil
 	},
 })
 
