@@ -131,7 +131,7 @@ func unifyMapTypes(types []cty.Type, unsafe bool, hasDynamic bool) (cty.Type, []
 		}
 		if conversions[i] == nil {
 			// Shouldn't be reachable, since we were able to unify
-			return unifyObjectTypesToMap(types, unsafe)
+			return cty.NilType, nil
 		}
 	}
 
