@@ -1,5 +1,6 @@
 # 1.4.0 (Unreleased)
 
+* `convert`: Fix incorrect conversion rules for maps of maps, leading to panics. This will now succeed in some more cases that ought to have been valid, and produce a proper error if there is no valid outcome. ([#47](https://github.com/zclconf/go-cty/pull/47))
 
 # 1.3.0 (February 19, 2020)
 
