@@ -617,7 +617,7 @@ func TestConvert(t *testing.T) {
 				}),
 			}),
 		},
-		// reduction of https://github.com/hashicorp/issues/24167
+		// reduction of https://github.com/hashicorp/terraform/issues/24167
 		{
 			Value: cty.ObjectVal(map[string]cty.Value{
 				"a": cty.ObjectVal(map[string]cty.Value{
