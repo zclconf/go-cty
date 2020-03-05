@@ -92,3 +92,10 @@ func TestRegexReplace(t *testing.T) {
 		})
 	}
 }
+
+func TestRegexReplace_invalid_regex(t *testing.T) {
+	_, err := RegexpReplace(cty.StringVal(""), cty.StringVal("("), cty.StringVal(""))
+	if err == nil {
+		t.Fatal("expected an error")
+	}
+}
