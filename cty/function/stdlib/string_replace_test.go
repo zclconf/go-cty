@@ -8,50 +8,86 @@ import (
 
 func TestReplace(t *testing.T) {
 	tests := []struct {
-		Input              cty.Value
-		Substr, Replace, N cty.Value
-		Want               cty.Value
+		Input           cty.Value
+		Substr, Replace cty.Value
+		Want            cty.Value
 	}{
 		{
 			cty.StringVal("hello"),
 			cty.StringVal("l"),
 			cty.StringVal(""),
-			cty.NumberIntVal(1),
-			cty.StringVal("helo"),
-		},
-		{
-			cty.StringVal("hello"),
-			cty.StringVal("l"),
-			cty.StringVal(""),
-			cty.NumberIntVal(-1),
 			cty.StringVal("heo"),
 		},
 		{
 			cty.StringVal("😸😸😸😾😾😾"),
 			cty.StringVal("😾"),
 			cty.StringVal("😸"),
-			cty.NumberIntVal(1),
-			cty.StringVal("😸😸😸😸😾😾"),
+			cty.StringVal("😸😸😸😸😸😸"),
 		},
 		{
-			cty.StringVal("😸😸😸😾😾😾"),
+			cty.StringVal("😸😸😸😸😸😾"),
 			cty.StringVal("😾"),
 			cty.StringVal("😸"),
-			cty.NumberIntVal(-1),
 			cty.StringVal("😸😸😸😸😸😸"),
 		},
 	}
 
 	for _, test := range tests {
-		t.Run(test.Input.GoString(), func(t *testing.T) {
-			got, err := Replace(test.Input, test.Substr, test.Replace, test.N)
+		t.Run(test.Input.GoString()+"_replace", func(t *testing.T) {
+			got, err := Replace(test.Input, test.Substr, test.Replace)
 
 			if err != nil {
 				t.Fatalf("unexpected error: %s", err)
 			}
 
 			if !got.RawEquals(test.Want) {
-				t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, test.Want)
+				t.Fatalf("wrong result\ngot:  %#v\nwant: %#v", got, test.Want)
+			}
+		})
+		t.Run(test.Input.GoString()+"_regex_replace", func(t *testing.T) {
+			got, err := Replace(test.Input, test.Substr, test.Replace)
+
+			if err != nil {
+				t.Fatalf("unexpected error: %s", err)
+			}
+
+			if !got.RawEquals(test.Want) {
+				t.Fatalf("wrong result\ngot:  %#v\nwant: %#v", got, test.Want)
+			}
+		})
+	}
+}
+
+func TestRegexReplace(t *testing.T) {
+	tests := []struct {
+		Input           cty.Value
+		Substr, Replace cty.Value
+		Want            cty.Value
+	}{
+		{
+			cty.StringVal("-ab-axxb-"),
+			cty.StringVal("/a(x*)b/"),
+			cty.StringVal("T"),
+			cty.StringVal("-T-T-"),
+		},
+		{
+			cty.StringVal("-ab-axxb-"),
+			cty.StringVal("a(x*)b"),
+			cty.StringVal("${1}W"),
+			cty.StringVal("-W-xxW-"),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.Input.GoString(), func(t *testing.T) {
+			got, err := RegexpReplace(test.Input, test.Substr, test.Replace)
+
+			if err != nil {
+				t.Fatalf("unexpected error: %s", err)
+			}
+
+			if !got.RawEquals(test.Want) {
+				t.Fatalf("wrong result\ngot:  %#v\nwant: %#v", got, test.Want)
 			}
 		})
 	}
