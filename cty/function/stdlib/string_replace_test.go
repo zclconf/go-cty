@@ -66,7 +66,7 @@ func TestRegexReplace(t *testing.T) {
 	}{
 		{
 			cty.StringVal("-ab-axxb-"),
-			cty.StringVal("/a(x*)b/"),
+			cty.StringVal("a(x*)b"),
 			cty.StringVal("T"),
 			cty.StringVal("-T-T-"),
 		},
