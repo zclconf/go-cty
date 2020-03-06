@@ -60,7 +60,6 @@ var RegexpReplaceFunc = function.New(&function.Spec{
 		substr := args[1].AsString()
 		replace := args[2].AsString()
 
-
 		re, err := regexp.Compile(substr)
 		if err != nil {
 			return cty.UnknownVal(cty.String), err
