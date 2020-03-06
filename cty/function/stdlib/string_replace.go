@@ -60,11 +60,6 @@ var RegexpReplaceFunc = function.New(&function.Spec{
 		substr := args[1].AsString()
 		replace := args[2].AsString()
 
-		// We search/replace using a regexp if the string is surrounded
-		// in forward slashes.
-		if len(substr) > 1 && substr[0] == '/' && substr[len(substr)-1] == '/' {
-			substr = substr[1 : len(substr)-1]
-		}
 
 		re, err := regexp.Compile(substr)
 		if err != nil {
