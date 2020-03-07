@@ -1,7 +1,7 @@
 module github.com/zclconf/go-cty
 
 require (
-	github.com/apparentlymart/go-textseg v1.0.0
+	github.com/apparentlymart/go-textseg/v12 v12.0.0
 	github.com/golang/protobuf v1.1.0 // indirect
 	github.com/google/go-cmp v0.3.1
 	github.com/kr/pretty v0.1.0 // indirect
