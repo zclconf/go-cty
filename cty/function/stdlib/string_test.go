@@ -324,6 +324,12 @@ func TestSubstr(t *testing.T) {
 			cty.StringVal(""),
 		},
 		{
+			cty.StringVal("hello"),
+			cty.NumberIntVal(0),
+			cty.NumberIntVal(0),
+			cty.StringVal(""),
+		},
+		{
 			cty.StringVal("noël"),
 			cty.NumberIntVal(0),
 			cty.NumberIntVal(3),
