@@ -1,6 +1,7 @@
 # 1.4.0 (Unreleased)
 
 * `function/stdlib`: The string functions that partition strings into individual characters (grapheme clusters) now use the appropriate segmentation rules from Unicode 12.0.0, while previous versions used Unicode 9.0.0.
+* `function/stdlib`: New functions `Replace` and `RegexReplace` for matching and replacing sequences of characters in a given string with another given string. ([#45](https://github.com/zclconf/go-cty/pull/45))
 
 # 1.3.1 (March 3, 2020)
 
