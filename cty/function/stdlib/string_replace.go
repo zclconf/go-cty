@@ -36,10 +36,10 @@ var ReplaceFunc = function.New(&function.Spec{
 	},
 })
 
-// RegexpReplaceFunc is a function that searches a given string for another
+// RegexReplaceFunc is a function that searches a given string for another
 // given substring, and replaces each occurence with a given replacement
 // string. The substr argument must be a valid regular expression.
-var RegexpReplaceFunc = function.New(&function.Spec{
+var RegexReplaceFunc = function.New(&function.Spec{
 	Params: []function.Parameter{
 		{
 			Name: "str",
@@ -75,6 +75,6 @@ func Replace(str, substr, replace cty.Value) (cty.Value, error) {
 	return ReplaceFunc.Call([]cty.Value{str, substr, replace})
 }
 
-func RegexpReplace(str, substr, replace cty.Value) (cty.Value, error) {
-	return RegexpReplaceFunc.Call([]cty.Value{str, substr, replace})
+func RegexReplace(str, substr, replace cty.Value) (cty.Value, error) {
+	return RegexReplaceFunc.Call([]cty.Value{str, substr, replace})
 }

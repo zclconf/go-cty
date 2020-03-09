@@ -80,7 +80,7 @@ func TestRegexReplace(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.Input.GoString(), func(t *testing.T) {
-			got, err := RegexpReplace(test.Input, test.Substr, test.Replace)
+			got, err := RegexReplace(test.Input, test.Substr, test.Replace)
 
 			if err != nil {
 				t.Fatalf("unexpected error: %s", err)
@@ -93,8 +93,8 @@ func TestRegexReplace(t *testing.T) {
 	}
 }
 
-func TestRegexReplace_invalid_regex(t *testing.T) {
-	_, err := RegexpReplace(cty.StringVal(""), cty.StringVal("("), cty.StringVal(""))
+func TestRegexReplaceInvalidRegex(t *testing.T) {
+	_, err := RegexReplace(cty.StringVal(""), cty.StringVal("("), cty.StringVal(""))
 	if err == nil {
 		t.Fatal("expected an error")
 	}
