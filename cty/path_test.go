@@ -242,6 +242,58 @@ func TestPathEquals(t *testing.T) {
 				cty.GetAttrStep{Name: "attr"},
 			},
 		},
+
+		// tests for convenience methods
+		{
+			A: cty.Path{
+				cty.GetAttrStep{Name: "attr"},
+			},
+			B:      cty.GetAttrPath("attr"),
+			Prefix: true,
+			Equal:  true,
+		},
+		{
+			A: cty.Path{
+				cty.IndexStep{Key: cty.NumberIntVal(0)},
+			},
+			B:      cty.IndexPath(cty.NumberIntVal(0)),
+			Prefix: true,
+			Equal:  true,
+		},
+		{
+			A: cty.Path{
+				cty.IndexStep{Key: cty.NumberIntVal(0)},
+			},
+			B:      cty.IndexIntPath(0),
+			Prefix: true,
+			Equal:  true,
+		},
+		{
+			A: cty.Path{
+				cty.IndexStep{Key: cty.StringVal("key")},
+			},
+			B:      cty.IndexStringPath("key"),
+			Prefix: true,
+			Equal:  true,
+		},
+		{
+			A: cty.Path{
+				cty.GetAttrStep{Name: "attr"},
+				cty.IndexStep{Key: cty.NumberIntVal(0)},
+			},
+			B:      cty.GetAttrPath("attr").IndexInt(0),
+			Prefix: true,
+			Equal:  true,
+		},
+		{
+			A: cty.Path{
+				cty.GetAttrStep{Name: "attr"},
+				cty.IndexStep{Key: cty.StringVal("key")},
+			},
+			B:      cty.GetAttrPath("attr").IndexString("key"),
+			Prefix: true,
+			Equal:  true,
+		},
 	}
 
 	for i, test := range tests {
