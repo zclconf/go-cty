@@ -2,6 +2,7 @@ package stdlib
 
 import (
 	"fmt"
+	"math"
 	"math/big"
 	"testing"
 
@@ -806,6 +807,16 @@ func TestCeil(t *testing.T) {
 			cty.NumberFloatVal(2),
 			false,
 		},
+		{
+			cty.NumberFloatVal(math.Inf(1)),
+			cty.NumberFloatVal(math.Inf(1)),
+			false,
+		},
+		{
+			cty.NumberFloatVal(math.Inf(-1)),
+			cty.NumberFloatVal(math.Inf(-1)),
+			false,
+		},
 	}
 
 	for _, test := range tests {
@@ -842,6 +853,16 @@ func TestFloor(t *testing.T) {
 		{
 			cty.NumberFloatVal(1.2),
 			cty.NumberFloatVal(1),
+			false,
+		},
+		{
+			cty.NumberFloatVal(math.Inf(1)),
+			cty.NumberFloatVal(math.Inf(1)),
+			false,
+		},
+		{
+			cty.NumberFloatVal(math.Inf(-1)),
+			cty.NumberFloatVal(math.Inf(-1)),
 			false,
 		},
 	}
