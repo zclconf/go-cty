@@ -4,6 +4,7 @@
 * `function/stdlib`: New functions `Replace` and `RegexReplace` for matching and replacing sequences of characters in a given string with another given string. ([#45](https://github.com/zclconf/go-cty/pull/45))
 * `function/stdlib`: The function `Substr` will now produce a zero-length string when given a length of zero. Previously it was incorrectly returning the remainder of the string after the given offset. ([#48](https://github.com/zclconf/go-cty/pull/48))
 * `function/stdlib`: The `Floor` and `Ceil` functions will now return an infinity if given an infinity, rather than returning the maximum/minimum integer value. ([#51](https://github.com/zclconf/go-cty/pull/51))
+* `cty`: Convenience methods for constructing path index steps from normal Go int and string values. ([#50](https://github.com/zclconf/go-cty/pull/50))
 
 # 1.3.1 (March 3, 2020)
 
