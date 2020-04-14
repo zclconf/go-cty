@@ -8,9 +8,9 @@ import (
 
 	"github.com/apparentlymart/go-textseg/v12/textseg"
 
-	"github.com/zclconf/go-cty/cty"
-	"github.com/zclconf/go-cty/cty/function"
-	"github.com/zclconf/go-cty/cty/gocty"
+	"github.com/hashicorp/go-cty/cty"
+	"github.com/hashicorp/go-cty/cty/function"
+	"github.com/hashicorp/go-cty/cty/gocty"
 )
 
 var UpperFunc = function.New(&function.Spec{
@@ -150,7 +150,6 @@ var SubstrFunc = function.New(&function.Spec{
 			// be the empty string
 			return cty.StringVal(""), nil
 		}
-
 
 		sub := in
 		pos := 0

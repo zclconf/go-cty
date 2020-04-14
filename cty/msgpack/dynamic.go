@@ -3,8 +3,8 @@ package msgpack
 import (
 	"bytes"
 
+	"github.com/hashicorp/go-cty/cty"
 	"github.com/vmihailenco/msgpack"
-	"github.com/zclconf/go-cty/cty"
 )
 
 type dynamicVal struct {

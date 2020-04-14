@@ -5,7 +5,7 @@ import (
 	"math/big"
 	"reflect"
 
-	"github.com/zclconf/go-cty/cty/set"
+	"github.com/hashicorp/go-cty/cty/set"
 )
 
 // GoString is an implementation of fmt.GoStringer that produces concise

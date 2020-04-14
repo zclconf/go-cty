@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"hash/crc64"
 
-	"github.com/zclconf/go-cty/cty/set"
+	"github.com/hashicorp/go-cty/cty/set"
 )
 
 // PathSet represents a set of Path objects. This can be used, for example,

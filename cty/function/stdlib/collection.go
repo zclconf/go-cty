@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/zclconf/go-cty/cty"
-	"github.com/zclconf/go-cty/cty/convert"
-	"github.com/zclconf/go-cty/cty/function"
-	"github.com/zclconf/go-cty/cty/gocty"
+	"github.com/hashicorp/go-cty/cty"
+	"github.com/hashicorp/go-cty/cty/convert"
+	"github.com/hashicorp/go-cty/cty/function"
+	"github.com/hashicorp/go-cty/cty/gocty"
 )
 
 var HasIndexFunc = function.New(&function.Spec{

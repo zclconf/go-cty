@@ -3,7 +3,7 @@ package convert
 import (
 	"strings"
 
-	"github.com/zclconf/go-cty/cty"
+	"github.com/hashicorp/go-cty/cty"
 )
 
 var stringTrue = cty.StringVal("true")

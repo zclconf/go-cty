@@ -1,7 +1,7 @@
 package convert
 
 import (
-	"github.com/zclconf/go-cty/cty"
+	"github.com/hashicorp/go-cty/cty"
 )
 
 // conversionCollectionToList returns a conversion that will apply the given

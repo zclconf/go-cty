@@ -6,8 +6,8 @@ import (
 	"io"
 	"strings"
 
-	"github.com/zclconf/go-cty/cty"
-	"github.com/zclconf/go-cty/cty/function"
+	"github.com/hashicorp/go-cty/cty"
+	"github.com/hashicorp/go-cty/cty/function"
 )
 
 var CSVDecodeFunc = function.New(&function.Spec{

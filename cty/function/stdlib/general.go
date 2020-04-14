@@ -3,9 +3,9 @@ package stdlib
 import (
 	"fmt"
 
-	"github.com/zclconf/go-cty/cty"
-	"github.com/zclconf/go-cty/cty/convert"
-	"github.com/zclconf/go-cty/cty/function"
+	"github.com/hashicorp/go-cty/cty"
+	"github.com/hashicorp/go-cty/cty/convert"
+	"github.com/hashicorp/go-cty/cty/function"
 )
 
 var EqualFunc = function.New(&function.Spec{

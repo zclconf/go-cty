@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zclconf/go-cty/cty"
+	"github.com/hashicorp/go-cty/cty"
 )
 
 func TestFormatDate(t *testing.T) {

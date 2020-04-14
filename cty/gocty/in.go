@@ -4,9 +4,9 @@ import (
 	"math/big"
 	"reflect"
 
-	"github.com/zclconf/go-cty/cty"
-	"github.com/zclconf/go-cty/cty/convert"
-	"github.com/zclconf/go-cty/cty/set"
+	"github.com/hashicorp/go-cty/cty"
+	"github.com/hashicorp/go-cty/cty/convert"
+	"github.com/hashicorp/go-cty/cty/set"
 )
 
 // ToCtyValue produces a cty.Value from a Go value. The result will conform
