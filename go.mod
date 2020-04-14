@@ -1,4 +1,4 @@
-module github.com/zclconf/go-cty
+module github.com/hashicorp/go-cty
 
 require (
 	github.com/apparentlymart/go-textseg/v12 v12.0.0

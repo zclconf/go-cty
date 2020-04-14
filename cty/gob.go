@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/zclconf/go-cty/cty/set"
+	"github.com/hashicorp/go-cty/cty/set"
 )
 
 // GobEncode is an implementation of the gob.GobEncoder interface, which

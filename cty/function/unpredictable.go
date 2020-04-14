@@ -1,7 +1,7 @@
 package function
 
 import (
-	"github.com/zclconf/go-cty/cty"
+	"github.com/hashicorp/go-cty/cty"
 )
 
 // Unpredictable wraps a given function such that it retains the same arguments

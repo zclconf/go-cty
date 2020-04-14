@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/hashicorp/go-cty/cty"
 	"github.com/vmihailenco/msgpack"
 	msgpackcodes "github.com/vmihailenco/msgpack/codes"
-	"github.com/zclconf/go-cty/cty"
 )
 
 // ImpliedType returns the cty Type implied by the structure of the given

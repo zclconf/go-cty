@@ -1,7 +1,7 @@
 package convert
 
 import (
-	"github.com/zclconf/go-cty/cty"
+	"github.com/hashicorp/go-cty/cty"
 )
 
 // The current unify implementation is somewhat inefficient, but we accept this

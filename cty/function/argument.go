@@ -1,7 +1,7 @@
 package function
 
 import (
-	"github.com/zclconf/go-cty/cty"
+	"github.com/hashicorp/go-cty/cty"
 )
 
 // Parameter represents a parameter to a function.

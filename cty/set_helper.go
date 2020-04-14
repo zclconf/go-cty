@@ -3,7 +3,7 @@ package cty
 import (
 	"fmt"
 
-	"github.com/zclconf/go-cty/cty/set"
+	"github.com/hashicorp/go-cty/cty/set"
 )
 
 // ValueSet is to cty.Set what []cty.Value is to cty.List and

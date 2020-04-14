@@ -1,7 +1,7 @@
 package json
 
 import (
-	"github.com/zclconf/go-cty/cty"
+	"github.com/hashicorp/go-cty/cty"
 )
 
 // MarshalType returns a JSON serialization of the given type.

@@ -1,7 +1,7 @@
 package convert
 
 import (
-	"github.com/zclconf/go-cty/cty"
+	"github.com/hashicorp/go-cty/cty"
 )
 
 // sortTypes produces an ordering of the given types that serves as a

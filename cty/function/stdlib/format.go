@@ -8,10 +8,10 @@ import (
 
 	"github.com/apparentlymart/go-textseg/v12/textseg"
 
-	"github.com/zclconf/go-cty/cty"
-	"github.com/zclconf/go-cty/cty/convert"
-	"github.com/zclconf/go-cty/cty/function"
-	"github.com/zclconf/go-cty/cty/json"
+	"github.com/hashicorp/go-cty/cty"
+	"github.com/hashicorp/go-cty/cty/convert"
+	"github.com/hashicorp/go-cty/cty/function"
+	"github.com/hashicorp/go-cty/cty/json"
 )
 
 //go:generate ragel -Z format_fsm.rl

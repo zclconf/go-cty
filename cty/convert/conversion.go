@@ -1,7 +1,7 @@
 package convert
 
 import (
-	"github.com/zclconf/go-cty/cty"
+	"github.com/hashicorp/go-cty/cty"
 )
 
 // conversion is an internal variant of Conversion that carries around

@@ -5,9 +5,9 @@ import (
 	"math"
 	"math/big"
 
-	"github.com/zclconf/go-cty/cty"
-	"github.com/zclconf/go-cty/cty/function"
-	"github.com/zclconf/go-cty/cty/gocty"
+	"github.com/hashicorp/go-cty/cty"
+	"github.com/hashicorp/go-cty/cty/function"
+	"github.com/hashicorp/go-cty/cty/gocty"
 )
 
 var AbsoluteFunc = function.New(&function.Spec{

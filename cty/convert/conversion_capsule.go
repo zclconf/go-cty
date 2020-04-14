@@ -1,7 +1,7 @@
 package convert
 
 import (
-	"github.com/zclconf/go-cty/cty"
+	"github.com/hashicorp/go-cty/cty"
 )
 
 func conversionToCapsule(inTy, outTy cty.Type, fn func(inTy cty.Type) func(cty.Value, cty.Path) (interface{}, error)) conversion {

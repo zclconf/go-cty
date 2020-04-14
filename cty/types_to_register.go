@@ -6,7 +6,7 @@ import (
 	"math/big"
 	"strings"
 
-	"github.com/zclconf/go-cty/cty/set"
+	"github.com/hashicorp/go-cty/cty/set"
 )
 
 // InternalTypesToRegister is a slice of values that covers all of the
@@ -49,7 +49,7 @@ func init() {
 	for _, tv := range InternalTypesToRegister {
 		typeName := fmt.Sprintf("%T", tv)
 		if strings.HasPrefix(typeName, "cty.") {
-			gob.RegisterName(fmt.Sprintf("github.com/zclconf/go-cty/%s", typeName), tv)
+			gob.RegisterName(fmt.Sprintf("github.com/hashicorp/go-cty/%s", typeName), tv)
 		} else {
 			gob.Register(tv)
 		}

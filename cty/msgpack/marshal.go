@@ -5,9 +5,9 @@ import (
 	"math/big"
 	"sort"
 
+	"github.com/hashicorp/go-cty/cty"
+	"github.com/hashicorp/go-cty/cty/convert"
 	"github.com/vmihailenco/msgpack"
-	"github.com/zclconf/go-cty/cty"
-	"github.com/zclconf/go-cty/cty/convert"
 )
 
 // Marshal produces a msgpack serialization of the given value that

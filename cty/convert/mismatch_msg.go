@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/zclconf/go-cty/cty"
+	"github.com/hashicorp/go-cty/cty"
 )
 
 // MismatchMessage is a helper to return an English-language description of

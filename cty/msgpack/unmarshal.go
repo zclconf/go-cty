@@ -3,9 +3,9 @@ package msgpack
 import (
 	"bytes"
 
+	"github.com/hashicorp/go-cty/cty"
 	"github.com/vmihailenco/msgpack"
 	msgpackCodes "github.com/vmihailenco/msgpack/codes"
-	"github.com/zclconf/go-cty/cty"
 )
 
 // Unmarshal interprets the given bytes as a msgpack-encoded cty Value of
