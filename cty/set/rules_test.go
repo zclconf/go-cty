@@ -13,3 +13,7 @@ func (r testRules) Hash(val interface{}) int {
 func (r testRules) Equivalent(val1 interface{}, val2 interface{}) bool {
 	return val1 == val2
 }
+
+func (r testRules) SameRules(other Rules) bool {
+	return r == other // true if "other" is also a testRules
+}
