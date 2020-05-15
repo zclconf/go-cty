@@ -480,6 +480,10 @@ func (r testSetRules) Equivalent(v1 interface{}, v2 interface{}) bool {
 	return v1 == v2
 }
 
+func (r testSetRules) SameRules(other set.Rules) bool {
+	return r == other
+}
+
 type capsuleType1Native struct {
 	name string
 }

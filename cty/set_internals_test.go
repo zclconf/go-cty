@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"math/big"
 	"testing"
+
+	"github.com/zclconf/go-cty/cty/set"
 )
 
 func TestSetHashBytes(t *testing.T) {
@@ -309,6 +311,59 @@ func TestSetOrder(t *testing.T) {
 			got := rules.Less(test.a.v, test.b.v)
 			if got != test.want {
 				t.Errorf("wrong result\na: %#v\nb: %#v\ngot:  %#v\nwant: %#v", test.a, test.b, got, test.want)
+			}
+		})
+	}
+}
+
+func TestSetRulesSameRules(t *testing.T) {
+	tests := []struct {
+		a    set.Rules
+		b    set.Rules
+		want bool
+	}{
+		{
+			setRules{EmptyObject},
+			setRules{DynamicPseudoType},
+			false,
+		},
+		{
+			setRules{EmptyObject},
+			setRules{EmptyObject},
+			true,
+		},
+		{
+			setRules{String},
+			setRules{String},
+			true,
+		},
+		{
+			setRules{Object(map[string]Type{"a": String})},
+			setRules{Object(map[string]Type{"a": String})},
+			true,
+		},
+		{
+			setRules{Object(map[string]Type{"a": String})},
+			setRules{Object(map[string]Type{"a": Bool})},
+			false,
+		},
+		{
+			pathSetRules{},
+			pathSetRules{},
+			true,
+		},
+		{
+			setRules{DynamicPseudoType},
+			pathSetRules{},
+			false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%#v.SameRules(%#v)", test.a, test.b), func(t *testing.T) {
+			got := test.a.SameRules(test.b)
+			if got != test.want {
+				t.Errorf("wrong result\na: %#v\nb: %#v\ngot %#v, want %#v", test.a, test.b, got, test.want)
 			}
 		})
 	}
