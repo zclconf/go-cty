@@ -1,5 +1,6 @@
 # 1.4.1 (Unreleased)
 
+* `convert`: Don't panic when asked to convert a tuple of objects to a list type constraint containing a nested `cty.DynamicPseudoType`. ([#53](https://github.com/zclconf/go-cty/pull/53))
 
 # 1.4.0 (April 7, 2020)
 
