@@ -1,5 +1,6 @@
 # 1.4.1 (Unreleased)
 
+* `function/stdlib`: Fix various panics related to sets with unknown element types in the set-manipulation functions. ([#52](https://github.com/zclconf/go-cty/pull/52))
 * `convert`: Don't panic when asked to convert a tuple of objects to a list type constraint containing a nested `cty.DynamicPseudoType`. ([#53](https://github.com/zclconf/go-cty/pull/53))
 
 # 1.4.0 (April 7, 2020)
