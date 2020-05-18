@@ -1,3 +1,6 @@
+# 1.4.2 (Unreleased)
+
+
 # 1.4.1 (May 18, 2020)
 
 * `function/stdlib`: Fix various panics related to sets with unknown element types in the set-manipulation functions. ([#52](https://github.com/zclconf/go-cty/pull/52))
