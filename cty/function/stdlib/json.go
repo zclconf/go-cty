@@ -26,7 +26,7 @@ var JSONEncodeFunc = function.New(&function.Spec{
 		}
 
 		if val.IsNull() {
-			return cty.NullVal(retType), nil
+			return cty.StringVal("null"), nil
 		}
 
 		buf, err := json.Marshal(val, val.Type())
