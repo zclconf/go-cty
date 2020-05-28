@@ -52,6 +52,10 @@ func TestJSONEncode(t *testing.T) {
 			cty.DynamicVal,
 			cty.UnknownVal(cty.String),
 		},
+		{
+			cty.NullVal(cty.String),
+			cty.StringVal("null"),
+		},
 	}
 
 	for _, test := range tests {
