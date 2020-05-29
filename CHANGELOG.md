@@ -1,3 +1,6 @@
+# 1.4.2 (Unreleased)
+
+
 # 1.4.2 (May 29, 2020)
 
 * `function/stdlib`: The `jsonencode` function will now correctly accept a null as its argument, and produce the JSON representation `"null"` rather than returning an error. ([#54](https://github.com/zclconf/go-cty/pull/54))
