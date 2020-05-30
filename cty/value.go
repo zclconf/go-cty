@@ -106,3 +106,30 @@ func (val Value) IsWhollyKnown() bool {
 		return true
 	}
 }
+
+// HasDynamicValues checks if the value is dynamic, or contains any nested
+// DynamicVal. This implies that both the value is not known, and the final
+// type may change.
+func (val Value) HasDynamicValues() bool {
+	// a null dynamic type is known
+	if val.IsNull() {
+		return false
+	}
+
+	// an unknown DynamicPseudoType is a DynamicVal, but we don't want to
+	// check that value for equality here, since this method is used within the
+	// equality check.
+	if val.ty == DynamicPseudoType {
+		return true
+	}
+
+	if val.CanIterateElements() {
+		for it := val.ElementIterator(); it.Next(); {
+			_, ev := it.Element()
+			if ev.HasDynamicValues() {
+				return true
+			}
+		}
+	}
+	return false
+}

@@ -133,9 +133,9 @@ func (val Value) Equals(other Value) Value {
 	case val.IsKnown() && !other.IsKnown():
 		switch {
 		case val.IsNull(), other.ty.HasDynamicTypes():
-			// If known is Null, we need to wait for the unkown value since
+			// If known is Null, we need to wait for the unknown value since
 			// nulls of any type are equal.
-			// An unkown with a dynamic type compares as unknown, which we need
+			// An unknown with a dynamic type compares as unknown, which we need
 			// to check before the type comparison below.
 			return UnknownVal(Bool)
 		case !val.ty.Equals(other.ty):
@@ -148,9 +148,9 @@ func (val Value) Equals(other Value) Value {
 	case other.IsKnown() && !val.IsKnown():
 		switch {
 		case other.IsNull(), val.ty.HasDynamicTypes():
-			// If known is Null, we need to wait for the unkown value since
+			// If known is Null, we need to wait for the unknown value since
 			// nulls of any type are equal.
-			// An unkown with a dynamic type compares as unknown, which we need
+			// An unknown with a dynamic type compares as unknown, which we need
 			// to check before the type comparison below.
 			return UnknownVal(Bool)
 		case !other.ty.Equals(val.ty):
@@ -171,7 +171,9 @@ func (val Value) Equals(other Value) Value {
 		return BoolVal(false)
 	}
 
-	if val.ty.HasDynamicTypes() || other.ty.HasDynamicTypes() {
+	// Check if there are any nested dynamic values making this comparison
+	// unknown.
+	if val.HasDynamicValues() || other.HasDynamicValues() {
 		return UnknownVal(Bool)
 	}
 
