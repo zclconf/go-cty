@@ -667,6 +667,19 @@ func TestValueEquals(t *testing.T) {
 		},
 		{
 			ObjectVal(map[string]Value{
+				"a": StringVal("a"),
+				"b": UnknownVal(Number),
+			}),
+			// While we have a dynamic type, the different object types should
+			// still compare false
+			ObjectVal(map[string]Value{
+				"a": DynamicVal,
+				"c": UnknownVal(Number),
+			}),
+			BoolVal(false),
+		},
+		{
+			ObjectVal(map[string]Value{
 				"a": NullVal(DynamicPseudoType),
 			}),
 			ObjectVal(map[string]Value{
