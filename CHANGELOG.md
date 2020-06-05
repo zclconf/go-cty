@@ -1,5 +1,6 @@
-# 1.4.2 (Unreleased)
+# 1.4.3 (Unreleased)
 
+* `convert`: Fix incorrect panic when converting a tuple with a dynamic-typed null member into a list or set, due to overly-liberal type unification. ([#56](https://github.com/zclconf/go-cty/pull/56))
 
 # 1.4.2 (May 29, 2020)
 
