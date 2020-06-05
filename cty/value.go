@@ -107,10 +107,10 @@ func (val Value) IsWhollyKnown() bool {
 	}
 }
 
-// HasDynamicValues checks if the value is dynamic, or contains any nested
+// HasWhollyKnownType checks if the value is dynamic, or contains any nested
 // DynamicVal. This implies that both the value is not known, and the final
 // type may change.
-func (val Value) HasDynamicValues() bool {
+func (val Value) HasWhollyKnownType() bool {
 	// a null dynamic type is known
 	if val.IsNull() {
 		return false
@@ -132,7 +132,7 @@ func (val Value) HasDynamicValues() bool {
 
 		for it := val.ElementIterator(); it.Next(); {
 			_, ev := it.Element()
-			if ev.HasDynamicValues() {
+			if ev.HasWhollyKnownType() {
 				return true
 			}
 		}

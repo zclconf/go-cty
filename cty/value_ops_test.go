@@ -2510,7 +2510,7 @@ func TestValueGoString(t *testing.T) {
 	}
 }
 
-func TestHasDynamicValues(t *testing.T) {
+func TestHasWhollyKnownType(t *testing.T) {
 	tests := []struct {
 		Value Value
 		Want  bool
@@ -2576,7 +2576,7 @@ func TestHasDynamicValues(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.Value.GoString(), func(t *testing.T) {
-			got := test.Value.HasDynamicValues()
+			got := test.Value.HasWhollyKnownType()
 			want := test.Want
 			if got != want {
 				t.Errorf("wrong result\ngot:  %v\nwant: %v", got, want)
