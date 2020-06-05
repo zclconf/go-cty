@@ -124,6 +124,12 @@ func (val Value) HasDynamicValues() bool {
 	}
 
 	if val.CanIterateElements() {
+		// if the value is not known, then we can look directly at the internal
+		// types
+		if !val.IsKnown() {
+			return val.ty.HasDynamicTypes()
+		}
+
 		for it := val.ElementIterator(); it.Next(); {
 			_, ev := it.Element()
 			if ev.HasDynamicValues() {

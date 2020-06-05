@@ -687,6 +687,26 @@ func TestValueEquals(t *testing.T) {
 			}),
 			UnknownVal(Bool),
 		},
+		{
+			ObjectVal(map[string]Value{
+				"a": NullVal(List(String)),
+			}),
+			// While the unknown val does contain dynamic types, the overall
+			// container types can't conform.
+			ObjectVal(map[string]Value{
+				"a": UnknownVal(List(List(DynamicPseudoType))),
+			}),
+			BoolVal(false),
+		},
+		{
+			ObjectVal(map[string]Value{
+				"a": NullVal(List(List(String))),
+			}),
+			ObjectVal(map[string]Value{
+				"a": UnknownVal(List(List(DynamicPseudoType))),
+			}),
+			UnknownVal(Bool),
+		},
 
 		// Marks
 		{
