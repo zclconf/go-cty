@@ -173,7 +173,7 @@ func (val Value) Equals(other Value) Value {
 
 	// Check if there are any nested dynamic values making this comparison
 	// unknown.
-	if val.HasWhollyKnownType() || other.HasWhollyKnownType() {
+	if !val.HasWhollyKnownType() || !other.HasWhollyKnownType() {
 		// Even if we have dynamic values, we can still determine inequality if
 		// there is no way the types could later conform.
 		if val.ty.TestConformance(other.ty) != nil && other.ty.TestConformance(val.ty) != nil {

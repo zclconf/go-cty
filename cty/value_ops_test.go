@@ -2517,26 +2517,26 @@ func TestHasWhollyKnownType(t *testing.T) {
 	}{
 		{
 			Value: DynamicVal,
-			Want:  true,
+			Want:  false,
 		},
 		{
 			Value: ObjectVal(map[string]Value{
 				"dyn": DynamicVal,
 			}),
-			Want: true,
+			Want: false,
 		},
 		{
 			Value: NullVal(Object(map[string]Type{
 				"dyn": DynamicPseudoType,
 			})),
-			Want: false,
+			Want: true,
 		},
 		{
 			Value: TupleVal([]Value{
 				StringVal("a"),
 				NullVal(DynamicPseudoType),
 			}),
-			Want: false,
+			Want: true,
 		},
 		{
 			Value: ListVal([]Value{
@@ -2544,7 +2544,7 @@ func TestHasWhollyKnownType(t *testing.T) {
 					"null": NullVal(DynamicPseudoType),
 				}),
 			}),
-			Want: false,
+			Want: true,
 		},
 		{
 			Value: ListVal([]Value{
@@ -2552,7 +2552,7 @@ func TestHasWhollyKnownType(t *testing.T) {
 					"dyn": DynamicPseudoType,
 				})),
 			}),
-			Want: false,
+			Want: true,
 		},
 		{
 			Value: ObjectVal(map[string]Value{
@@ -2561,7 +2561,7 @@ func TestHasWhollyKnownType(t *testing.T) {
 					NullVal(DynamicPseudoType),
 				}),
 			}),
-			Want: false,
+			Want: true,
 		},
 		{
 			Value: ObjectVal(map[string]Value{
@@ -2571,7 +2571,7 @@ func TestHasWhollyKnownType(t *testing.T) {
 					}),
 				}),
 			}),
-			Want: true,
+			Want: false,
 		},
 	}
 	for _, test := range tests {
