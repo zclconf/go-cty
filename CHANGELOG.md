@@ -1,5 +1,6 @@
 # 1.5.1 (Unreleased)
 
+* `function/stdlib`: The `merge` function will no longer panic if all given maps are empty. ([#58](https://github.com/zclconf/go-cty/pull/58))
 
 # 1.5.0 (June 11, 2020)
 
