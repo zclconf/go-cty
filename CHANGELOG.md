@@ -1,4 +1,4 @@
-# 1.5.1 (Unreleased)
+# 1.5.1 (June 25, 2020)
 
 * `function/stdlib`: The `merge` function will no longer panic if all given maps are empty. ([#58](https://github.com/zclconf/go-cty/pull/58))
 * `function/stdlib`: The various set-manipulation functions, like `setunion`, will no longer panic if given an unknown set value. ([#59](https://github.com/zclconf/go-cty/pull/59))
