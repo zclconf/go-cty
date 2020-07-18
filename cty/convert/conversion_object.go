@@ -11,17 +11,29 @@ import (
 // type, meaning that each attribute of the output type has a corresponding
 // attribute in the input type where a recursive conversion is available.
 //
+// If the "out" type has any attributes with default values, those attributes
+// may be absent in the "in" type and the default values will be used in their
+// place in the result.
+//
 // Shallow object conversions work the same for both safe and unsafe modes,
 // but the safety flag is passed on to recursive conversions and may thus
 // limit the above definition of "subset".
 func conversionObjectToObject(in, out cty.Type, unsafe bool) conversion {
 	inAtys := in.AttributeTypes()
 	outAtys := out.AttributeTypes()
+	outDefaults := out.AttributeDefaultValues()
 	attrConvs := make(map[string]conversion)
 
 	for name, outAty := range outAtys {
 		inAty, exists := inAtys[name]
 		if !exists {
+			if _, optional := outDefaults[name]; optional {
+				// If there's a default then we'll skip inserting an
+				// attribute conversion and then deal with inserting
+				// the default value in our overall conversion logic
+				// later.
+				continue
+			}
 			// No conversion is available, then.
 			return nil
 		}
@@ -69,6 +81,17 @@ func conversionObjectToObject(in, out cty.Type, unsafe bool) conversion {
 			}
 
 			attrVals[name] = val
+		}
+
+		for name, def := range outDefaults {
+			if _, exists := attrVals[name]; !exists {
+				wantTy := outAtys[name]
+				def, err := Convert(def, wantTy)
+				if err != nil {
+					return cty.NilVal, path.NewErrorf("invalid type constraint: default value for attribute %q is not compatible with its type", name)
+				}
+				attrVals[name] = def
+			}
 		}
 
 		return cty.ObjectVal(attrVals), nil

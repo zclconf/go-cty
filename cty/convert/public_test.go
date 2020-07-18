@@ -383,6 +383,34 @@ func TestConvert(t *testing.T) {
 		},
 		{
 			Value: cty.MapVal(map[string]cty.Value{
+				"name": cty.StringVal("John"),
+			}),
+			Type: cty.Object(map[string]cty.Type{
+				"name":     cty.String,
+				"greeting": cty.String,
+			}),
+			WantError: true, // map has no element for required attribute "greeting"
+		},
+		{
+			Value: cty.MapVal(map[string]cty.Value{
+				"name": cty.StringVal("John"),
+			}),
+			Type: cty.ObjectWithDefaults(
+				map[string]cty.Type{
+					"name":     cty.String,
+					"greeting": cty.String,
+				},
+				map[string]cty.Value{
+					"greeting": cty.StringVal("Hello"),
+				},
+			),
+			Want: cty.ObjectVal(map[string]cty.Value{
+				"greeting": cty.StringVal("Hello"),
+				"name":     cty.StringVal("John"),
+			}),
+		},
+		{
+			Value: cty.MapVal(map[string]cty.Value{
 				"a": cty.NumberIntVal(2),
 				"b": cty.NumberIntVal(5),
 			}),
@@ -475,6 +503,75 @@ func TestConvert(t *testing.T) {
 				"baz": cty.String,
 			}),
 			WantError: true, // given value must have superset object type
+		},
+		{
+			Value: cty.ObjectVal(map[string]cty.Value{
+				"bar": cty.StringVal("bar value"),
+			}),
+			Type: cty.ObjectWithDefaults(
+				map[string]cty.Type{
+					"foo": cty.String,
+					"bar": cty.String,
+				},
+				map[string]cty.Value{
+					"foo": cty.StringVal("foo default"),
+				},
+			),
+			Want: cty.ObjectVal(map[string]cty.Value{
+				"foo": cty.StringVal("foo default"),
+				"bar": cty.StringVal("bar value"),
+			}),
+		},
+		{
+			Value: cty.ObjectVal(map[string]cty.Value{
+				"foo": cty.StringVal("foo value"),
+				"bar": cty.StringVal("bar value"),
+			}),
+			Type: cty.ObjectWithDefaults(
+				map[string]cty.Type{
+					"foo": cty.String,
+					"bar": cty.String,
+				},
+				map[string]cty.Value{
+					"foo": cty.StringVal("foo default"),
+				},
+			),
+			Want: cty.ObjectVal(map[string]cty.Value{
+				"foo": cty.StringVal("foo value"),
+				"bar": cty.StringVal("bar value"),
+			}),
+		},
+		{
+			Value: cty.EmptyObjectVal,
+			Type: cty.ObjectWithDefaults(
+				map[string]cty.Type{
+					"foo": cty.String,
+					"bar": cty.String,
+				},
+				map[string]cty.Value{
+					"foo": cty.StringVal("foo default"),
+				},
+			),
+			WantError: true, // Attribute "bar" is required
+		},
+		{
+			Value: cty.ObjectVal(map[string]cty.Value{
+				"bar": cty.StringVal("bar value"),
+			}),
+			Type: cty.ObjectWithDefaults(
+				map[string]cty.Type{
+					"foo": cty.String,
+					"bar": cty.String,
+				},
+				map[string]cty.Value{
+					// This default is invalid because it can't
+					// convert to the attribute's type, but it's
+					// this package's responsibility to enforce
+					// that.
+					"foo": cty.EmptyObjectVal,
+				},
+			),
+			WantError: true, // invalid type constraint: default value for attribute "foo" is not compatible with its type
 		},
 		{
 			Value: cty.ObjectVal(map[string]cty.Value{

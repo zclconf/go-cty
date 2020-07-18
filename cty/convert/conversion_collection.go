@@ -458,6 +458,20 @@ func conversionMapToObject(mapType cty.Type, objType cty.Type, unsafe bool) conv
 			elems[name.AsString()] = val
 		}
 
+		for name, aty := range objectAtys {
+			if _, exists := elems[name]; !exists {
+				if def := objType.AttributeDefaultValue(name); def != cty.NilVal {
+					def, err := Convert(def, aty)
+					if err != nil {
+						return cty.NilVal, path.NewErrorf("invalid type constraint: default value for attribute %q is not compatible with its type", name)
+					}
+					elems[name] = def
+				} else {
+					return cty.NilVal, path.NewErrorf("map has no element for required attribute %q", name)
+				}
+			}
+		}
+
 		return cty.ObjectVal(elems), nil
 	}
 }

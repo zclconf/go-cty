@@ -52,6 +52,9 @@ func (t Type) MarshalJSON() ([]byte, error) {
 		}
 		buf.WriteString(`["object",`)
 		buf.Write(atysJSON)
+		if defaults := t.AttributeDefaultValues(); len(defaults) > 0 {
+			buf.WriteByte(',')
+		}
 		buf.WriteRune(']')
 		return buf.Bytes(), nil
 	case typeTuple:

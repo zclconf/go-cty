@@ -6,7 +6,8 @@ import (
 
 type typeObject struct {
 	typeImplSigil
-	AttrTypes map[string]Type
+	AttrTypes    map[string]Type
+	AttrDefaults map[string]Value
 }
 
 // Object creates an object type with the given attribute types.
@@ -14,14 +15,53 @@ type typeObject struct {
 // After a map is passed to this function the caller must no longer access it,
 // since ownership is transferred to this library.
 func Object(attrTypes map[string]Type) Type {
+	return ObjectWithDefaults(attrTypes, nil)
+}
+
+// ObjectWithDefaults creates an object type with the given attribute types
+// and the given default values for some or all of the declared attributes.
+//
+// Default values are significant only when an object type is being used
+// as a target type for conversion in the "convert" package. A value of an
+// object type always has a value for each of the attributes in the attribute
+// types table, with defaults applied only during conversion.
+//
+// Default values must be convertable to the type of their attribute, but that
+// constraint is enforced during conversion to the type rather than during
+// construction of the type.
+//
+// All keys in the defaults map must also exist in the attrTypes map. If not,
+// this function will panic. Default values must always be wholly known; if
+// a given default value contains an unknown value then this function will
+// panic.
+//
+// After a map is passed to this function the caller must no longer access it,
+// since ownership is transferred to this library.
+func ObjectWithDefaults(attrTypes map[string]Type, defaults map[string]Value) Type {
 	attrTypesNorm := make(map[string]Type, len(attrTypes))
 	for k, v := range attrTypes {
 		attrTypesNorm[NormalizeString(k)] = v
 	}
 
+	var defaultsNorm map[string]Value
+	if len(defaults) != 0 {
+		defaultsNorm = make(map[string]Value, len(defaults))
+		for k, v := range defaults {
+			k = NormalizeString(k)
+			if _, exists := attrTypesNorm[k]; !exists {
+				panic(fmt.Sprintf("default given for undeclared attribute %q", k))
+			}
+			if !v.IsWhollyKnown() {
+				panic(fmt.Sprintf("default value for attribute %q is not wholly known", k))
+			}
+			defaultsNorm[k] = v
+		}
+	}
+
 	return Type{
 		typeObject{
-			AttrTypes: attrTypesNorm,
+			AttrTypes:    attrTypesNorm,
+			AttrDefaults: defaultsNorm,
 		},
 	}
 }
@@ -42,6 +82,14 @@ func (t typeObject) Equals(other Type) bool {
 				return false
 			}
 			if !oty.Equals(ty) {
+				return false
+			}
+			dv := t.AttrDefaults[attr]
+			odv := ot.AttrDefaults[attr]
+			if (dv == NilVal) != (odv == NilVal) {
+				return false
+			}
+			if dv != NilVal && !dv.RawEquals(odv) {
 				return false
 			}
 		}
@@ -65,6 +113,9 @@ func (t typeObject) FriendlyName(mode friendlyTypeNameMode) string {
 func (t typeObject) GoString() string {
 	if len(t.AttrTypes) == 0 {
 		return "cty.EmptyObject"
+	}
+	if len(t.AttrDefaults) > 0 {
+		return fmt.Sprintf("cty.ObjectWithDefaults(%#v, %#v)", t.AttrTypes, t.AttrDefaults)
 	}
 	return fmt.Sprintf("cty.Object(%#v)", t.AttrTypes)
 }
@@ -132,4 +183,33 @@ func (t Type) AttributeTypes() map[string]Type {
 		return ot.AttrTypes
 	}
 	panic("AttributeTypes on non-object Type")
+}
+
+// AttributeDefaultValues returns a map from attribute names to their default
+// values. WIll panic if the receiver is not an object type (use IsObjectType
+// to confirm).
+//
+// The returned map is part of the internal state of the type, and is provided
+// for read access only. It is forbidden for any caller to modify the returned
+// map.
+func (t Type) AttributeDefaultValues() map[string]Value {
+	if ot, ok := t.typeImpl.(typeObject); ok {
+		return ot.AttrDefaults
+	}
+	panic("AttributeDefaultValues on non-object Type")
+}
+
+// AttributeDefaultValue returns the default value of the attribute with the
+// given name, or cty.NilVal if the attribute has no default value. Will
+// panic if the receiver is not an object type (use IsObjectType to confirm)
+// or if the object type has no such attribute (use HasAttribute to confirm).
+func (t Type) AttributeDefaultValue(name string) Value {
+	name = NormalizeString(name)
+	if ot, ok := t.typeImpl.(typeObject); ok {
+		if _, hasAttr := ot.AttrTypes[name]; !hasAttr {
+			panic("no such attribute")
+		}
+		return ot.AttrDefaults[name]
+	}
+	panic("AttributeDefaultValue on non-object Type")
 }
