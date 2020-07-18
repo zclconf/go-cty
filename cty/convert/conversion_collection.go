@@ -458,6 +458,16 @@ func conversionMapToObject(mapType cty.Type, objType cty.Type, unsafe bool) conv
 			elems[name.AsString()] = val
 		}
 
+		for name, aty := range objectAtys {
+			if _, exists := elems[name]; !exists {
+				if optional := objType.AttributeOptional(name); optional {
+					elems[name] = cty.NullVal(aty)
+				} else {
+					return cty.NilVal, path.NewErrorf("map has no element for required attribute %q", name)
+				}
+			}
+		}
+
 		return cty.ObjectVal(elems), nil
 	}
 }

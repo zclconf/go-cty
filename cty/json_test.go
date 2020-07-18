@@ -47,6 +47,10 @@ func TestTypeJSONable(t *testing.T) {
 			`["object",{"bool":"bool","string":"string"}]`,
 		},
 		{
+			ObjectWithOptionalAttrs(map[string]Type{"bool": Bool, "string": String}, []string{"string", "bool"}),
+			`["object",{"bool":"bool","string":"string"},["bool","string"]]`,
+		},
+		{
 			DynamicPseudoType,
 			`"dynamic"`,
 		},

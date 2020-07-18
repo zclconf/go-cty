@@ -135,3 +135,31 @@ if their respective elements/attributes also have conversions available.
 The conversions from structural types to collection types rely on
 type unification to identify a single element type for the final collection,
 and so conversion is possible only if unification is possible.
+
+## Conversion between Object Types
+
+There are some special considerations for conversion between distinct object
+types that do not apply to conversion between types of other kinds.
+
+For object types, `convert` implements _structural typing_ behaviors, where
+the target type is considered to be a description of a set of attributes the
+final result should have. There are two important additional concerns that
+result from this design intent:
+
+* If the input type has additional attributes that are not mentioned at all
+  in the target type, those additional attributes are silently discarded
+  during conversion, leading to a new object value that has a subset of the
+  attributes of the input value, and whose type therefore conforms to the
+  target type constraint.
+
+* If any of the attributes of the target type are marked as optional using
+  the **currently-experimental** `cty.ObjectWithOptionalAttrs` constructor,
+  type conversion will tolerate those attributes being absent in the given
+  type, and the resulting value will include appropriately-typed null value
+  placeholders as the values of those omitted attributes.
+
+    This behavior is subject to change even in future minor versions of the
+    `cty` module, so that we can try it out with experimental versions of
+    calling applications and adjust the details of the behavior if needed.
+    Hopefully this mechanism will be stabilized in a future release, if those
+    downstream experiments are successful.

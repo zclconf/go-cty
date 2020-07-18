@@ -383,6 +383,32 @@ func TestConvert(t *testing.T) {
 		},
 		{
 			Value: cty.MapVal(map[string]cty.Value{
+				"name": cty.StringVal("John"),
+			}),
+			Type: cty.Object(map[string]cty.Type{
+				"name":     cty.String,
+				"greeting": cty.String,
+			}),
+			WantError: true, // map has no element for required attribute "greeting"
+		},
+		{
+			Value: cty.MapVal(map[string]cty.Value{
+				"name": cty.StringVal("John"),
+			}),
+			Type: cty.ObjectWithOptionalAttrs(
+				map[string]cty.Type{
+					"name":     cty.String,
+					"greeting": cty.String,
+				},
+				[]string{"greeting"},
+			),
+			Want: cty.ObjectVal(map[string]cty.Value{
+				"greeting": cty.NullVal(cty.String),
+				"name":     cty.StringVal("John"),
+			}),
+		},
+		{
+			Value: cty.MapVal(map[string]cty.Value{
 				"a": cty.NumberIntVal(2),
 				"b": cty.NumberIntVal(5),
 			}),
@@ -475,6 +501,50 @@ func TestConvert(t *testing.T) {
 				"baz": cty.String,
 			}),
 			WantError: true, // given value must have superset object type
+		},
+		{
+			Value: cty.ObjectVal(map[string]cty.Value{
+				"bar": cty.StringVal("bar value"),
+			}),
+			Type: cty.ObjectWithOptionalAttrs(
+				map[string]cty.Type{
+					"foo": cty.String,
+					"bar": cty.String,
+				},
+				[]string{"foo"},
+			),
+			Want: cty.ObjectVal(map[string]cty.Value{
+				"foo": cty.NullVal(cty.String),
+				"bar": cty.StringVal("bar value"),
+			}),
+		},
+		{
+			Value: cty.ObjectVal(map[string]cty.Value{
+				"foo": cty.StringVal("foo value"),
+				"bar": cty.StringVal("bar value"),
+			}),
+			Type: cty.ObjectWithOptionalAttrs(
+				map[string]cty.Type{
+					"foo": cty.String,
+					"bar": cty.String,
+				},
+				[]string{"foo"},
+			),
+			Want: cty.ObjectVal(map[string]cty.Value{
+				"foo": cty.StringVal("foo value"),
+				"bar": cty.StringVal("bar value"),
+			}),
+		},
+		{
+			Value: cty.EmptyObjectVal,
+			Type: cty.ObjectWithOptionalAttrs(
+				map[string]cty.Type{
+					"foo": cty.String,
+					"bar": cty.String,
+				},
+				[]string{"foo"},
+			),
+			WantError: true, // Attribute "bar" is required
 		},
 		{
 			Value: cty.ObjectVal(map[string]cty.Value{

@@ -97,6 +97,49 @@ func TestObjectTypeEquals(t *testing.T) {
 			}),
 			false,
 		},
+		{
+			ObjectWithOptionalAttrs(
+				map[string]Type{
+					"person": Bool,
+				},
+				[]string{"person"},
+			),
+			ObjectWithOptionalAttrs(
+				map[string]Type{
+					"person": Bool,
+				},
+				[]string{"person"},
+			),
+			true,
+		},
+		{
+			Object(map[string]Type{
+				"person": Object(map[string]Type{
+					"name": String,
+				}),
+			}),
+			ObjectWithOptionalAttrs(
+				map[string]Type{
+					"person": Bool,
+				},
+				[]string{"person"},
+			),
+			false,
+		},
+		{
+			ObjectWithOptionalAttrs(
+				map[string]Type{
+					"person": Bool,
+				},
+				[]string{"person"},
+			),
+			Object(map[string]Type{
+				"person": Object(map[string]Type{
+					"name": String,
+				}),
+			}),
+			false,
+		},
 	}
 
 	for _, test := range tests {

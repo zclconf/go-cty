@@ -237,6 +237,14 @@ that is implicitly created for that value.
 The variable `cty.EmptyObject` contains the object type with no attributes,
 and `cty.EmptyObjectVal` is the only non-null, known value of that type.
 
+There is **currently-experimental** support for creating object types where
+one or more attributes is annotated as being "optional", using the alternative
+constructor `cty.ObjectWithOptionalAttrs`. The behavior of that function or
+of any other function working with its result is subject to change even in
+future minor versions of `cty`. The optional-attribute annotations are
+considered only during type conversion, so for more information refer to
+the guide [Converting between `cty` types](convert.md).
+
 ### `cty.Tuple` types
 
 Tuple types each have zero or more elements, each with its own type, arranged
