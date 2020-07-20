@@ -61,22 +61,21 @@ func Marshal(val cty.Value, t cty.Type) ([]byte, error) {
 // may be a cty.PathError.
 func Unmarshal(buf []byte, t cty.Type) (cty.Value, error) {
 	var path cty.Path
-	return unmarshal(buf, t, path, &UnmarshalOptions{})
+	return unmarshal(buf, t, path, &unmarshalOptions{})
 }
 
-// UnmarshalOpt decodes a JSON representation of the given value into a cty Value
-// conforming to the given type while following certain decoding options.
+// UnmarshalDynamicWithImpliedType decodes a JSON representation of the
+// given value into a cty.Value conforming to the given type while replacing
+// dynamicPseudoType attributes with their implied type.
+//
+// Implied types are a best-effort deduction of the type from the structure
+// of the input JSON.
 //
 // While decoding, type conversions will be done where possible to make
 // the result conformant even if the types given in JSON are not exactly
 // correct. If conversion isn't possible then an error is returned, which
 // may be a cty.PathError.
-func UnmarshalOpt(buf []byte, t cty.Type, opt *UnmarshalOptions) (cty.Value, error) {
+func UnmarshalDynamicWithImpliedType(buf []byte, t cty.Type) (cty.Value, error) {
 	var path cty.Path
-	return unmarshal(buf, t, path, opt)
-}
-
-// UnmarshalOptions configures options for the JSON to CTY decoder.
-type UnmarshalOptions struct {
-	ImpliedDynamic bool
+	return unmarshal(buf, t, path, &unmarshalOptions{ImpliedDynamic: true})
 }

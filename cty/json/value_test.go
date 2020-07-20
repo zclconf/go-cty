@@ -294,7 +294,7 @@ func TestJSONIntoDynamic(t *testing.T) {
 	for _, test := range tests {
 		t.Run(fmt.Sprintf("%#v to %#v", test.Value, test.Type), func(t *testing.T) {
 
-			newVal, err := UnmarshalOpt([]byte(test.From), container, &UnmarshalOptions{ImpliedDynamic: true})
+			newVal, err := UnmarshalDynamicWithImpliedType([]byte(test.From), container)
 			if err != nil {
 				t.Fatalf("unexpected error from Unmarshal: %s", err)
 			}
