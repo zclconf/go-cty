@@ -138,6 +138,13 @@ var ElementFunc = function.New(&function.Spec{
 	},
 	Type: func(args []cty.Value) (cty.Type, error) {
 		list := args[0]
+		index := args[1]
+		if index.IsKnown() {
+			if index.LessThan(cty.NumberIntVal(0)).True() {
+				return cty.DynamicPseudoType, fmt.Errorf("cannot use element function with a negative index")
+			}
+		}
+
 		listTy := list.Type()
 		switch {
 		case listTy.IsListType():
@@ -171,6 +178,10 @@ var ElementFunc = function.New(&function.Spec{
 		if err != nil {
 			// can't happen because we checked this in the Type function above
 			return cty.DynamicVal, fmt.Errorf("invalid index: %s", err)
+		}
+
+		if args[1].LessThan(cty.NumberIntVal(0)).True() {
+			return cty.DynamicVal, fmt.Errorf("cannot use element function with a negative index")
 		}
 
 		if !args[0].IsKnown() {

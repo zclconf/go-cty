@@ -708,3 +708,62 @@ func TestLookup(t *testing.T) {
 		})
 	}
 }
+
+func TestElement(t *testing.T) {
+	tests := []struct {
+		List  cty.Value
+		Index cty.Value
+		Want  cty.Value
+		Err   bool
+	}{
+		{
+			cty.ListVal([]cty.Value{
+				cty.StringVal("foo"),
+				cty.StringVal("bar"),
+				cty.StringVal("baz"),
+			}),
+			cty.NumberIntVal(2),
+			cty.StringVal("baz"),
+			false,
+		},
+		{
+			cty.ListVal([]cty.Value{
+				cty.StringVal("foo"),
+				cty.StringVal("bar"),
+				cty.StringVal("baz"),
+			}),
+			cty.NumberIntVal(5),
+			cty.StringVal("baz"),
+			false,
+		},
+		{
+			cty.ListVal([]cty.Value{
+				cty.StringVal("foo"),
+				cty.StringVal("bar"),
+				cty.StringVal("baz"),
+			}),
+			cty.NumberIntVal(-1),
+			cty.DynamicVal,
+			true, // index cannot be a negative number
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("Element(%#v,%#v)", test.List, test.Index), func(t *testing.T) {
+			got, err := Element(test.List, test.Index)
+
+			if test.Err {
+				if err == nil {
+					t.Fatal("succeeded; want error")
+				}
+				return
+			} else if err != nil {
+				t.Fatalf("unexpected error: %s", err)
+			}
+
+			if !got.RawEquals(test.Want) {
+				t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, test.Want)
+			}
+		})
+	}
+}
