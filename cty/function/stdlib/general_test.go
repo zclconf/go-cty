@@ -88,6 +88,10 @@ func TestCoalesce(t *testing.T) {
 			cty.False,
 		},
 		{
+			[]cty.Value{cty.StringVal(""), cty.False, cty.StringVal("hello")},
+			cty.StringVal("false"),
+		},
+		{
 			[]cty.Value{cty.NullVal(cty.Bool), cty.False, cty.StringVal("hello")},
 			cty.StringVal("false"),
 		},

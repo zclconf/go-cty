@@ -82,6 +82,9 @@ var CoalesceFunc = function.New(&function.Spec{
 			if argVal.IsNull() {
 				continue
 			}
+			if retType == cty.String && argVal.RawEquals(cty.StringVal("")) {
+				continue
+			}
 
 			return convert.Convert(argVal, retType)
 		}
