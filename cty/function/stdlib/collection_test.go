@@ -710,6 +710,25 @@ func TestLookup(t *testing.T) {
 }
 
 func TestElement(t *testing.T) {
+	listOfStrings := cty.ListVal([]cty.Value{
+		cty.StringVal("the"),
+		cty.StringVal("quick"),
+		cty.StringVal("brown"),
+		cty.StringVal("fox"),
+	})
+	listOfInts := cty.ListVal([]cty.Value{
+		cty.NumberIntVal(1),
+		cty.NumberIntVal(2),
+		cty.NumberIntVal(3),
+		cty.NumberIntVal(4),
+	})
+	listWithUnknown := cty.ListVal([]cty.Value{
+		cty.StringVal("the"),
+		cty.StringVal("quick"),
+		cty.StringVal("brown"),
+		cty.UnknownVal(cty.String),
+	})
+
 	tests := []struct {
 		List  cty.Value
 		Index cty.Value
@@ -717,34 +736,58 @@ func TestElement(t *testing.T) {
 		Err   bool
 	}{
 		{
-			cty.ListVal([]cty.Value{
-				cty.StringVal("foo"),
-				cty.StringVal("bar"),
-				cty.StringVal("baz"),
-			}),
+			listOfStrings,
 			cty.NumberIntVal(2),
-			cty.StringVal("baz"),
+			cty.StringVal("brown"),
 			false,
 		},
-		{
-			cty.ListVal([]cty.Value{
-				cty.StringVal("foo"),
-				cty.StringVal("bar"),
-				cty.StringVal("baz"),
-			}),
+		{ // index greater than length(list)
+			listOfStrings,
 			cty.NumberIntVal(5),
-			cty.StringVal("baz"),
+			cty.StringVal("quick"),
+			false,
+		},
+		{ // list of lists
+			cty.ListVal([]cty.Value{listOfStrings, listOfStrings}),
+			cty.NumberIntVal(0),
+			listOfStrings,
 			false,
 		},
 		{
-			cty.ListVal([]cty.Value{
-				cty.StringVal("foo"),
-				cty.StringVal("bar"),
-				cty.StringVal("baz"),
-			}),
+			listOfStrings,
+			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.String),
+			false,
+		},
+		{
+			listOfInts,
+			cty.NumberIntVal(2),
+			cty.NumberIntVal(3),
+			false,
+		},
+		{
+			listWithUnknown,
+			cty.NumberIntVal(2),
+			cty.StringVal("brown"),
+			false,
+		},
+		{
+			listWithUnknown,
+			cty.NumberIntVal(3),
+			cty.UnknownVal(cty.String),
+			false,
+		},
+		{
+			listOfStrings,
 			cty.NumberIntVal(-1),
 			cty.DynamicVal,
 			true, // index cannot be a negative number
+		},
+		{
+			listOfStrings,
+			cty.StringVal("brown"), // definitely not an index
+			cty.DynamicVal,
+			true,
 		},
 	}
 
