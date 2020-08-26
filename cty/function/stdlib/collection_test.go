@@ -708,3 +708,105 @@ func TestLookup(t *testing.T) {
 		})
 	}
 }
+
+func TestElement(t *testing.T) {
+	listOfStrings := cty.ListVal([]cty.Value{
+		cty.StringVal("the"),
+		cty.StringVal("quick"),
+		cty.StringVal("brown"),
+		cty.StringVal("fox"),
+	})
+	listOfInts := cty.ListVal([]cty.Value{
+		cty.NumberIntVal(1),
+		cty.NumberIntVal(2),
+		cty.NumberIntVal(3),
+		cty.NumberIntVal(4),
+	})
+	listWithUnknown := cty.ListVal([]cty.Value{
+		cty.StringVal("the"),
+		cty.StringVal("quick"),
+		cty.StringVal("brown"),
+		cty.UnknownVal(cty.String),
+	})
+
+	tests := []struct {
+		List  cty.Value
+		Index cty.Value
+		Want  cty.Value
+		Err   bool
+	}{
+		{
+			listOfStrings,
+			cty.NumberIntVal(2),
+			cty.StringVal("brown"),
+			false,
+		},
+		{ // index greater than length(list)
+			listOfStrings,
+			cty.NumberIntVal(5),
+			cty.StringVal("quick"),
+			false,
+		},
+		{ // list of lists
+			cty.ListVal([]cty.Value{listOfStrings, listOfStrings}),
+			cty.NumberIntVal(0),
+			listOfStrings,
+			false,
+		},
+		{
+			listOfStrings,
+			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.String),
+			false,
+		},
+		{
+			listOfInts,
+			cty.NumberIntVal(2),
+			cty.NumberIntVal(3),
+			false,
+		},
+		{
+			listWithUnknown,
+			cty.NumberIntVal(2),
+			cty.StringVal("brown"),
+			false,
+		},
+		{
+			listWithUnknown,
+			cty.NumberIntVal(3),
+			cty.UnknownVal(cty.String),
+			false,
+		},
+		{
+			listOfStrings,
+			cty.NumberIntVal(-1),
+			cty.DynamicVal,
+			true, // index cannot be a negative number
+		},
+		{
+			listOfStrings,
+			cty.StringVal("brown"), // definitely not an index
+			cty.DynamicVal,
+			true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("Element(%#v,%#v)", test.List, test.Index), func(t *testing.T) {
+			got, err := Element(test.List, test.Index)
+
+			if test.Err {
+				if err == nil {
+					t.Fatal("succeeded; want error")
+				}
+				return
+			} else if err != nil {
+				t.Fatalf("unexpected error: %s", err)
+			}
+
+			if !got.RawEquals(test.Want) {
+				t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, test.Want)
+			}
+		})
+	}
+}
