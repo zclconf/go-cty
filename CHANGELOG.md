@@ -1,5 +1,6 @@
 # 1.5.2 (Unreleased)
 
+* `function/stdlib`: The `element` function will no longer panic if given a negative index. Instead, it will return a proper error. ([#62](https://github.com/zclconf/go-cty/pull/62))
 
 # 1.5.1 (June 25, 2020)
 
