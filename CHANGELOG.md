@@ -1,6 +1,7 @@
 # 1.5.2 (Unreleased)
 
 * `function/stdlib`: The `element` function will no longer panic if given a negative index. Instead, it will return a proper error. ([#62](https://github.com/zclconf/go-cty/pull/62))
+* `convert`: **Experimental** support for annotating one or more attributes of an object type as "optional", which the `convert` package can then use to suppress the error that would normally be returned if the source type has no corresponding attribute, and can substitute a correctly-typed null value instead. This new behavior is subject to change even in minor release of `cty`, until it has been tested in experimental releases of downstream applications and potentially modified in response.
 
 # 1.5.1 (June 25, 2020)
 
