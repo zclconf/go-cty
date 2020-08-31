@@ -13,6 +13,14 @@ import (
 // if we're converting from a set into a list of the same element type.)
 func conversionCollectionToList(ety cty.Type, conv conversion) conversion {
 	return func(val cty.Value, path cty.Path) (cty.Value, error) {
+		if !val.Length().IsKnown() {
+			// If the input collection has an unknown length (which is true
+			// for a set containing unknown values) then our result must be
+			// an unknown list, because we can't predict how many elements
+			// the resulting list should have.
+			return cty.UnknownVal(cty.List(val.Type().ElementType())), nil
+		}
+
 		elems := make([]cty.Value, 0, val.LengthInt())
 		i := int64(0)
 		elemPath := append(path.Copy(), nil)

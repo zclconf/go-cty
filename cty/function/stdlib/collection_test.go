@@ -169,6 +169,16 @@ func TestContains(t *testing.T) {
 			cty.BoolVal(true),
 			false,
 		},
+		{
+			cty.ListVal([]cty.Value{
+				cty.UnknownVal(cty.String),
+				cty.StringVal("brown"),
+				cty.StringVal("fox"),
+			}),
+			cty.StringVal("quick"),
+			cty.UnknownVal(cty.Bool),
+			false,
+		},
 		{ // set val
 			cty.SetVal([]cty.Value{
 				cty.StringVal("quick"),
@@ -177,6 +187,16 @@ func TestContains(t *testing.T) {
 			}),
 			cty.StringVal("quick"),
 			cty.BoolVal(true),
+			false,
+		},
+		{
+			cty.SetVal([]cty.Value{
+				cty.UnknownVal(cty.String),
+				cty.StringVal("brown"),
+				cty.StringVal("fox"),
+			}),
+			cty.StringVal("quick"),
+			cty.UnknownVal(cty.Bool),
 			false,
 		},
 		{ // nested unknown
@@ -222,6 +242,7 @@ func TestContains(t *testing.T) {
 		})
 	}
 }
+
 func TestMerge(t *testing.T) {
 	tests := []struct {
 		Values []cty.Value
@@ -629,6 +650,18 @@ func TestLength(t *testing.T) {
 		{
 			cty.SetVal([]cty.Value{cty.True}),
 			cty.NumberIntVal(1),
+		},
+		{
+			cty.SetVal([]cty.Value{cty.True, cty.False}),
+			cty.NumberIntVal(2),
+		},
+		{
+			cty.SetVal([]cty.Value{cty.True, cty.UnknownVal(cty.Bool)}),
+			cty.UnknownVal(cty.Number), // Don't know if the unknown in the input represents cty.True or cty.False
+		},
+		{
+			cty.SetVal([]cty.Value{cty.UnknownVal(cty.Bool)}),
+			cty.NumberIntVal(1), // Will be one regardless of what value the unknown in the input is representing
 		},
 		{
 			cty.MapValEmpty(cty.Bool),

@@ -146,6 +146,14 @@ func TestConvert(t *testing.T) {
 		{
 			Value: cty.SetVal([]cty.Value{
 				cty.StringVal("5"),
+				cty.UnknownVal(cty.String),
+			}),
+			Type: cty.Set(cty.Number),
+			Want: cty.SetVal([]cty.Value{cty.NumberIntVal(5), cty.UnknownVal(cty.Number)}),
+		},
+		{
+			Value: cty.SetVal([]cty.Value{
+				cty.StringVal("5"),
 				cty.StringVal("10"),
 			}),
 			Type: cty.List(cty.String),
@@ -180,6 +188,27 @@ func TestConvert(t *testing.T) {
 				// set, which may change if the set implementation changes.
 				cty.StringVal("5"),
 				cty.StringVal("10"),
+			}),
+		},
+		{
+			Value: cty.SetVal([]cty.Value{
+				cty.StringVal("5"),
+				cty.UnknownVal(cty.String),
+			}),
+			Type: cty.List(cty.String),
+			Want: cty.UnknownVal(cty.List(cty.String)),
+		},
+		{
+			Value: cty.SetVal([]cty.Value{
+				cty.UnknownVal(cty.String),
+			}),
+			Type: cty.List(cty.String),
+			// We get a known list value this time because even though we
+			// don't know the single value that's in the list, we _do_ know
+			// that there are no other values in the set for it to coalesce
+			// with.
+			Want: cty.ListVal([]cty.Value{
+				cty.UnknownVal(cty.String),
 			}),
 		},
 		{

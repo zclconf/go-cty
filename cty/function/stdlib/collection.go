@@ -503,6 +503,11 @@ var FlattenFunc = function.New(&function.Spec{
 // We can flatten lists with unknown values, as long as they are not
 // lists themselves.
 func flattener(flattenList cty.Value) ([]cty.Value, bool) {
+	if !flattenList.Length().IsKnown() {
+		// If we don't know the length of what we're flattening then we can't
+		// predict the length of our result yet either.
+		return nil, false
+	}
 	out := make([]cty.Value, 0)
 	for it := flattenList.ElementIterator(); it.Next(); {
 		_, val := it.Element()
@@ -883,6 +888,10 @@ var SetProductFunc = function.New(&function.Spec{
 
 		total := 1
 		for _, arg := range args {
+			if !arg.Length().IsKnown() {
+				return cty.UnknownVal(retType), nil
+			}
+
 			// Because of our type checking function, we are guaranteed that
 			// all of the arguments are known, non-null values of types that
 			// support LengthInt.
@@ -1030,7 +1039,8 @@ func sliceIndexes(args []cty.Value) (int, int, bool, error) {
 	var startIndex, endIndex, length int
 	var startKnown, endKnown, lengthKnown bool
 
-	if args[0].Type().IsTupleType() || args[0].IsKnown() { // if it's a tuple then we always know the length by the type, but lists must be known
+	// If it's a tuple then we always know the length by the type, but collections might be unknown or have unknown length
+	if args[0].Type().IsTupleType() || args[0].Length().IsKnown() {
 		length = args[0].LengthInt()
 		lengthKnown = true
 	}

@@ -83,6 +83,13 @@ func TestSetUnion(t *testing.T) {
 			},
 			cty.UnknownVal(cty.Set(cty.String)),
 		},
+		{
+			[]cty.Value{
+				cty.SetVal([]cty.Value{cty.StringVal("5")}),
+				cty.SetVal([]cty.Value{cty.UnknownVal(cty.String)}),
+			},
+			cty.SetVal([]cty.Value{cty.StringVal("5"), cty.UnknownVal(cty.String)}),
+		},
 	}
 
 	for _, test := range tests {
@@ -173,6 +180,13 @@ func TestSetIntersection(t *testing.T) {
 			},
 			cty.UnknownVal(cty.Set(cty.String)),
 		},
+		{
+			[]cty.Value{
+				cty.SetVal([]cty.Value{cty.StringVal("5")}),
+				cty.SetVal([]cty.Value{cty.UnknownVal(cty.String)}),
+			},
+			cty.UnknownVal(cty.Set(cty.String)),
+		},
 	}
 
 	for _, test := range tests {
@@ -245,11 +259,93 @@ func TestSetSubtract(t *testing.T) {
 			cty.UnknownVal(cty.Set(cty.Number)),
 			cty.UnknownVal(cty.Set(cty.String)),
 		},
+		{
+			cty.SetVal([]cty.Value{cty.StringVal("5")}),
+			cty.SetVal([]cty.Value{cty.UnknownVal(cty.String)}),
+			cty.UnknownVal(cty.Set(cty.String)),
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(fmt.Sprintf("SetSubtract(%#v, %#v)", test.InputA, test.InputB), func(t *testing.T) {
 			got, err := SetSubtract(test.InputA, test.InputB)
+
+			if err != nil {
+				t.Fatalf("unexpected error: %s", err)
+			}
+
+			if !got.RawEquals(test.Want) {
+				t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, test.Want)
+			}
+		})
+	}
+}
+
+func TestSetSymmetricDifference(t *testing.T) {
+	tests := []struct {
+		InputA cty.Value
+		InputB cty.Value
+		Want   cty.Value
+	}{
+		{
+			cty.SetValEmpty(cty.String),
+			cty.SetValEmpty(cty.String),
+			cty.SetValEmpty(cty.String),
+		},
+		{
+			cty.SetVal([]cty.Value{cty.True}),
+			cty.SetValEmpty(cty.String),
+			cty.SetVal([]cty.Value{cty.StringVal("true")}),
+		},
+		{
+			cty.SetVal([]cty.Value{cty.True}),
+			cty.SetVal([]cty.Value{cty.False}),
+			cty.SetVal([]cty.Value{cty.True, cty.False}),
+		},
+		{
+			cty.SetVal([]cty.Value{
+				cty.StringVal("a"),
+				cty.StringVal("b"),
+				cty.StringVal("c"),
+			}),
+			cty.SetVal([]cty.Value{
+				cty.StringVal("a"),
+				cty.StringVal("c"),
+			}),
+			cty.SetVal([]cty.Value{
+				cty.StringVal("b"),
+			}),
+		},
+		{
+			cty.SetVal([]cty.Value{cty.StringVal("a")}),
+			cty.SetValEmpty(cty.DynamicPseudoType),
+			cty.SetVal([]cty.Value{cty.StringVal("a")}),
+		},
+		{
+			cty.SetVal([]cty.Value{cty.EmptyObjectVal}),
+			cty.SetValEmpty(cty.DynamicPseudoType),
+			cty.SetVal([]cty.Value{cty.EmptyObjectVal}),
+		},
+		{
+			cty.SetValEmpty(cty.DynamicPseudoType),
+			cty.SetValEmpty(cty.DynamicPseudoType),
+			cty.SetValEmpty(cty.DynamicPseudoType),
+		},
+		{
+			cty.SetVal([]cty.Value{cty.StringVal("5")}),
+			cty.UnknownVal(cty.Set(cty.Number)),
+			cty.UnknownVal(cty.Set(cty.String)),
+		},
+		{
+			cty.SetVal([]cty.Value{cty.StringVal("5")}),
+			cty.SetVal([]cty.Value{cty.UnknownVal(cty.Number)}),
+			cty.UnknownVal(cty.Set(cty.String)),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("SetSymmetricDifference(%#v, %#v)", test.InputA, test.InputB), func(t *testing.T) {
+			got, err := SetSymmetricDifference(test.InputA, test.InputB)
 
 			if err != nil {
 				t.Fatalf("unexpected error: %s", err)

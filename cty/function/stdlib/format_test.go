@@ -825,6 +825,17 @@ func TestFormatList(t *testing.T) {
 			cty.UnknownVal(cty.List(cty.String)),
 			`argument 2 has length 2, which is inconsistent with argument 1 of length 1`,
 		},
+		22: {
+			cty.StringVal("%v"),
+			[]cty.Value{
+				cty.SetVal([]cty.Value{
+					cty.StringVal("hello"),
+					cty.UnknownVal(cty.String),
+				}),
+			},
+			cty.UnknownVal(cty.List(cty.String)),
+			``,
+		},
 	}
 
 	for i, test := range tests {
