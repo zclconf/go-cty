@@ -1,3 +1,5 @@
+# 1.6.1 (Unreleased)
+
 # 1.6.0 (Unreleased)
 
 * Fixed various defects in the handling of sets containing unknown values. This will cause unknown values to now be returned in more situations, whereas before `cty` would often return incorrect results when working with sets containing unknown values. The list of defects fixed in this release includes:
