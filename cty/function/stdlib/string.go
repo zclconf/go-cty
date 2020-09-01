@@ -521,7 +521,7 @@ func Strlen(str cty.Value) (cty.Value, error) {
 }
 
 func StartsWith(str cty.Value, prefix cty.Value) (cty.Value, error) {
-	return SubstrFunc.Call([]cty.Value{str, prefix})
+	return StartsWithFunc.Call([]cty.Value{str, prefix})
 }
 
 // Substr is a Function that extracts a sequence of characters from another
