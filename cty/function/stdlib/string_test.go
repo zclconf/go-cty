@@ -279,6 +279,36 @@ func TestStartsWith(t *testing.T) {
 			cty.StringVal("h"),
 			cty.BoolVal(true),
 		},
+		{
+			cty.StringVal("HELLO"),
+			cty.StringVal("h"),
+			cty.BoolVal(false),
+		},
+		{
+			cty.StringVal(""),
+			cty.StringVal("foo"),
+			cty.BoolVal(true),
+		}
+		{
+			cty.StringVal("foo"),
+			cty.StringVal(""),
+			cty.BoolVal(true),
+		},
+		{
+			cty.StringVal(""),
+			cty.StringVal(""),
+			cty.BoolVal(true),
+		},
+		{
+			cty.StringVal("short1"),
+			cty.StringVal("short1extra"),
+			cty.BoolVal(false),
+		},
+		{
+			cty.StringVal("short2"),
+			cty.StringVal("longerprefix"),
+			cty.BoolVal(false),
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.String.GoString(), func(t *testing.T) {
