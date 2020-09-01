@@ -268,6 +268,34 @@ func TestStrlen(t *testing.T) {
 	}
 }
 
+func TestStartsWith(t *testing.T) {
+	tests := []struct {
+		String cty.Value
+		Prefix cty.Value
+		Want   cty.Value
+	}{
+		{
+			cty.StringVal("hello"),
+			cty.StringVal("h"),
+			cty.BoolVal(true),
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.String.GoString(), func(t *testing.T) {
+			got, err := StartsWith(test.String, test.Prefix)
+
+			if err != nil {
+				t.Fatalf("unexpected error: %s", err)
+			}
+
+			if !got.RawEquals(test.Want) {
+				t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, test.Want)
+			}
+		})
+	}
+
+}
+
 func TestSubstr(t *testing.T) {
 	tests := []struct {
 		Input  cty.Value
