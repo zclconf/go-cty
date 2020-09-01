@@ -96,6 +96,54 @@ var StrlenFunc = function.New(&function.Spec{
 	},
 })
 
+var StartsWithFunc = function.New(&function.Spec{
+	Params: []function.Parameter{
+		{
+			Name:             "str",
+			Type:             cty.String,
+			AllowDynamicType: true,
+		},
+		{
+			Name:             "prefix",
+			Type:             cty.String,
+			AllowDynamicType: true,
+		},
+	},
+	Type: function.StaticReturnType(cty.Bool),
+	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
+		str := []byte(args[0].AsString())
+		prefix := []byte(args[1].AsString())
+
+		// Empty prefix always matches
+		prefixLenNum, err := Strlen(args[1])
+		if err != nil {
+			// should never happen
+			panic("Stdlen returned an error")
+		}
+		var prefixLen int
+		err = gocty.FromCtyValue(prefixLenNum, &prefixLen)
+		if err != nil {
+			// should never happen
+			panic("Stdlen returned a non-int number")
+		}
+		if prefixLen == 0 {
+			return cty.BoolVal(true), nil
+		}
+
+		// For each character of prefix, check the matching character of str.
+		// If they don't match, fail
+		var i int
+		for i = 0; i < prefixLen; {
+			if str[i] != prefix[i] {
+				return cty.BoolVal(false), nil
+			}
+		}
+
+		// We do match
+		return cty.BoolVal(true), nil
+	},
+})
+
 var SubstrFunc = function.New(&function.Spec{
 	Params: []function.Parameter{
 		{
@@ -150,7 +198,6 @@ var SubstrFunc = function.New(&function.Spec{
 			// be the empty string
 			return cty.StringVal(""), nil
 		}
-
 
 		sub := in
 		pos := 0
@@ -471,6 +518,10 @@ func Reverse(str cty.Value) (cty.Value, error) {
 // single character.
 func Strlen(str cty.Value) (cty.Value, error) {
 	return StrlenFunc.Call([]cty.Value{str})
+}
+
+func StartsWith(str cty.Value, prefix cty.Value) (cty.Value, error) {
+	return StartsWithFunc.Call([]cty.Value{str, prefix})
 }
 
 // Substr is a Function that extracts a sequence of characters from another
