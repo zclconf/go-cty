@@ -765,6 +765,789 @@ func TestValueEquals(t *testing.T) {
 	}
 }
 
+func TestValueRawEquals(t *testing.T) {
+	capsuleA := CapsuleVal(capsuleTestType1, &capsuleTestType1Native{"capsuleA"})
+	capsuleB := CapsuleVal(capsuleTestType1, &capsuleTestType1Native{"capsuleB"})
+	capsuleC := CapsuleVal(capsuleTestType2, &capsuleTestType2Native{"capsuleC"})
+
+	tests := []struct {
+		LHS      Value
+		RHS      Value
+		Expected bool
+	}{
+		// Booleans
+		{
+			BoolVal(true),
+			BoolVal(true),
+			true,
+		},
+		{
+			BoolVal(false),
+			BoolVal(false),
+			true,
+		},
+		{
+			BoolVal(true),
+			BoolVal(false),
+			false,
+		},
+
+		// Numbers
+		{
+			NumberIntVal(1),
+			NumberIntVal(2),
+			false,
+		},
+		{
+			NumberIntVal(2),
+			NumberIntVal(2),
+			true,
+		},
+
+		// Strings
+		{
+			StringVal(""),
+			StringVal(""),
+			true,
+		},
+		{
+			StringVal("hello"),
+			StringVal("hello"),
+			true,
+		},
+		{
+			StringVal("hello"),
+			StringVal("world"),
+			false,
+		},
+		{
+			StringVal("0"),
+			StringVal(""),
+			false,
+		},
+		{
+			StringVal("años"),
+			StringVal("años"),
+			true,
+		},
+		{
+			// Combining marks are normalized by StringVal
+			StringVal("años"),  // (precomposed tilde-n)
+			StringVal("años"), // (combining tilde followed by bare n)
+			true,
+		},
+		{
+			// tilde-n does not normalize with bare n
+			StringVal("años"),
+			StringVal("anos"),
+			false,
+		},
+
+		// Objects
+		{
+			ObjectVal(map[string]Value{}),
+			ObjectVal(map[string]Value{}),
+			true,
+		},
+		{
+			ObjectVal(map[string]Value{
+				"num": NumberIntVal(1),
+			}),
+			ObjectVal(map[string]Value{
+				"num": NumberIntVal(1),
+			}),
+			true,
+		},
+		{
+			ObjectVal(map[string]Value{
+				"h\u00e9llo": NumberIntVal(1), // precombined é
+			}),
+			ObjectVal(map[string]Value{
+				"he\u0301llo": NumberIntVal(1), // e with combining acute accent
+			}),
+			true,
+		},
+		{
+			ObjectVal(map[string]Value{
+				"num": NumberIntVal(1),
+			}),
+			ObjectVal(map[string]Value{}),
+			false,
+		},
+		{
+			ObjectVal(map[string]Value{
+				"num":  NumberIntVal(1),
+				"flag": BoolVal(true),
+			}),
+			ObjectVal(map[string]Value{
+				"num":  NumberIntVal(1),
+				"flag": BoolVal(true),
+			}),
+			true,
+		},
+		{
+			ObjectVal(map[string]Value{
+				"num": NumberIntVal(1),
+			}),
+			ObjectVal(map[string]Value{
+				"num": NumberIntVal(2),
+			}),
+			false,
+		},
+		{
+			ObjectVal(map[string]Value{
+				"num": NumberIntVal(1),
+			}),
+			ObjectVal(map[string]Value{
+				"othernum": NumberIntVal(1),
+			}),
+			false,
+		},
+		{
+			ObjectVal(map[string]Value{
+				"num":  NumberIntVal(1),
+				"flag": BoolVal(true),
+			}),
+			ObjectVal(map[string]Value{
+				"num": NumberIntVal(1),
+			}),
+			false,
+		},
+		{
+			ObjectVal(map[string]Value{
+				"num":  NumberIntVal(1),
+				"flag": BoolVal(true),
+			}),
+			ObjectVal(map[string]Value{
+				"num":  NumberIntVal(1),
+				"flag": BoolVal(false),
+			}),
+			false,
+		},
+
+		// Tuples
+		{
+			EmptyTupleVal,
+			EmptyTupleVal,
+			true,
+		},
+		{
+			TupleVal([]Value{NumberIntVal(1)}),
+			TupleVal([]Value{NumberIntVal(1)}),
+			true,
+		},
+		{
+			TupleVal([]Value{NumberIntVal(1)}),
+			TupleVal([]Value{NumberIntVal(2)}),
+			false,
+		},
+		{
+			TupleVal([]Value{StringVal("hi")}),
+			TupleVal([]Value{NumberIntVal(1)}),
+			false,
+		},
+		{
+			TupleVal([]Value{NumberIntVal(1)}),
+			TupleVal([]Value{NumberIntVal(1), NumberIntVal(2)}),
+			false,
+		},
+		{
+			TupleVal([]Value{NumberIntVal(1), NumberIntVal(2)}),
+			TupleVal([]Value{NumberIntVal(1)}),
+			false,
+		},
+		{
+			TupleVal([]Value{NumberIntVal(1), NumberIntVal(2)}),
+			TupleVal([]Value{NumberIntVal(1), NumberIntVal(2)}),
+			true,
+		},
+		{
+			TupleVal([]Value{UnknownVal(Number)}),
+			TupleVal([]Value{NumberIntVal(1)}),
+			false,
+		},
+		{
+			TupleVal([]Value{UnknownVal(Number)}),
+			TupleVal([]Value{UnknownVal(Number)}),
+			true,
+		},
+		{
+			TupleVal([]Value{NumberIntVal(1)}),
+			TupleVal([]Value{UnknownVal(Number)}),
+			false,
+		},
+		{
+			TupleVal([]Value{NumberIntVal(1)}),
+			TupleVal([]Value{DynamicVal}),
+			false,
+		},
+		{
+			TupleVal([]Value{DynamicVal}),
+			TupleVal([]Value{NumberIntVal(1)}),
+			false,
+		},
+		{
+			TupleVal([]Value{NumberIntVal(1)}),
+			UnknownVal(Tuple([]Type{Number})),
+			false,
+		},
+		{
+			UnknownVal(Tuple([]Type{Number})),
+			TupleVal([]Value{NumberIntVal(1)}),
+			false,
+		},
+		{
+			DynamicVal,
+			TupleVal([]Value{NumberIntVal(1)}),
+			false,
+		},
+		{
+			TupleVal([]Value{NumberIntVal(1)}),
+			DynamicVal,
+			false,
+		},
+
+		// Lists
+		{
+			ListValEmpty(Number),
+			ListValEmpty(Number),
+			true,
+		},
+		{
+			ListValEmpty(Number),
+			ListValEmpty(Bool),
+			false,
+		},
+		{
+			ListVal([]Value{
+				NumberIntVal(1),
+			}),
+			ListVal([]Value{
+				NumberIntVal(1),
+			}),
+			true,
+		},
+		{
+			ListVal([]Value{
+				NumberIntVal(1),
+			}),
+			ListValEmpty(String),
+			false,
+		},
+		{
+			ListVal([]Value{
+				NumberIntVal(1),
+				NumberIntVal(2),
+			}),
+			ListVal([]Value{
+				NumberIntVal(1),
+				NumberIntVal(2),
+			}),
+			true,
+		},
+		{
+			ListVal([]Value{
+				NumberIntVal(1),
+			}),
+			ListVal([]Value{
+				NumberIntVal(2),
+			}),
+			false,
+		},
+		{
+			ListVal([]Value{
+				NumberIntVal(1),
+				NumberIntVal(2),
+			}),
+			ListVal([]Value{
+				NumberIntVal(1),
+			}),
+			false,
+		},
+		{
+			ListVal([]Value{
+				NumberIntVal(1),
+			}),
+			ListVal([]Value{
+				NumberIntVal(1),
+				NumberIntVal(2),
+			}),
+			false,
+		},
+
+		// Maps
+		{
+			MapValEmpty(Number),
+			MapValEmpty(Number),
+			true,
+		},
+		{
+			MapValEmpty(Number),
+			MapValEmpty(Bool),
+			false,
+		},
+		{
+			MapVal(map[string]Value{
+				"num": NumberIntVal(1),
+			}),
+			MapVal(map[string]Value{
+				"num": NumberIntVal(1),
+			}),
+			true,
+		},
+		{
+			MapVal(map[string]Value{
+				"h\u00e9llo": NumberIntVal(1), // precombined é
+			}),
+			MapVal(map[string]Value{
+				"he\u0301llo": NumberIntVal(1), // e with combining acute accent
+			}),
+			true,
+		},
+		{
+			MapVal(map[string]Value{
+				"num": NumberIntVal(1),
+			}),
+			MapValEmpty(String),
+			false,
+		},
+		{
+			MapVal(map[string]Value{
+				"num1": NumberIntVal(1),
+				"num2": NumberIntVal(2),
+			}),
+			MapVal(map[string]Value{
+				"num1": NumberIntVal(1),
+				"num2": NumberIntVal(2),
+			}),
+			true,
+		},
+		{
+			MapVal(map[string]Value{
+				"num": NumberIntVal(1),
+			}),
+			MapVal(map[string]Value{
+				"num": NumberIntVal(2),
+			}),
+			false,
+		},
+		{
+			MapVal(map[string]Value{
+				"num": NumberIntVal(1),
+			}),
+			MapVal(map[string]Value{
+				"othernum": NumberIntVal(1),
+			}),
+			false,
+		},
+		{
+			MapVal(map[string]Value{
+				"num1": NumberIntVal(1),
+				"num2": NumberIntVal(2),
+			}),
+			MapVal(map[string]Value{
+				"num1": NumberIntVal(1),
+			}),
+			false,
+		},
+		{
+			MapVal(map[string]Value{
+				"num1": NumberIntVal(1),
+			}),
+			MapVal(map[string]Value{
+				"num1": NumberIntVal(1),
+				"num2": NumberIntVal(2),
+			}),
+			false,
+		},
+		{
+			MapVal(map[string]Value{
+				"num1": NumberIntVal(1),
+				"num2": NumberIntVal(2),
+			}),
+			MapVal(map[string]Value{
+				"num1": NumberIntVal(1),
+				"num2": NumberIntVal(3),
+			}),
+			false,
+		},
+
+		// Sets
+		{
+			SetValEmpty(Number),
+			SetValEmpty(Number),
+			true,
+		},
+		{
+			SetValEmpty(Number),
+			SetValEmpty(Bool),
+			false,
+		},
+		{
+			SetVal([]Value{
+				NumberIntVal(1),
+			}),
+			SetVal([]Value{
+				NumberIntVal(1),
+			}),
+			true,
+		},
+		{
+			SetVal([]Value{
+				NumberIntVal(1),
+			}),
+			SetValEmpty(String),
+			false,
+		},
+		{
+			SetVal([]Value{
+				NumberIntVal(1),
+				NumberIntVal(2),
+			}),
+			SetVal([]Value{
+				NumberIntVal(2),
+				NumberIntVal(1),
+			}),
+			true,
+		},
+		{
+			SetVal([]Value{
+				NumberIntVal(1),
+			}),
+			SetVal([]Value{
+				NumberIntVal(2),
+			}),
+			false,
+		},
+		{
+			SetVal([]Value{
+				NumberIntVal(1),
+				NumberIntVal(2),
+			}),
+			SetVal([]Value{
+				NumberIntVal(1),
+			}),
+			false,
+		},
+		{
+			SetVal([]Value{
+				NumberIntVal(1),
+			}),
+			SetVal([]Value{
+				NumberIntVal(1),
+				NumberIntVal(2),
+			}),
+			false,
+		},
+
+		// Capsules
+		{
+			capsuleA,
+			capsuleA,
+			true,
+		},
+		{
+			capsuleA,
+			capsuleB,
+			false,
+		},
+		{
+			capsuleA,
+			capsuleC,
+			false,
+		},
+		{
+			capsuleA,
+			UnknownVal(capsuleTestType1), // same type
+			false,
+		},
+		{
+			capsuleA,
+			UnknownVal(capsuleTestType2), // different type
+			false,
+		},
+
+		// Unknowns and Dynamics
+		{
+			NumberIntVal(2),
+			UnknownVal(Number),
+			false,
+		},
+		{
+			NumberIntVal(1),
+			DynamicVal,
+			false,
+		},
+		{
+			DynamicVal,
+			BoolVal(true),
+			false,
+		},
+		{
+			DynamicVal,
+			DynamicVal,
+			true, //?
+		},
+		{
+			ListVal([]Value{
+				StringVal("hi"),
+				DynamicVal,
+			}),
+			ListVal([]Value{
+				StringVal("hi"),
+				DynamicVal,
+			}),
+			true,
+		},
+		{
+			ListVal([]Value{
+				StringVal("hi"),
+				UnknownVal(String),
+			}),
+			ListVal([]Value{
+				StringVal("hi"),
+				UnknownVal(String),
+			}),
+			true,
+		},
+		{
+			MapVal(map[string]Value{
+				"static":  StringVal("hi"),
+				"dynamic": DynamicVal,
+			}),
+			MapVal(map[string]Value{
+				"static":  StringVal("hi"),
+				"dynamic": DynamicVal,
+			}),
+			true,
+		},
+		{
+			MapVal(map[string]Value{
+				"static":  StringVal("hi"),
+				"dynamic": UnknownVal(String),
+			}),
+			MapVal(map[string]Value{
+				"static":  StringVal("hi"),
+				"dynamic": UnknownVal(String),
+			}),
+			true,
+		},
+
+		{
+			NullVal(String),
+			NullVal(DynamicPseudoType),
+			false,
+		},
+		{
+			NullVal(String),
+			NullVal(String),
+			true,
+		},
+		{
+			UnknownVal(String),
+			UnknownVal(Number),
+			false,
+		},
+		{
+			StringVal(""),
+			NullVal(DynamicPseudoType),
+			false,
+		},
+		{
+			StringVal(""),
+			NullVal(String),
+			false,
+		},
+		{
+			StringVal(""),
+			UnknownVal(String),
+			false,
+		},
+		{
+			NullVal(DynamicPseudoType),
+			NullVal(DynamicPseudoType),
+			true,
+		},
+		{
+			NullVal(String),
+			UnknownVal(Number),
+			false, // because second operand might eventually be null
+		},
+		{
+			UnknownVal(String),
+			NullVal(Number),
+			false, // because first operand might eventually be null
+		},
+		{
+			UnknownVal(String),
+			UnknownVal(Number),
+			false, // because both operands might eventually be null
+		},
+		{
+			StringVal("hello"),
+			UnknownVal(Number),
+			false, // because no number value -- even null -- can be equal to a non-null string
+		},
+		{
+			UnknownVal(String),
+			NumberIntVal(1),
+			false, // because no string value -- even null -- can be equal to a non-null number
+		},
+		{
+			ObjectVal(map[string]Value{
+				"a": StringVal("a"),
+			}),
+			// A null value is always known
+			ObjectVal(map[string]Value{
+				"a": NullVal(DynamicPseudoType),
+			}),
+			false,
+		},
+		{
+			ObjectVal(map[string]Value{
+				"a": NullVal(DynamicPseudoType),
+			}),
+			ObjectVal(map[string]Value{
+				"a": NullVal(DynamicPseudoType),
+			}),
+			true,
+		},
+		{
+			ObjectVal(map[string]Value{
+				"a": StringVal("a"),
+				"b": UnknownVal(Number),
+			}),
+			// While we have a dynamic type, the different object types should
+			// still compare false
+			ObjectVal(map[string]Value{
+				"a": NullVal(DynamicPseudoType),
+				"c": UnknownVal(Number),
+			}),
+			false,
+		},
+		{
+			ObjectVal(map[string]Value{
+				"a": StringVal("a"),
+				"b": UnknownVal(Number),
+			}),
+			// While we have a dynamic type, the different object types should
+			// still compare false
+			ObjectVal(map[string]Value{
+				"a": DynamicVal,
+				"c": UnknownVal(Number),
+			}),
+			false,
+		},
+		{
+			ObjectVal(map[string]Value{
+				"a": NullVal(DynamicPseudoType),
+			}),
+			ObjectVal(map[string]Value{
+				"a": DynamicVal,
+			}),
+			false,
+		},
+		{
+			ObjectVal(map[string]Value{
+				"a": NullVal(List(String)),
+			}),
+			// While the unknown val does contain dynamic types, the overall
+			// container types can't conform.
+			ObjectVal(map[string]Value{
+				"a": UnknownVal(List(List(DynamicPseudoType))),
+			}),
+			false,
+		},
+		{
+			ObjectVal(map[string]Value{
+				"a": NullVal(List(List(String))),
+			}),
+			ObjectVal(map[string]Value{
+				"a": UnknownVal(List(List(DynamicPseudoType))),
+			}),
+			false,
+		},
+		{
+			ObjectVal(map[string]Value{
+				"a": SetVal([]Value{
+					ObjectVal(map[string]Value{
+						"b": UnknownVal(String),
+					}),
+				}),
+			}),
+			ObjectVal(map[string]Value{
+				"a": SetVal([]Value{
+					ObjectVal(map[string]Value{
+						"b": UnknownVal(String),
+					}),
+				}),
+			}),
+			true,
+		},
+		{
+			ObjectVal(map[string]Value{
+				"a": SetVal([]Value{
+					ObjectVal(map[string]Value{
+						"b": UnknownVal(String),
+						"c": StringVal("cee"),
+					}),
+				}),
+			}),
+			ObjectVal(map[string]Value{
+				"a": SetVal([]Value{
+					ObjectVal(map[string]Value{
+						"b": UnknownVal(String),
+						"c": StringVal("cee"),
+					}),
+				}),
+			}),
+			true,
+		},
+		{
+			ObjectVal(map[string]Value{
+				"a": SetVal([]Value{
+					ObjectVal(map[string]Value{
+						"b": UnknownVal(String),
+					}),
+				}),
+			}),
+			ObjectVal(map[string]Value{
+				"a": SetVal([]Value{
+					ObjectVal(map[string]Value{
+						"c": UnknownVal(String),
+					}),
+				}),
+			}),
+			false,
+		},
+		// Marks
+		{
+			StringVal("a").Mark(1),
+			StringVal("b"),
+			false,
+		},
+		{
+			StringVal("a"),
+			StringVal("b").Mark(2),
+			false,
+		},
+		{
+			StringVal("a").Mark(1),
+			StringVal("b").Mark(2),
+			false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%#v.RawEquals(%#v)", test.LHS, test.RHS), func(t *testing.T) {
+			got := test.LHS.RawEquals(test.RHS)
+			if !got == test.Expected {
+				t.Fatalf("wrong Equals result\ngot:  %#v\nwant: %#v", got, test.Expected)
+			}
+		})
+	}
+}
+
 func TestValueAdd(t *testing.T) {
 	tests := []struct {
 		LHS      Value
