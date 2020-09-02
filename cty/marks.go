@@ -191,6 +191,20 @@ func (val Value) Mark(mark interface{}) Value {
 	}
 }
 
+// MarkWithPaths accepts a slice of PathValueMarks to apply
+// marker particular paths
+func (val Value) MarkWithPaths(pvm []PathValueMarks) Value {
+	ret, _ := Transform(val, func(p Path, v Value) (Value, error) {
+		for _, path := range pvm {
+			if p.Equals(path.Path) {
+				return v.WithMarks(path.Marks), nil
+			}
+		}
+		return v, nil
+	})
+	return ret
+}
+
 // Unmark separates the marks of the receiving value from the value itself,
 // removing a new unmarked value and a map (representing a set) of the marks.
 //

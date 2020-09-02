@@ -61,6 +61,14 @@ func TestValueMarks(t *testing.T) {
 	if got, want := result, False.WithMarks(NewValueMarks("a", "b", "c", "d")); !want.RawEquals(got) {
 		t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, want)
 	}
+
+	// Unmark the result and capture the paths
+	unmarkedResult, pvm := result.UnmarkDeepWithPaths()
+	// Remark the result with those paths
+	remarked := unmarkedResult.MarkWithPaths(pvm)
+	if got, want := remarked, False.WithMarks(NewValueMarks("a", "b", "c", "d")); !want.RawEquals(got) {
+		t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, want)
+	}
 }
 
 func TestUnmarkDeep(t *testing.T) {
