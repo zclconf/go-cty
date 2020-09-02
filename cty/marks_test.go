@@ -62,3 +62,23 @@ func TestValueMarks(t *testing.T) {
 		t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, want)
 	}
 }
+
+func TestUnmarkDeep(t *testing.T) {
+	v := NumberIntVal(1).Mark("a")
+	v1 := NumberIntVal(2)
+	l := ListVal([]Value{v, v1})
+	if l.IsMarked() {
+		t.Error("Value containing marks should not be marked itself")
+	}
+	if !l.ContainsMarked() {
+		t.Error("Value containing marks should be caught by ContainsMarked")
+	}
+
+	l1, marks := l.UnmarkDeep()
+	if got, want := l1, ListVal([]Value{NumberIntVal(1), v1}); !want.RawEquals(got) {
+		t.Errorf("wrong result\ngot: #%v\nwant: %#v", got, want)
+	}
+	if got, want := marks, NewValueMarks("a"); !want.Equal(got) {
+		t.Errorf("wrong result\ngot: #%v\nwant: %#v", got, want)
+	}
+}
