@@ -1,4 +1,7 @@
-# 1.6.1 (Unreleased)
+# 1.6.2 (Unreleased)
+
+
+# 1.6.1 (September 2, 2020)
 
 * Fix a regression from 1.6.0 where `Value.RawEqual` no longer returned the correct result given a pair of sets containing partially-unknown values. ([#64](https://github.com/zclconf/go-cty/pull/64))
 
