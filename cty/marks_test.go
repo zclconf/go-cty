@@ -81,4 +81,15 @@ func TestUnmarkDeep(t *testing.T) {
 	if got, want := marks, NewValueMarks("a"); !want.Equal(got) {
 		t.Errorf("wrong result\ngot: #%v\nwant: %#v", got, want)
 	}
+
+	l2, paths := l.UnmarkDeepWithPaths()
+	if got, want := l2, ListVal([]Value{NumberIntVal(1), v1}); !want.RawEquals(got) {
+		t.Errorf("wrong result\ngot: #%v\nwant: %#v", got, want)
+	}
+	expectedPathValueMarks := []PathValueMarks{{Path{IndexStep{Key: NumberIntVal(0)}}, NewValueMarks("a")}, {}, {}}
+	for i, p := range paths {
+		if got, want := p, expectedPathValueMarks[i]; !want.Equal(got) {
+			t.Errorf("wrong result\ngot: #%v\nwant: %#v", got, want)
+		}
+	}
 }
