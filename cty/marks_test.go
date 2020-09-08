@@ -70,6 +70,12 @@ func TestValueMarks(t *testing.T) {
 	if got, want := remarked, False.WithMarks(NewValueMarks("a", "b", "c", "d")); !want.RawEquals(got) {
 		t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, want)
 	}
+
+	// If we call MarkWithPaths without any matching paths, we should get the unmarked result
+	markedWithNoPaths := unmarkedResult.MarkWithPaths([]PathValueMarks{{Path{IndexStep{Key: NumberIntVal(0)}}, NewValueMarks("z")}})
+	if got, want := markedWithNoPaths, False; !want.RawEquals(got) {
+		t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, want)
+	}
 }
 
 func TestPathValueMarks(t *testing.T) {
