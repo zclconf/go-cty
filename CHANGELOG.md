@@ -1,9 +1,10 @@
-# 1.6.2 (Unreleased)
+# 1.7.0 (Unreleased)
 
+* `cty`: `Value.UnmarkDeepWithPaths` and `Value.MarkWithPaths` are like `Value.UnmarkDeep` and `Value.Mark` but they retain path information for each marked value, so that marks can be re-applied later without all the loss of detail that results from `Value.UnmarkDeep` aggregating together all of the nested marks.
 
 # 1.6.1 (September 2, 2020)
 
-* Fix a regression from 1.6.0 where `Value.RawEqual` no longer returned the correct result given a pair of sets containing partially-unknown values. ([#64](https://github.com/zclconf/go-cty/pull/64))
+* `cty`:: Fix a regression from 1.6.0 where `Value.RawEqual` no longer returned the correct result given a pair of sets containing partially-unknown values. ([#64](https://github.com/zclconf/go-cty/pull/64))
 
 # 1.6.0 (August 30, 2020)
 
