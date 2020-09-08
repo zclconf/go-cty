@@ -1,6 +1,7 @@
 package cty
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -68,6 +69,48 @@ func TestValueMarks(t *testing.T) {
 	remarked := unmarkedResult.MarkWithPaths(pvm)
 	if got, want := remarked, False.WithMarks(NewValueMarks("a", "b", "c", "d")); !want.RawEquals(got) {
 		t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, want)
+	}
+}
+
+func TestPathValueMarks(t *testing.T) {
+	tests := []struct {
+		original PathValueMarks
+		compare  PathValueMarks
+		want     bool
+	}{
+		{
+			PathValueMarks{Path{IndexStep{Key: NumberIntVal(0)}}, NewValueMarks("a")},
+			PathValueMarks{Path{IndexStep{Key: NumberIntVal(0)}}, NewValueMarks("a")},
+			true,
+		},
+		{
+			PathValueMarks{Path{IndexStep{Key: StringVal("p")}}, NewValueMarks(123)},
+			PathValueMarks{Path{IndexStep{Key: StringVal("p")}}, NewValueMarks(123)},
+			true,
+		},
+		{
+			PathValueMarks{Path{IndexStep{Key: NumberIntVal(0)}}, NewValueMarks("a")},
+			PathValueMarks{Path{IndexStep{Key: NumberIntVal(1)}}, NewValueMarks("a")},
+			false,
+		},
+		{
+			PathValueMarks{Path{IndexStep{Key: NumberIntVal(0)}}, NewValueMarks("a")},
+			PathValueMarks{Path{IndexStep{Key: NumberIntVal(0)}}, NewValueMarks("b")},
+			false,
+		},
+		{
+			PathValueMarks{Path{IndexStep{Key: NumberIntVal(0)}}, NewValueMarks("a")},
+			PathValueMarks{Path{IndexStep{Key: NumberIntVal(1)}}, NewValueMarks("b")},
+			false,
+		},
+	}
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("Comparing %#v to %#v", test.original, test.compare), func(t *testing.T) {
+			got := test.original.Equal(test.compare)
+			if got != test.want {
+				t.Errorf("wrong result\ngot: %v\nwant: %v", got, test.want)
+			}
+		})
 	}
 }
 
