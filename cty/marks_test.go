@@ -1,6 +1,7 @@
 package cty
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -60,5 +61,92 @@ func TestValueMarks(t *testing.T) {
 	result := a.Multiply(b).Subtract(c).GreaterThanOrEqualTo(d)
 	if got, want := result, False.WithMarks(NewValueMarks("a", "b", "c", "d")); !want.RawEquals(got) {
 		t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, want)
+	}
+
+	// Unmark the result and capture the paths
+	unmarkedResult, pvm := result.UnmarkDeepWithPaths()
+	// Remark the result with those paths
+	remarked := unmarkedResult.MarkWithPaths(pvm)
+	if got, want := remarked, False.WithMarks(NewValueMarks("a", "b", "c", "d")); !want.RawEquals(got) {
+		t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, want)
+	}
+
+	// If we call MarkWithPaths without any matching paths, we should get the unmarked result
+	markedWithNoPaths := unmarkedResult.MarkWithPaths([]PathValueMarks{{Path{IndexStep{Key: NumberIntVal(0)}}, NewValueMarks("z")}})
+	if got, want := markedWithNoPaths, False; !want.RawEquals(got) {
+		t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, want)
+	}
+}
+
+func TestPathValueMarks(t *testing.T) {
+	tests := []struct {
+		original PathValueMarks
+		compare  PathValueMarks
+		want     bool
+	}{
+		{
+			PathValueMarks{Path{IndexStep{Key: NumberIntVal(0)}}, NewValueMarks("a")},
+			PathValueMarks{Path{IndexStep{Key: NumberIntVal(0)}}, NewValueMarks("a")},
+			true,
+		},
+		{
+			PathValueMarks{Path{IndexStep{Key: StringVal("p")}}, NewValueMarks(123)},
+			PathValueMarks{Path{IndexStep{Key: StringVal("p")}}, NewValueMarks(123)},
+			true,
+		},
+		{
+			PathValueMarks{Path{IndexStep{Key: NumberIntVal(0)}}, NewValueMarks("a")},
+			PathValueMarks{Path{IndexStep{Key: NumberIntVal(1)}}, NewValueMarks("a")},
+			false,
+		},
+		{
+			PathValueMarks{Path{IndexStep{Key: NumberIntVal(0)}}, NewValueMarks("a")},
+			PathValueMarks{Path{IndexStep{Key: NumberIntVal(0)}}, NewValueMarks("b")},
+			false,
+		},
+		{
+			PathValueMarks{Path{IndexStep{Key: NumberIntVal(0)}}, NewValueMarks("a")},
+			PathValueMarks{Path{IndexStep{Key: NumberIntVal(1)}}, NewValueMarks("b")},
+			false,
+		},
+	}
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("Comparing %#v to %#v", test.original, test.compare), func(t *testing.T) {
+			got := test.original.Equal(test.compare)
+			if got != test.want {
+				t.Errorf("wrong result\ngot: %v\nwant: %v", got, test.want)
+			}
+		})
+	}
+}
+
+func TestUnmarkDeep(t *testing.T) {
+	v := NumberIntVal(1).Mark("a")
+	v1 := NumberIntVal(2)
+	l := ListVal([]Value{v, v1})
+	if l.IsMarked() {
+		t.Error("Value containing marks should not be marked itself")
+	}
+	if !l.ContainsMarked() {
+		t.Error("Value containing marks should be caught by ContainsMarked")
+	}
+
+	l1, marks := l.UnmarkDeep()
+	if got, want := l1, ListVal([]Value{NumberIntVal(1), v1}); !want.RawEquals(got) {
+		t.Errorf("wrong result\ngot: #%v\nwant: %#v", got, want)
+	}
+	if got, want := marks, NewValueMarks("a"); !want.Equal(got) {
+		t.Errorf("wrong result\ngot: #%v\nwant: %#v", got, want)
+	}
+
+	l2, paths := l.UnmarkDeepWithPaths()
+	if got, want := l2, ListVal([]Value{NumberIntVal(1), v1}); !want.RawEquals(got) {
+		t.Errorf("wrong result\ngot: #%v\nwant: %#v", got, want)
+	}
+	expectedPathValueMarks := []PathValueMarks{{Path{IndexStep{Key: NumberIntVal(0)}}, NewValueMarks("a")}, {}, {}}
+	for i, p := range paths {
+		if got, want := p, expectedPathValueMarks[i]; !want.Equal(got) {
+			t.Errorf("wrong result\ngot: #%v\nwant: %#v", got, want)
+		}
 	}
 }
