@@ -80,7 +80,20 @@ func TestWalk(t *testing.T) {
 	}
 }
 
-func TestTransform(t *testing.T) {
+type pathTransformer struct{}
+
+func (pathTransformer) Enter(p Path, v Value) (Value, error) {
+	return v, nil
+}
+
+func (pathTransformer) Exit(p Path, v Value) (Value, error) {
+	if v.Type().IsPrimitiveType() {
+		return StringVal(fmt.Sprintf("%#v", p)), nil
+	}
+	return v, nil
+}
+
+func TestTransformWithTransformer(t *testing.T) {
 	val := ObjectVal(map[string]Value{
 		"string":       StringVal("hello"),
 		"number":       NumberIntVal(10),
@@ -101,12 +114,7 @@ func TestTransform(t *testing.T) {
 		"unknown_map":  UnknownVal(Map(Bool)),
 	})
 
-	gotVal, err := Transform(val, func(path Path, v Value) (Value, error) {
-		if v.Type().IsPrimitiveType() {
-			return StringVal(fmt.Sprintf("%#v", path)), nil
-		}
-		return v, nil
-	})
+	gotVal, err := TransformWithTransformer(val, pathTransformer{})
 	if err != nil {
 		t.Fatalf("unexpected error: %s", err)
 	}
@@ -147,5 +155,79 @@ func TestTransform(t *testing.T) {
 				t.Errorf("wrong value for attribute %q\ngot:  %#v\nwant: %#v", attr, gotElem, wantElem)
 			}
 		}
+	}
+}
+
+type errorTransformer struct{}
+
+func (errorTransformer) Enter(p Path, v Value) (Value, error) {
+	return v, nil
+}
+
+func (errorTransformer) Exit(p Path, v Value) (Value, error) {
+	ty := v.Type()
+	if ty.IsPrimitiveType() {
+		return v, nil
+	}
+	return v, p.NewError(fmt.Errorf("expected primitive type, was %#v", ty))
+}
+
+func TestTransformWithTransformer_error(t *testing.T) {
+	val := ObjectVal(map[string]Value{
+		"string": StringVal("hello"),
+		"number": NumberIntVal(10),
+		"bool":   True,
+		"list":   ListVal([]Value{True}),
+	})
+
+	gotVal, err := TransformWithTransformer(val, errorTransformer{})
+	if gotVal != DynamicVal {
+		t.Fatalf("expected DynamicVal, got %#v", gotVal)
+	}
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+
+	pathError, ok := err.(PathError)
+	if !ok {
+		t.Fatalf("expected PathError, got %#v", err)
+	}
+
+	if got, want := pathError.Path, GetAttrPath("list"); !got.Equals(want) {
+		t.Errorf("wrong path\n got: %#v\nwant: %#v", got, want)
+	}
+}
+
+func TestTransform(t *testing.T) {
+	val := ObjectVal(map[string]Value{
+		"list": ListVal([]Value{True, True, False}),
+		"set":  SetVal([]Value{True, False}),
+		"map":  MapVal(map[string]Value{"a": True, "b": False}),
+		"object": ObjectVal(map[string]Value{
+			"a": True,
+			"b": ListVal([]Value{False, False, False}),
+		}),
+	})
+	wantVal := ObjectVal(map[string]Value{
+		"list": ListVal([]Value{False, False, True}),
+		"set":  SetVal([]Value{True, False}),
+		"map":  MapVal(map[string]Value{"a": False, "b": True}),
+		"object": ObjectVal(map[string]Value{
+			"a": False,
+			"b": ListVal([]Value{True, True, True}),
+		}),
+	})
+
+	gotVal, err := Transform(val, func(p Path, v Value) (Value, error) {
+		if v.Type().Equals(Bool) {
+			return v.Not(), nil
+		}
+		return v, nil
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+	if !gotVal.RawEquals(wantVal) {
+		t.Fatalf("wrong value\n got: %#v\nwant: %#v", gotVal, wantVal)
 	}
 }
