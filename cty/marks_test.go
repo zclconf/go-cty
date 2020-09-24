@@ -454,3 +454,92 @@ func TestPathValueMarks(t *testing.T) {
 		})
 	}
 }
+
+func TestWithMarksDeep(t *testing.T) {
+	testCases := map[string]struct {
+		val   Value
+		marks ValueMarks
+		want  Value
+	}{
+		"adding no marks to marked value is no-op": {
+			StringVal("a").Mark("a"),
+			NewValueMarks(),
+			StringVal("a").Mark("a"),
+		},
+		"adding marks to marked value": {
+			NumberIntVal(1).Mark("a"),
+			NewValueMarks("b"),
+			NumberIntVal(1).WithMarks(NewValueMarks("a", "b")),
+		},
+		"marking list": {
+			ListVal([]Value{NumberIntVal(1), NumberIntVal(2)}),
+			NewValueMarks("a"),
+			ListVal([]Value{NumberIntVal(1).Mark("a"), NumberIntVal(2).Mark("a")}).Mark("a"),
+		},
+		"list with some elements already marked": {
+			ListVal([]Value{NumberIntVal(1).Mark("a"), NumberIntVal(2)}),
+			NewValueMarks("a"),
+			ListVal([]Value{NumberIntVal(1).Mark("a"), NumberIntVal(2).Mark("a")}).Mark("a"),
+		},
+		"marking empty list": {
+			ListValEmpty(String),
+			NewValueMarks("c"),
+			ListValEmpty(String).Mark("c"),
+		},
+		"map with multiple marks": {
+			MapVal(map[string]Value{
+				"a": StringVal("b"),
+				"x": StringVal("y"),
+			}),
+			NewValueMarks("c", "z"),
+			MapVal(map[string]Value{
+				"a": StringVal("b").WithMarks(NewValueMarks("c", "z")),
+				"x": StringVal("y").WithMarks(NewValueMarks("c", "z")),
+			}).WithMarks(NewValueMarks("c", "z")),
+		},
+		"tuple": {
+			TupleVal([]Value{
+				NumberIntVal(1),
+				StringVal("y"),
+			}),
+			NewValueMarks("a"),
+			TupleVal([]Value{
+				NumberIntVal(1).Mark("a"),
+				StringVal("y").Mark("a"),
+			}).Mark("a"),
+		},
+		"set": {
+			SetVal([]Value{NumberIntVal(1), NumberIntVal(2)}),
+			NewValueMarks("a"),
+			SetVal([]Value{NumberIntVal(1), NumberIntVal(2)}).Mark("a"),
+		},
+		"complex object": {
+			ObjectVal(map[string]Value{
+				"x": ListVal([]Value{
+					NumberIntVal(3),
+					NumberIntVal(5),
+				}),
+				"y": StringVal("y"),
+				"z": BoolVal(true),
+			}),
+			NewValueMarks("a"),
+			ObjectVal(map[string]Value{
+				"x": ListVal([]Value{
+					NumberIntVal(3).Mark("a"),
+					NumberIntVal(5).Mark("a"),
+				}).Mark("a"),
+				"y": StringVal("y").Mark("a"),
+				"z": BoolVal(true).Mark("a"),
+			}).Mark("a"),
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			got := tc.val.WithMarksDeep(tc.marks)
+			if !got.RawEquals(tc.want) {
+				t.Errorf("wrong value\n got: %#v\nwant: %#v", got, tc.want)
+			}
+		})
+	}
+}

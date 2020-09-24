@@ -364,3 +364,13 @@ func (val Value) WithSameMarks(srcs ...Value) Value {
 		},
 	}
 }
+
+// WithMarksDeep is similar to WithMarks, but it works with an entire nested
+// structure rather than just the given value directly.
+func (val Value) WithMarksDeep(marks ...ValueMarks) Value {
+	ret, _ := Transform(val, func(p Path, v Value) (Value, error) {
+		return v.WithMarks(marks...), nil
+	})
+
+	return ret
+}
