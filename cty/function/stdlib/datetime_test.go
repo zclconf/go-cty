@@ -40,6 +40,11 @@ func TestFormatDate(t *testing.T) {
 			``,
 		},
 		{
+			cty.StringVal("H 'o''clock'"),
+			cty.StringVal("3 o'clock"),
+			``,
+		},
+		{
 			cty.StringVal("hh:mm:ssZZZZ"),
 			cty.StringVal("15:04:05+0000"),
 			``,
