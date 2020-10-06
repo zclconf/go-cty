@@ -240,7 +240,9 @@ type unmarkTransformer struct {
 func (t *unmarkTransformer) Enter(p Path, v Value) (Value, error) {
 	unmarkedVal, marks := v.Unmark()
 	if len(marks) > 0 {
-		t.pvm = append(t.pvm, PathValueMarks{p, marks})
+		path := make(Path, len(p), len(p)+1)
+		copy(path, p)
+		t.pvm = append(t.pvm, PathValueMarks{path, marks})
 	}
 	return unmarkedVal, nil
 }
