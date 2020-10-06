@@ -69,6 +69,9 @@ func walk(path Path, val Value, cb func(Path, Value) (bool, error)) error {
 // Use Enter when you want to transform a complex value before traversal
 // (preorder), and Exit when you want to transform a value after traversal
 // (postorder).
+//
+// The path passed to the given function may not be used after that function
+// returns, since its backing array is re-used for other calls.
 type Transformer interface {
 	Enter(Path, Value) (Value, error)
 	Exit(Path, Value) (Value, error)

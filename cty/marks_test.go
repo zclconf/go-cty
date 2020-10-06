@@ -422,6 +422,32 @@ func TestPathValueMarks(t *testing.T) {
 				{GetAttrPath("z"), NewValueMarks("f")},
 			},
 		},
+		"path array reuse regression test": {
+			ObjectVal(map[string]Value{
+				"environment": ListVal([]Value{
+					ObjectVal(map[string]Value{
+						"variables": MapVal(map[string]Value{
+							"bar": StringVal("secret").Mark("sensitive"),
+							"foo": StringVal("secret").Mark("sensitive"),
+						}),
+					}),
+				}),
+			}),
+			ObjectVal(map[string]Value{
+				"environment": ListVal([]Value{
+					ObjectVal(map[string]Value{
+						"variables": MapVal(map[string]Value{
+							"bar": StringVal("secret"),
+							"foo": StringVal("secret"),
+						}),
+					}),
+				}),
+			}),
+			[]PathValueMarks{
+				{GetAttrPath("environment").IndexInt(0).GetAttr("variables").IndexString("bar"), NewValueMarks("sensitive")},
+				{GetAttrPath("environment").IndexInt(0).GetAttr("variables").IndexString("foo"), NewValueMarks("sensitive")},
+			},
+		},
 	}
 
 	for name, tc := range testCases {
