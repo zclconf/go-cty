@@ -443,6 +443,20 @@ func TestJoin(t *testing.T) {
 			},
 			cty.StringVal("hello-world").Mark("sensitive"),
 		},
+		"list with some marked elements": {
+			cty.StringVal("-"),
+			[]cty.Value{
+				cty.ListVal([]cty.Value{cty.StringVal("hello").Mark("sensitive"), cty.StringVal("world")}),
+			},
+			cty.StringVal("hello-world").Mark("sensitive"),
+		},
+		"multiple marks": {
+			cty.StringVal("-").Mark("a"),
+			[]cty.Value{
+				cty.ListVal([]cty.Value{cty.StringVal("hello").Mark("b"), cty.StringVal("world").Mark("c")}),
+			},
+			cty.StringVal("hello-world").WithMarks(cty.NewValueMarks("a", "b", "c")),
+		},
 	}
 
 	for name, test := range tests {
