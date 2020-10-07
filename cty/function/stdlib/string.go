@@ -151,7 +151,6 @@ var SubstrFunc = function.New(&function.Spec{
 			return cty.StringVal(""), nil
 		}
 
-
 		sub := in
 		pos := 0
 		var i int
@@ -225,10 +224,15 @@ var JoinFunc = function.New(&function.Spec{
 		}
 
 		items := make([]string, 0, l)
+		marks := make(cty.ValueMarks)
 		for ai, list := range listVals {
 			ei := 0
 			for it := list.ElementIterator(); it.Next(); {
 				_, val := it.Element()
+				val, valMarks := val.Unmark()
+				for k, s := range valMarks {
+					marks[k] = s
+				}
 				if val.IsNull() {
 					if len(listVals) > 1 {
 						return cty.UnknownVal(cty.String), function.NewArgErrorf(ai+1, "element %d of list %d is null; cannot concatenate null values", ei, ai+1)
@@ -240,7 +244,7 @@ var JoinFunc = function.New(&function.Spec{
 			}
 		}
 
-		return cty.StringVal(strings.Join(items, sep)), nil
+		return cty.StringVal(strings.Join(items, sep)).WithMarks(marks), nil
 	},
 })
 
