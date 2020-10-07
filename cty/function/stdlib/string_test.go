@@ -393,3 +393,69 @@ func TestSubstr(t *testing.T) {
 		})
 	}
 }
+
+func TestJoin(t *testing.T) {
+	tests := map[string]struct {
+		Separator cty.Value
+		Lists     []cty.Value
+		Want      cty.Value
+	}{
+		"single two-element list": {
+			cty.StringVal("-"),
+			[]cty.Value{
+				cty.ListVal([]cty.Value{cty.StringVal("hello"), cty.StringVal("world")}),
+			},
+			cty.StringVal("hello-world"),
+		},
+		"multiple single-element lists": {
+			cty.StringVal("-"),
+			[]cty.Value{
+				cty.ListVal([]cty.Value{cty.StringVal("chicken")}),
+				cty.ListVal([]cty.Value{cty.StringVal("egg")}),
+			},
+			cty.StringVal("chicken-egg"),
+		},
+		"single single-element list": {
+			cty.StringVal("-"),
+			[]cty.Value{
+				cty.ListVal([]cty.Value{cty.StringVal("chicken")}),
+			},
+			cty.StringVal("chicken"),
+		},
+		"blank separator": {
+			cty.StringVal(""),
+			[]cty.Value{
+				cty.ListVal([]cty.Value{cty.StringVal("horse"), cty.StringVal("face")}),
+			},
+			cty.StringVal("horseface"),
+		},
+		"marked list": {
+			cty.StringVal("-"),
+			[]cty.Value{
+				cty.ListVal([]cty.Value{cty.StringVal("hello"), cty.StringVal("world")}).Mark("sensitive"),
+			},
+			cty.StringVal("hello-world").Mark("sensitive"),
+		},
+		"marked separator": {
+			cty.StringVal("-").Mark("sensitive"),
+			[]cty.Value{
+				cty.ListVal([]cty.Value{cty.StringVal("hello"), cty.StringVal("world")}),
+			},
+			cty.StringVal("hello-world").Mark("sensitive"),
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			got, err := Join(test.Separator, test.Lists...)
+
+			if err != nil {
+				t.Fatalf("unexpected error: %s", err)
+			}
+
+			if !got.RawEquals(test.Want) {
+				t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, test.Want)
+			}
+		})
+	}
+}
