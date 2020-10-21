@@ -1,3 +1,6 @@
+# 1.7.1 (Unreleased)
+
+
 # 1.7.0 (October 20, 2020)
 
 * `cty`: `Value.UnmarkDeepWithPaths` and `Value.MarkWithPaths` are like `Value.UnmarkDeep` and `Value.Mark` but they retain path information for each marked value, so that marks can be re-applied later without all the loss of detail that results from `Value.UnmarkDeep` aggregating together all of the nested marks.
