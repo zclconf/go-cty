@@ -3,6 +3,8 @@ package cty
 import (
 	"fmt"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 func TestHasDynamicTypes(t *testing.T) {
@@ -52,5 +54,19 @@ func TestHasDynamicTypes(t *testing.T) {
 				t.Errorf("Equals returned %#v; want %#v", got, test.expected)
 			}
 		})
+	}
+}
+
+func TestEqualTypes(t *testing.T) {
+	type field struct {
+		Type Type
+	}
+
+	if diff := cmp.Diff(&field{Type: String}, &field{Type: String}); diff != "" {
+		t.Fatalf("types differ: %s", diff)
+	}
+
+	if diff := cmp.Diff(&field{Type: Bool}, &field{Type: String}); diff == "" {
+		t.Fatal("expected types to differ")
 	}
 }
