@@ -1953,6 +1953,11 @@ func TestValueModulo(t *testing.T) {
 			NumberIntVal(10).Mark(2),
 			Zero.WithMarks(NewValueMarks(1, 2)),
 		},
+		{
+			MustParseNumberVal("967323432120515089486873574508975134568969931547"),
+			NumberIntVal(10),
+			NumberIntVal(7),
+		},
 	}
 
 	for _, test := range tests {
