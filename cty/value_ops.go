@@ -596,8 +596,25 @@ func (val Value) Multiply(other Value) Value {
 		return *shortCircuit
 	}
 
-	ret := new(big.Float)
+	// find the larger precision of the arguments
+	resPrec := val.v.(*big.Float).Prec()
+	otherPrec := other.v.(*big.Float).Prec()
+	if otherPrec > resPrec {
+		resPrec = otherPrec
+	}
+
+	// make sure we have enough precision for the product
+	ret := new(big.Float).SetPrec(512)
 	ret.Mul(val.v.(*big.Float), other.v.(*big.Float))
+
+	// now reduce the precision back to the greater argument, or the minimum
+	// required by the product.
+	minPrec := ret.MinPrec()
+	if minPrec > resPrec {
+		resPrec = minPrec
+	}
+	ret.SetPrec(resPrec)
+
 	return NumberVal(ret)
 }
 

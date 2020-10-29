@@ -1777,6 +1777,17 @@ func TestValueMultiply(t *testing.T) {
 			Zero.Mark(2),
 			Zero.WithMarks(NewValueMarks(1, 2)),
 		},
+		{
+			MustParseNumberVal("967323432120515089486873574508975134568969931547"),
+			NumberFloatVal(12345),
+			MustParseNumberVal("11941607769527758779715454277313298036253933804947715"),
+		},
+		//
+		{
+			NumberFloatVal(22337203685475.5),
+			NumberFloatVal(22337203685475.5),
+			MustParseNumberVal("498950668486420259929661100.25"),
+		},
 	}
 
 	for _, test := range tests {
