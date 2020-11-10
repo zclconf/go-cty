@@ -54,3 +54,10 @@ func TestHasDynamicTypes(t *testing.T) {
 		})
 	}
 }
+
+func TestNilTypeEquals(t *testing.T) {
+	var typ Type
+	if !typ.Equals(NilType) {
+		t.Fatal("expected NilTypes to equal")
+	}
+}
