@@ -1,5 +1,6 @@
 # 1.7.1 (Unreleased)
 
+* `cty`: The `Value.Multiply` and `Value.Modulo` functions now correctly propagate the floating point precision of the arguments, which avoids generating incorrect results for large integer operands. ([#75](https://github.com/zclconf/go-cty/pull/75))
 
 # 1.7.0 (October 20, 2020)
 
