@@ -104,6 +104,24 @@ func TestMismatchMessage(t *testing.T) {
 			cty.List(cty.DynamicPseudoType),
 			`all list elements must have the same type`,
 		},
+		{
+			cty.Object(map[string]cty.Type{
+				"foo": cty.Bool,
+				"bar": cty.String,
+				"baz": cty.Object(map[string]cty.Type{
+					"boop": cty.Number,
+				}),
+			}),
+			cty.Object(map[string]cty.Type{
+				"foo": cty.Bool,
+				"bar": cty.String,
+				"baz": cty.Object(map[string]cty.Type{
+					"boop": cty.Number,
+					"beep": cty.Bool,
+				}),
+			}),
+			`attribute "baz": attribute "beep" is required`,
+		},
 	}
 
 	for _, test := range tests {
