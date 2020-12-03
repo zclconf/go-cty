@@ -66,9 +66,15 @@ func ObjectWithOptionalAttrs(attrTypes map[string]Type, optional []string) Type 
 	}
 }
 
+// abs two complements implementation of abs.
+func abs(n int) int {
+	y := n >> 31       // y ← x ⟫ 31
+	return (n ^ y) - y // (x ⨁ y) - y
+}
+
 func (t typeObject) Equals(other Type) bool {
 	if ot, ok := other.typeImpl.(typeObject); ok {
-		if len(t.AttrTypes)-len(ot.AttrTypes) > len(t.AttrOptional) {
+		if abs(len(t.AttrTypes)-len(ot.AttrTypes)) > len(t.AttrOptional) {
 			// Fast path: if the difference between the number of attributes
 			// is bigger than the number of optional attributes the can't
 			// be equal. This also avoids the need to test attributes in
