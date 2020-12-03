@@ -68,16 +68,33 @@ func ObjectWithOptionalAttrs(attrTypes map[string]Type, optional []string) Type 
 
 func (t typeObject) Equals(other Type) bool {
 	if ot, ok := other.typeImpl.(typeObject); ok {
-		if len(t.AttrTypes) != len(ot.AttrTypes) {
-			// Fast path: if we don't have the same number of attributes
-			// then we can't possibly be equal. This also avoids the need
-			// to test attributes in both directions below, since we know
-			// there can't be extras in "other".
+		if len(t.AttrTypes)-len(ot.AttrTypes) > len(t.AttrOptional) {
+			// Fast path: if the difference between the number of attributes
+			// is bigger than the number of optional attributes the can't
+			// be equal. This also avoids the need to test attributes in
+			// both directions below, since we know there can't be
+			// extras in "other".
 			return false
 		}
 
 		for attr, ty := range t.AttrTypes {
 			oty, ok := ot.AttrTypes[attr]
+			if !ok {
+				return false
+			}
+			if !oty.Equals(ty) {
+				return false
+			}
+			_, opt := t.AttrOptional[attr]
+			_, oopt := ot.AttrOptional[attr]
+			if opt != oopt {
+				return false
+			}
+		}
+
+		// We have to chack the other direction
+		for attr, oty := range ot.AttrTypes {
+			ty, ok := t.AttrTypes[attr]
 			if !ok {
 				return false
 			}
