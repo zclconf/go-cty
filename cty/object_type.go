@@ -72,9 +72,17 @@ func abs(n int) int {
 	return (n ^ y) - y // (x ⨁ y) - y
 }
 
+func max(x, y int) int {
+	max := x
+	if y > max {
+		max = y
+	}
+	return max
+}
+
 func (t typeObject) Equals(other Type) bool {
 	if ot, ok := other.typeImpl.(typeObject); ok {
-		if abs(len(t.AttrTypes)-len(ot.AttrTypes)) > len(t.AttrOptional) {
+		if abs(len(t.AttrTypes)-len(ot.AttrTypes)) > max(len(t.AttrOptional), len(ot.AttrOptional)) {
 			// Fast path: if the difference between the number of attributes
 			// is bigger than the number of optional attributes the can't
 			// be equal. This also avoids the need to test attributes in
@@ -98,18 +106,11 @@ func (t typeObject) Equals(other Type) bool {
 			}
 		}
 
-		// We have to chack the other direction
-		for attr, oty := range ot.AttrTypes {
-			ty, ok := t.AttrTypes[attr]
+		// We have to check the other direction, this time
+		// only for presence
+		for attr, _ := range ot.AttrTypes {
+			_, ok := t.AttrTypes[attr]
 			if !ok {
-				return false
-			}
-			if !oty.Equals(ty) {
-				return false
-			}
-			_, opt := t.AttrOptional[attr]
-			_, oopt := ot.AttrOptional[attr]
-			if opt != oopt {
 				return false
 			}
 		}

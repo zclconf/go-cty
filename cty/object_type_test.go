@@ -114,6 +114,28 @@ func TestObjectTypeEquals(t *testing.T) {
 		},
 		{
 			Object(map[string]Type{
+				"person": Bool,
+			}),
+			ObjectWithOptionalAttrs(map[string]Type{
+				"person": Bool,
+				"date":   Number,
+			}, []string{"date"}),
+			false,
+		},
+		{
+			Object(map[string]Type{
+				"person": Bool,
+			}),
+			ObjectWithOptionalAttrs(
+				map[string]Type{
+					"person": Bool,
+				},
+				[]string{"person"},
+			),
+			false,
+		},
+		{
+			Object(map[string]Type{
 				"person": Object(map[string]Type{
 					"name": String,
 				}),
