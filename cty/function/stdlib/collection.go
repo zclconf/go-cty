@@ -758,16 +758,10 @@ var MergeFunc = function.New(&function.Spec{
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		outputMap := make(map[string]cty.Value)
 
-		// if all inputs are null, return a null value rather than an object
-		// with null attributes
-		allNull := true
 		for _, arg := range args {
 			if arg.IsNull() {
 				continue
-			} else {
-				allNull = false
 			}
-
 			for it := arg.ElementIterator(); it.Next(); {
 				k, v := it.Element()
 				outputMap[k.AsString()] = v
@@ -775,8 +769,6 @@ var MergeFunc = function.New(&function.Spec{
 		}
 
 		switch {
-		case allNull:
-			return cty.NullVal(retType), nil
 		case retType.IsMapType():
 			if len(outputMap) == 0 {
 				return cty.MapValEmpty(retType.ElementType()), nil
