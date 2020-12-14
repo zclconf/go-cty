@@ -301,6 +301,13 @@ func TestMerge(t *testing.T) {
 			cty.EmptyObjectVal,
 			false,
 		},
+		{ // single null input
+			[]cty.Value{
+				cty.MapValEmpty(cty.String),
+			},
+			cty.EmptyObjectVal,
+			false,
+		},
 		{ // handle null object
 			[]cty.Value{
 				cty.MapVal(map[string]cty.Value{
