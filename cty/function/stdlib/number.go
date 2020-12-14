@@ -536,7 +536,7 @@ var ParseIntFunc = function.New(&function.Spec{
 			)
 		}
 
-		parsedNum := cty.NumberVal((&big.Float{}).SetInt(num))
+		parsedNum := cty.NumberIntVal(num.Int64())
 
 		return parsedNum, nil
 	},

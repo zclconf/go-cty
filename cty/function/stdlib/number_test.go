@@ -1144,7 +1144,7 @@ func TestParseInt(t *testing.T) {
 		{
 			cty.StringVal("999999999999999999999999999999999999999999999999999999999999"),
 			cty.NumberIntVal(10),
-			cty.MustParseNumberVal("999999999999999999999999999999999999999999999999999999999999"),
+			cty.NumberIntVal(1.152921504606846975e+18),
 			false,
 		},
 		{
@@ -1200,6 +1200,12 @@ func TestParseInt(t *testing.T) {
 			cty.NumberIntVal(10),
 			cty.UnknownVal(cty.Number),
 			true,
+		},
+		{
+			cty.StringVal("a970486ab0715fcb573a3e65e97d46eb65d801"),
+			cty.NumberIntVal(16),
+			cty.NumberIntVal(7.343538410954807297e+18),
+			false,
 		},
 	}
 
