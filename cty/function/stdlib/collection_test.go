@@ -305,7 +305,7 @@ func TestMerge(t *testing.T) {
 			[]cty.Value{
 				cty.MapValEmpty(cty.String),
 			},
-			cty.EmptyObjectVal,
+			cty.MapValEmpty(cty.String),
 			false,
 		},
 		{ // handle null object
