@@ -251,6 +251,10 @@ var CoalesceListFunc = function.New(&function.Spec{
 				return cty.UnknownVal(retType), nil
 			}
 
+			if arg.IsNull() {
+				continue
+			}
+
 			if arg.LengthInt() > 0 {
 				return arg, nil
 			}
