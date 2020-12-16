@@ -291,14 +291,21 @@ func TestMerge(t *testing.T) {
 			}),
 			false,
 		},
-		{ // handle null map
+		{ // all inputs are null
 			[]cty.Value{
 				cty.NullVal(cty.Map(cty.String)),
 				cty.NullVal(cty.Object(map[string]cty.Type{
 					"a": cty.List(cty.String),
 				})),
 			},
-			cty.NullVal(cty.EmptyObject),
+			cty.EmptyObjectVal,
+			false,
+		},
+		{ // single null input
+			[]cty.Value{
+				cty.MapValEmpty(cty.String),
+			},
+			cty.EmptyObjectVal,
 			false,
 		},
 		{ // handle null object
