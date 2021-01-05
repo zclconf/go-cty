@@ -149,9 +149,9 @@ func TupleVal(elems []Value) Value {
 // the types of the given values, which must be homogenous.
 //
 // If the types are not all consistent (aside from elements that are of the
-// dynamic pseudo-type) then this function will panic. It will panic also
-// if the given list is empty, since then the element type cannot be inferred.
-// (See also ListValEmpty.)
+// dynamic pseudo-type, or contain dynamic pseudo-types) then this function will
+// panic. It will panic also if the given list is empty, since then the element
+// type cannot be inferred.  (See also ListValEmpty.)
 func ListVal(vals []Value) Value {
 	if len(vals) == 0 {
 		panic("must not call ListVal with empty slice")
@@ -160,9 +160,20 @@ func ListVal(vals []Value) Value {
 	rawList := make([]interface{}, len(vals))
 
 	for i, val := range vals {
-		if elementType == DynamicPseudoType {
+		valHasDynamic := val.ty.HasDynamicTypes()
+		etyHasDynamic := elementType.HasDynamicTypes()
+
+		if elementType == DynamicPseudoType || (etyHasDynamic && !valHasDynamic) {
+			// If we currently think the element type is the dynamic pseudo-type, or
+			// the current value is more concrete than the partly-dynamic element type,
+			// then use the current value's type as the new list element type
 			elementType = val.ty
-		} else if val.ty != DynamicPseudoType && !elementType.Equals(val.ty) {
+		} else if !valHasDynamic && !etyHasDynamic && !elementType.Equals(val.ty) {
+			// If the types are concrete and inequal, this list would be inconsistent,
+			// so we must panic. Note that this panic will not happen if given values
+			// which are partly-dynamic but incompatible; it is the responsibility of
+			// the caller to verify that all list elements can be unified to a single
+			// type.
 			panic(fmt.Errorf(
 				"inconsistent list element types (%#v then %#v)",
 				elementType, val.ty,

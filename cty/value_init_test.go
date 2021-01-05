@@ -116,3 +116,92 @@ func TestSetVal_nestedStructures(t *testing.T) {
 		})
 	}
 }
+
+func TestListVal(t *testing.T) {
+	testCases := []struct {
+		Name  string
+		Elems []Value
+	}{
+		{
+			"integers",
+			[]Value{
+				NumberIntVal(5),
+				NumberIntVal(10),
+			},
+		},
+		{
+			"strings",
+			[]Value{
+				StringVal("boop"),
+				StringVal("beep"),
+			},
+		},
+		{
+			"all dynamic values",
+			[]Value{
+				DynamicVal,
+				DynamicVal,
+				DynamicVal,
+			},
+		},
+		{
+			"some dynamic values",
+			[]Value{
+				DynamicVal,
+				NumberIntVal(5),
+				DynamicVal,
+				NumberIntVal(10),
+				DynamicVal,
+			},
+		},
+		{
+			"nested dynamic values",
+			[]Value{
+				ObjectVal(map[string]Value{
+					"foo": NumberIntVal(5),
+					"bar": StringVal("beep"),
+				}),
+				ObjectVal(map[string]Value{
+					"foo": NumberIntVal(5),
+					"bar": DynamicVal,
+				}),
+			},
+		},
+		{
+			"nested dynamic values, dynamic first",
+			[]Value{
+				ObjectVal(map[string]Value{
+					"foo": NumberIntVal(5),
+					"bar": StringVal("beep"),
+				}),
+				ObjectVal(map[string]Value{
+					"foo": NumberIntVal(5),
+					"bar": DynamicVal,
+				}),
+			},
+		},
+		{
+			// This test case documents that this call does not panic, but will
+			// result in an invalid list. We may want to change this behaviour
+			// later.
+			"incompatible but dynamic object types",
+			[]Value{
+				ObjectVal(map[string]Value{
+					"foo": NumberIntVal(5),
+					"bar": StringVal("beep"),
+					"baz": DynamicVal,
+				}),
+				ObjectVal(map[string]Value{
+					"foo": NumberIntVal(5),
+					"bar": DynamicVal,
+				}),
+			},
+		},
+	}
+
+	for i, tc := range testCases {
+		t.Run(fmt.Sprintf("%d-%s", i, tc.Name), func(t *testing.T) {
+			ListVal(tc.Elems)
+		})
+	}
+}
