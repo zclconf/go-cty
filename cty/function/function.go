@@ -237,14 +237,32 @@ func (f Function) Call(args []cty.Value) (val cty.Value, err error) {
 	varArgs := args[len(f.spec.Params):]
 	var resultMarks []cty.ValueMarks
 
+	// First we need to know if there are any unhandled unknowns in the
+	// argument list, because we'll just skip calling the function altogether
+	// and automatically generate an unknown result in that case.
+	unsupportedUnknowns := false
 	for i, spec := range f.spec.Params {
 		val := posArgs[i]
 
 		if !val.IsKnown() && !spec.AllowUnknown {
-			return cty.UnknownVal(expectedType), nil
+			unsupportedUnknowns = true
 		}
+	}
+	if spec := f.spec.VarParam; spec != nil {
+		for _, val := range varArgs {
+			if !val.IsKnown() && !spec.AllowUnknown {
+				unsupportedUnknowns = true
+			}
+		}
+	}
 
-		if !spec.AllowMarked {
+	// Now we'll collect up any unhandled marks. If we have unhandled unknowns
+	// then we'll collect _all_ the marks, because we're not going to call
+	// the function at all and therefore all marks are unhandled regardless.
+	for i, spec := range f.spec.Params {
+		val := posArgs[i]
+
+		if unsupportedUnknowns || !spec.AllowMarked {
 			unwrappedVal, marks := val.UnmarkDeep()
 			if len(marks) > 0 {
 				// In order to avoid additional overhead on applications that
@@ -261,14 +279,9 @@ func (f Function) Call(args []cty.Value) (val cty.Value, err error) {
 			}
 		}
 	}
-
-	if f.spec.VarParam != nil {
-		spec := f.spec.VarParam
+	if spec := f.spec.VarParam; spec != nil {
 		for i, val := range varArgs {
-			if !val.IsKnown() && !spec.AllowUnknown {
-				return cty.UnknownVal(expectedType), nil
-			}
-			if !spec.AllowMarked {
+			if unsupportedUnknowns || !spec.AllowMarked {
 				unwrappedVal, marks := val.UnmarkDeep()
 				if len(marks) > 0 {
 					newArgs := make([]cty.Value, len(args))
@@ -279,6 +292,12 @@ func (f Function) Call(args []cty.Value) (val cty.Value, err error) {
 				}
 			}
 		}
+	}
+
+	// Now that we've collected up all of the marks, we can exit early
+	// to report any unsupported unknown values by returning an unknown value.
+	if unsupportedUnknowns {
+		return cty.UnknownVal(expectedType).WithMarks(resultMarks...), nil
 	}
 
 	var retVal cty.Value

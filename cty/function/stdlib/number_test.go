@@ -349,12 +349,20 @@ func TestNegate(t *testing.T) {
 			cty.NumberIntVal(-15),
 		},
 		{
+			cty.NumberIntVal(15).Mark("blorp"),
+			cty.NumberIntVal(-15).Mark("blorp"),
+		},
+		{
 			cty.UnknownVal(cty.Number),
 			cty.UnknownVal(cty.Number),
 		},
 		{
 			cty.DynamicVal,
 			cty.UnknownVal(cty.Number),
+		},
+		{
+			cty.UnknownVal(cty.Number).Mark("blorp"),
+			cty.UnknownVal(cty.Number).Mark("blorp"),
 		},
 	}
 
