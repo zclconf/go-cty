@@ -1,10 +1,14 @@
 package stdlib
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
+	"strings"
 	"testing"
 
 	"github.com/zclconf/go-cty/cty"
+	"github.com/zclconf/go-cty/cty/function/functest"
 )
 
 func TestJSONEncode(t *testing.T) {
@@ -71,6 +75,37 @@ func TestJSONEncode(t *testing.T) {
 			}
 		})
 	}
+
+	// Property-based tests against randomly-selected inputs
+	// These can be quite time-consuming when our random generator produces
+	// larger data structures, so we use property-based testing only sparingly
+	// for this function.
+	t.Run(
+		"produces parseable JSON for all known, unmarked values",
+		functest.Test(
+			functest.GenFixedArgs(
+				functest.GenAnySerializableValues(),
+			),
+			func(args []cty.Value) bool {
+				v, err := JSONEncodeFunc.Call(args)
+				if err != nil || v.Type() != cty.String {
+					return false
+				}
+				src := v.AsString()
+				r := strings.NewReader(src)
+				dec := json.NewDecoder(r)
+				for {
+					_, err := dec.Token()
+					if err == io.EOF {
+						return true // tokenized the whole thing
+					}
+					if err != nil {
+						return false
+					}
+				}
+			},
+		).Run,
+	)
 }
 
 func TestJSONDecode(t *testing.T) {
@@ -129,4 +164,28 @@ func TestJSONDecode(t *testing.T) {
 			}
 		})
 	}
+
+	// Property-based tests against randomly-selected inputs
+	// These can be quite time-consuming when our random generator produces
+	// larger data structures, so we use property-based testing only sparingly
+	// for this function.
+
+	// We'll use our sibling JSONEncode function to help us construct valid
+	// JSON input to test with. That's only as good as the correctness of that
+	// function of course, but it has its own tests.
+	genJSONStrings := functest.GenAnySerializableValues().Map(func(v cty.Value) cty.Value {
+		v, err := JSONEncode(v)
+		if err != nil {
+			panic(fmt.Sprintf("JSONEncode failed: %s", err))
+		}
+		return v
+	})
+	t.Run(
+		"JSONEncode is the inverse of JSONDecode for all serializable values",
+		functest.TestInverse(
+			genJSONStrings,
+			JSONDecode,
+			JSONEncode,
+		).Run,
+	)
 }

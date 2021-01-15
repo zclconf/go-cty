@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/zclconf/go-cty/cty"
+	"github.com/zclconf/go-cty/cty/function/functest"
 )
 
 func TestAbsolute(t *testing.T) {
@@ -57,6 +58,28 @@ func TestAbsolute(t *testing.T) {
 			}
 		})
 	}
+
+	// Property-based tests against randomly-selected inputs
+	t.Run(
+		"succeeds for all numbers, including unknown numbers",
+		functest.TestSuccessfulType(
+			functest.GenFixedArgs(functest.GenNumbers().MaybeInfinity().MaybeAnnotated().MaybeDynamicVal()),
+			cty.Number,
+			AbsoluteFunc.Call,
+		).Run,
+	)
+	t.Run(
+		"result is always positive or zero",
+		functest.Test(
+			functest.GenFixedArgs(
+				functest.GenNumbers().MaybeInfinity(),
+			),
+			func(args []cty.Value) bool {
+				v, err := AbsoluteFunc.Call(args)
+				return err == nil && v.AsBigFloat().Sign() >= 0
+			},
+		).Run,
+	)
 }
 
 func TestAdd(t *testing.T) {
@@ -105,6 +128,61 @@ func TestAdd(t *testing.T) {
 			}
 		})
 	}
+
+	// Property-based tests against randomly-selected inputs
+	t.Run(
+		"succeeds for all numbers, including unknown numbers",
+		functest.TestSuccessfulType(
+			functest.GenFixedArgs(
+				// We only allow one operand to be an infinity, because
+				// it's not allowed to add a negative infinity to a positive
+				// infinity.
+				functest.GenNumbers().MaybeInfinity().MaybeAnnotated().MaybeDynamicVal(),
+				functest.GenNumbers().MaybeAnnotated().MaybeDynamicVal(),
+			),
+			cty.Number,
+			AddFunc.Call,
+		).Run,
+	)
+	t.Run(
+		"zero is the additive identity",
+		functest.Test(
+			functest.GenFixedArgs(
+				functest.GenNumbers().MaybeInfinity(),
+				functest.GenConstant(cty.Zero),
+			),
+			func(args []cty.Value) bool {
+				v, err := AddFunc.Call(args)
+				return err == nil && v.RawEquals(args[0])
+			},
+		).Run,
+	)
+	t.Run(
+		"addition is commutative aside from infinities",
+		functest.TestCommutative(functest.GenNumbers(), Add).Run,
+	)
+	t.Run(
+		"addition is associative within reasonable precision bounds, aside from infinities",
+		functest.TestAssociative(functest.GenNumbers(), Add).Run,
+	)
+	t.Run(
+		"subtraction is the inverse of addition, aside from infinities",
+		functest.Test(
+			functest.GenFixedArgs(
+				functest.GenNumbers(),
+				functest.GenNumbers(),
+			),
+			func(args []cty.Value) bool {
+				v1, err := Add(args[0], args[1])
+				if err != nil {
+					return false
+				}
+
+				v2, err := Subtract(v1, args[1])
+				return err == nil && v2.RawEquals(args[0])
+			},
+		).Run,
+	)
 }
 
 func TestSubtract(t *testing.T) {
@@ -153,6 +231,62 @@ func TestSubtract(t *testing.T) {
 			}
 		})
 	}
+
+	// Property-based tests against randomly-selected inputs
+	t.Run(
+		"succeeds for all numbers, including unknown numbers",
+		functest.TestSuccessfulType(
+			functest.GenFixedArgs(
+				// We only allow one operand to be an infinity, because
+				// it's not allowed to subtract an negative infinity from
+				// an infinity.
+				functest.GenNumbers().MaybeInfinity().MaybeAnnotated().MaybeDynamicVal(),
+				functest.GenNumbers().MaybeAnnotated().MaybeDynamicVal(),
+			),
+			cty.Number,
+			SubtractFunc.Call,
+		).Run,
+	)
+	t.Run(
+		"zero is the subtractive identity",
+		functest.Test(
+			functest.GenFixedArgs(
+				functest.GenNumbers().MaybeInfinity(),
+				functest.GenConstant(cty.Zero),
+			),
+			func(args []cty.Value) bool {
+				v, err := SubtractFunc.Call(args)
+				return err == nil && v.RawEquals(args[0])
+			},
+		).Run,
+	)
+	t.Run(
+		"subtracting from zero is the same as negating",
+		functest.Test(
+			functest.GenFixedArgs(
+				functest.GenConstant(cty.Zero),
+				functest.GenNumbers().MaybeInfinity(),
+			),
+			func(args []cty.Value) bool {
+				v1, err1 := SubtractFunc.Call(args)
+				v2, err2 := Negate(args[1])
+				return err1 == nil && err2 == nil && v1.RawEquals(v2)
+			},
+		).Run,
+	)
+	t.Run(
+		"subtracting from zero is the same as negating",
+		functest.Test(
+			functest.GenFixedArgs(
+				functest.GenConstant(cty.PositiveInfinity),
+				functest.GenNumbers(),
+			),
+			func(args []cty.Value) bool {
+				v, err := SubtractFunc.Call(args)
+				return err == nil && v.RawEquals(cty.PositiveInfinity)
+			},
+		).Run,
+	)
 }
 
 func TestMultiply(t *testing.T) {
@@ -201,6 +335,44 @@ func TestMultiply(t *testing.T) {
 			}
 		})
 	}
+
+	// Property-based tests against randomly-selected inputs
+	t.Run(
+		"succeeds for all numbers, including unknown numbers",
+		functest.TestSuccessfulType(
+			functest.GenFixedArgs(
+				// We only allow one operand to be an infinity, because
+				// it's not allowed to add a negative infinity to a positive
+				// infinity.
+				functest.GenNumbers().MaybeInfinity().MaybeAnnotated().MaybeDynamicVal(),
+				functest.GenNumbers().MaybeAnnotated().MaybeDynamicVal(),
+			),
+			cty.Number,
+			MultiplyFunc.Call,
+		).Run,
+	)
+	t.Run(
+		"one is the multiplicative identity",
+		functest.Test(
+			functest.GenFixedArgs(
+				functest.GenNumbers().MaybeInfinity(),
+				functest.GenConstant(cty.NumberIntVal(1)),
+			),
+			func(args []cty.Value) bool {
+				v, err := MultiplyFunc.Call(args)
+				return err == nil && v.RawEquals(args[0])
+			},
+		).Run,
+	)
+	t.Run(
+		"multiplication is commutative aside from infinities",
+		functest.TestCommutative(functest.GenNumbers(), Multiply).Run,
+	)
+	t.Run(
+		"multiplication is associative within reasonable precision bounds, aside from infinities",
+		functest.TestAssociative(functest.GenNumbers(), Multiply).Run,
+	)
+
 }
 
 func TestDivide(t *testing.T) {
@@ -269,6 +441,19 @@ func TestDivide(t *testing.T) {
 			}
 		})
 	}
+
+	// Property-based tests against randomly-selected inputs
+	t.Run(
+		"succeeds for all numbers, including unknown numbers, aside from division by zero",
+		functest.TestSuccessfulType(
+			functest.GenFixedArgs(
+				functest.GenNumbers().MaybeInfinity().MaybeAnnotated().MaybeDynamicVal(),
+				functest.GenNumbers().Where(func(v cty.Value) bool { return v != cty.Zero }).MaybeAnnotated().MaybeDynamicVal(),
+			),
+			cty.Number,
+			DivideFunc.Call,
+		).Run,
+	)
 }
 
 func TestModulo(t *testing.T) {
@@ -337,6 +522,19 @@ func TestModulo(t *testing.T) {
 			}
 		})
 	}
+
+	// Property-based tests against randomly-selected inputs
+	t.Run(
+		"succeeds for all numbers, including unknown numbers, aside from modulo zero",
+		functest.TestSuccessfulType(
+			functest.GenFixedArgs(
+				functest.GenNumbers().MaybeInfinity().MaybeAnnotated().MaybeDynamicVal(),
+				functest.GenNumbers().Where(func(v cty.Value) bool { return v != cty.Zero }).MaybeAnnotated().MaybeDynamicVal(),
+			),
+			cty.Number,
+			ModuloFunc.Call,
+		).Run,
+	)
 }
 
 func TestNegate(t *testing.T) {
@@ -379,6 +577,26 @@ func TestNegate(t *testing.T) {
 			}
 		})
 	}
+
+	// Property-based tests against randomly-selected inputs
+	t.Run(
+		"succeeds for all numbers, including unknown numbers",
+		functest.TestSuccessfulType(
+			functest.GenFixedArgs(
+				functest.GenNumbers().MaybeInfinity().MaybeAnnotated().MaybeDynamicVal(),
+			),
+			cty.Number,
+			NegateFunc.Call,
+		).Run,
+	)
+	t.Run(
+		"negate is its own inverse, aside from DynamicVal",
+		functest.TestInverse(
+			functest.GenNumbers().MaybeInfinity().MaybeAnnotated(),
+			Negate, Negate,
+		).Run,
+	)
+
 }
 
 func TestLessThan(t *testing.T) {
@@ -437,6 +655,19 @@ func TestLessThan(t *testing.T) {
 			}
 		})
 	}
+
+	// Property-based tests against randomly-selected inputs
+	t.Run(
+		"succeeds for all numbers, including unknown numbers",
+		functest.TestSuccessfulType(
+			functest.GenFixedArgs(
+				functest.GenNumbers().MaybeInfinity().MaybeAnnotated().MaybeDynamicVal(),
+				functest.GenNumbers().MaybeInfinity().MaybeAnnotated().MaybeDynamicVal(),
+			),
+			cty.Bool,
+			LessThanFunc.Call,
+		).Run,
+	)
 }
 
 func TestLessThanOrEqualTo(t *testing.T) {
@@ -495,6 +726,19 @@ func TestLessThanOrEqualTo(t *testing.T) {
 			}
 		})
 	}
+
+	// Property-based tests against randomly-selected inputs
+	t.Run(
+		"succeeds for all numbers, including unknown numbers",
+		functest.TestSuccessfulType(
+			functest.GenFixedArgs(
+				functest.GenNumbers().MaybeInfinity().MaybeAnnotated().MaybeDynamicVal(),
+				functest.GenNumbers().MaybeInfinity().MaybeAnnotated().MaybeDynamicVal(),
+			),
+			cty.Bool,
+			LessThanOrEqualToFunc.Call,
+		).Run,
+	)
 }
 
 func TestGreaterThan(t *testing.T) {
@@ -553,6 +797,19 @@ func TestGreaterThan(t *testing.T) {
 			}
 		})
 	}
+
+	// Property-based tests against randomly-selected inputs
+	t.Run(
+		"succeeds for all numbers, including unknown numbers",
+		functest.TestSuccessfulType(
+			functest.GenFixedArgs(
+				functest.GenNumbers().MaybeInfinity().MaybeAnnotated().MaybeDynamicVal(),
+				functest.GenNumbers().MaybeInfinity().MaybeAnnotated().MaybeDynamicVal(),
+			),
+			cty.Bool,
+			GreaterThanFunc.Call,
+		).Run,
+	)
 }
 
 func TestGreaterThanOrEqualTo(t *testing.T) {
@@ -611,6 +868,19 @@ func TestGreaterThanOrEqualTo(t *testing.T) {
 			}
 		})
 	}
+
+	// Property-based tests against randomly-selected inputs
+	t.Run(
+		"succeeds for all numbers, including unknown numbers",
+		functest.TestSuccessfulType(
+			functest.GenFixedArgs(
+				functest.GenNumbers().MaybeInfinity().MaybeAnnotated().MaybeDynamicVal(),
+				functest.GenNumbers().MaybeInfinity().MaybeAnnotated().MaybeDynamicVal(),
+			),
+			cty.Bool,
+			GreaterThanOrEqualToFunc.Call,
+		).Run,
+	)
 }
 
 func TestMin(t *testing.T) {
@@ -673,6 +943,19 @@ func TestMin(t *testing.T) {
 			}
 		})
 	}
+
+	// Property-based tests against randomly-selected inputs
+	t.Run(
+		"succeeds as long as it has at least one number",
+		functest.TestSuccessfulType(
+			functest.GenFixedArgs(
+				functest.GenNumbers().MaybeInfinity().MaybeAnnotated().MaybeDynamicVal(),
+				functest.GenNumbers().MaybeInfinity().MaybeAnnotated().MaybeDynamicVal(),
+			),
+			cty.Bool,
+			GreaterThanOrEqualToFunc.Call,
+		).Run,
+	)
 }
 
 func TestMax(t *testing.T) {
