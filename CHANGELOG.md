@@ -1,4 +1,4 @@
-# 1.7.2 (Unreleased)
+# 1.7.2 (February 22, 2020)
 
 * `cty`: The `Type.GoString` implementation for object types with optional attributes was previously producing incorrect results due to an implementation bug. ([#86](https://github.com/zclconf/go-cty/pull/86))
 
