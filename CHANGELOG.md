@@ -1,4 +1,4 @@
-# 1.8.0 (Unreleased)
+# 1.8.0 (February 22, 2020)
 
 * `cty`: When running on Go 1.16 or later, the `cty.String` type will now normalize incoming string values using the Unicode 13 normalization rules.
 * `function/stdlib`: The various string functions which split strings into individual characters as part of their work will now use the Unicode 13 version of the text segmentation algorithm to do so.
