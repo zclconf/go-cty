@@ -40,6 +40,16 @@ func getConversion(in cty.Type, out cty.Type, unsafe bool) conversion {
 			// We'll pass through nulls, albeit type converted, and let
 			// the caller deal with whatever handling they want to do in
 			// case null values are considered valid in some applications.
+
+			// Avoid constructing values with types which include optional
+			// attributes. Non-null object values will be passed to a
+			// conversion function which drops the optional attributes from the
+			// type. Null pass through values must do the same to ensure that
+			// homogeneous collections have a single element type.
+			if out.IsObjectType() && len(out.OptionalAttributes()) > 0 {
+				out = cty.Object(out.AttributeTypes())
+			}
+
 			return cty.NullVal(out), nil
 		}
 
