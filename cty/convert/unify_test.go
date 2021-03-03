@@ -143,6 +143,148 @@ func TestUnify(t *testing.T) {
 			nil,
 		},
 		{
+			// objects can unify as map(string) within the tuples
+			[]cty.Type{
+				cty.Tuple([]cty.Type{
+					cty.Object(map[string]cty.Type{
+						"a": cty.String,
+					}),
+					cty.Object(map[string]cty.Type{
+						"a": cty.String,
+					}),
+				}),
+				cty.Tuple([]cty.Type{
+					cty.Object(map[string]cty.Type{
+						"a": cty.String,
+						"b": cty.String,
+					}),
+				}),
+			},
+			cty.List(cty.Map(cty.String)),
+			[]bool{true, true},
+		},
+		{
+			// unifies to the same result as above, since the only difference
+			// is the addition of a list
+			[]cty.Type{
+				cty.List(cty.Object(map[string]cty.Type{
+					"a": cty.String,
+				})),
+				cty.Tuple([]cty.Type{
+					cty.Object(map[string]cty.Type{
+						"a": cty.String,
+						"b": cty.String,
+					}),
+				}),
+				cty.Tuple([]cty.Type{
+					cty.Object(map[string]cty.Type{
+						"a": cty.String,
+						"b": cty.String,
+					}),
+					cty.Object(map[string]cty.Type{
+						"c": cty.String,
+						"d": cty.String,
+					}),
+				}),
+			},
+			cty.List(cty.Map(cty.String)),
+			[]bool{true, true, true},
+		},
+		{
+			// Ensure the map does not change the unification process
+			[]cty.Type{
+				cty.List(cty.Object(map[string]cty.Type{
+					"a": cty.String,
+				})),
+				cty.List(cty.Map(cty.String)),
+				cty.Tuple([]cty.Type{
+					cty.Map(cty.String),
+					cty.Object(map[string]cty.Type{
+						"a": cty.String,
+						"b": cty.String,
+					}),
+				}),
+			},
+			cty.List(cty.Map(cty.String)),
+			[]bool{true, false, true},
+		},
+		{
+			// different tuple lengths unify as a list, and the objects can
+			// unify as maps
+			[]cty.Type{
+				cty.Tuple([]cty.Type{
+					cty.Object(map[string]cty.Type{
+						"a": cty.String,
+						"b": cty.Number,
+					}),
+					cty.Object(map[string]cty.Type{
+						"a": cty.String,
+						"b": cty.Number,
+					}),
+				}),
+				cty.Tuple([]cty.Type{
+					cty.Object(map[string]cty.Type{
+						"a": cty.String,
+					}),
+				}),
+			},
+			cty.List(cty.Map(cty.String)),
+			[]bool{true, true},
+		},
+		{
+			// the equivalent tuple lengths still unify as a tuple, though the
+			// objects are unified as a map
+			[]cty.Type{
+				cty.Tuple([]cty.Type{
+					cty.Object(map[string]cty.Type{
+						"a": cty.String,
+						"b": cty.Number,
+					}),
+				}),
+				cty.Tuple([]cty.Type{
+					cty.Object(map[string]cty.Type{
+						"a": cty.String,
+					}),
+				}),
+			},
+			cty.Tuple([]cty.Type{cty.Map(cty.String)}),
+			[]bool{true, true},
+		},
+		{
+			// This should unify to like the tuple above
+			[]cty.Type{
+				cty.List(
+					cty.Object(map[string]cty.Type{
+						"a": cty.Number,
+						"b": cty.String,
+					}),
+				),
+				cty.Tuple([]cty.Type{
+					cty.Object(map[string]cty.Type{
+						"a": cty.String,
+					}),
+				}),
+			},
+			cty.List(cty.Map(cty.String)),
+			[]bool{true, true},
+		},
+		{
+			// This should also unify like the previous 2 examples
+			[]cty.Type{
+				cty.List(
+					cty.Object(map[string]cty.Type{
+						"a": cty.Number,
+						"b": cty.String,
+					}),
+				),
+				cty.List(cty.Object(map[string]cty.Type{
+					"a": cty.String,
+				})),
+			},
+			cty.List(cty.Map(cty.String)),
+			[]bool{true, true},
+		},
+		{
 			[]cty.Type{
 				cty.DynamicPseudoType,
 				cty.Tuple([]cty.Type{cty.Number}),
