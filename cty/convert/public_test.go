@@ -576,6 +576,45 @@ func TestConvert(t *testing.T) {
 			WantError: true, // Attribute "bar" is required
 		},
 		{
+			Value: cty.NullVal(cty.DynamicPseudoType),
+			Type: cty.ObjectWithOptionalAttrs(
+				map[string]cty.Type{
+					"foo": cty.String,
+					"bar": cty.String,
+				},
+				[]string{"foo"},
+			),
+			Want: cty.NullVal(cty.Object(map[string]cty.Type{
+				"foo": cty.String,
+				"bar": cty.String,
+			})),
+		},
+		{
+			Value: cty.ListVal([]cty.Value{
+				cty.NullVal(cty.DynamicPseudoType),
+				cty.ObjectVal(map[string]cty.Value{
+					"bar": cty.StringVal("bar value"),
+				}),
+			}),
+			Type: cty.List(cty.ObjectWithOptionalAttrs(
+				map[string]cty.Type{
+					"foo": cty.String,
+					"bar": cty.String,
+				},
+				[]string{"foo"},
+			)),
+			Want: cty.ListVal([]cty.Value{
+				cty.NullVal(cty.Object(map[string]cty.Type{
+					"foo": cty.String,
+					"bar": cty.String,
+				})),
+				cty.ObjectVal(map[string]cty.Value{
+					"foo": cty.NullVal(cty.String),
+					"bar": cty.StringVal("bar value"),
+				}),
+			}),
+		},
+		{
 			Value: cty.ObjectVal(map[string]cty.Value{
 				"foo": cty.True,
 			}),
