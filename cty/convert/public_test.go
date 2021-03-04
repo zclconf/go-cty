@@ -787,6 +787,51 @@ func TestConvert(t *testing.T) {
 				"b": cty.MapValEmpty(cty.String),
 			}),
 		},
+		// reduction of https://github.com/hashicorp/terraform/issues/27269
+		{
+			Value: cty.TupleVal([]cty.Value{
+				cty.ObjectVal(map[string]cty.Value{
+					"a": cty.NullVal(cty.DynamicPseudoType),
+				}),
+				cty.ObjectVal(map[string]cty.Value{
+					"a": cty.ObjectVal(map[string]cty.Value{
+						"b": cty.ListVal([]cty.Value{
+							cty.ObjectVal(map[string]cty.Value{
+								"c": cty.StringVal("d"),
+							}),
+						}),
+					}),
+				}),
+			}),
+			Type: cty.List(cty.Object(map[string]cty.Type{
+				"a": cty.Object(map[string]cty.Type{
+					"b": cty.List(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+						"c": cty.String,
+						"d": cty.String,
+					}, []string{"d"})),
+				}),
+			})),
+			Want: cty.ListVal([]cty.Value{
+				cty.ObjectVal(map[string]cty.Value{
+					"a": cty.NullVal(cty.Object(map[string]cty.Type{
+						"b": cty.List(cty.Object(map[string]cty.Type{
+							"c": cty.String,
+							"d": cty.String,
+						})),
+					})),
+				}),
+				cty.ObjectVal(map[string]cty.Value{
+					"a": cty.ObjectVal(map[string]cty.Value{
+						"b": cty.ListVal([]cty.Value{
+							cty.ObjectVal(map[string]cty.Value{
+								"c": cty.StringVal("d"),
+								"d": cty.NullVal(cty.String),
+							}),
+						}),
+					}),
+				}),
+			}),
+		},
 		// https://github.com/hashicorp/terraform/issues/21588:
 		{
 			Value: cty.TupleVal([]cty.Value{
