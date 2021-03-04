@@ -57,6 +57,15 @@ func unify(types []cty.Type, unsafe bool) (cty.Type, []Conversion) {
 			return unifyCollectionTypes(cty.Map, types, unsafe, dynamicCt > 0)
 		case listCt > 0 && (listCt+dynamicCt) == len(types):
 			return unifyCollectionTypes(cty.List, types, unsafe, dynamicCt > 0)
+		case listCt > 0 && (listCt+tupleCt+dynamicCt) == len(types):
+			// Tuples are often lists in disguise, and we may be able to
+			// unify them as such.
+			ty, convs := unifyTuplesAsList(types, unsafe)
+			// if we got a list back, we know the unification was successful.
+			// Otherwise we will fall back to the heterogeneous type codepath.
+			if ty.IsListType() {
+				return ty, convs
+			}
 		case setCt > 0 && (setCt+dynamicCt) == len(types):
 			return unifyCollectionTypes(cty.Set, types, unsafe, dynamicCt > 0)
 		case objectCt > 0 && (objectCt+dynamicCt) == len(types):
@@ -108,6 +117,63 @@ Preferences:
 
 	// If we fall out here, no unification is possible
 	return cty.NilType, nil
+}
+
+// unifyTuplesAsList attempts to first see if the tuples unify as lists, then
+// re-unifies the given types with the list in place of the tuples.
+func unifyTuplesAsList(types []cty.Type, unsafe bool) (cty.Type, []Conversion) {
+	var tuples []cty.Type
+	var tupleIdxs []int
+	for i, t := range types {
+		if t.IsTupleType() {
+			tuples = append(tuples, t)
+			tupleIdxs = append(tupleIdxs, i)
+		}
+	}
+
+	ty, tupleConvs := unifyTupleTypesToList(tuples, unsafe)
+	if !ty.IsListType() {
+		return cty.NilType, nil
+	}
+
+	// the tuples themselves unified as a list, get the overall
+	// unification with this list type instead of the tuple.
+	// make a copy of the types, so we can fallback to the standard
+	// codepath if something went wrong
+	listed := make([]cty.Type, len(types))
+	copy(listed, types)
+	for _, idx := range tupleIdxs {
+		listed[idx] = ty
+	}
+
+	newTy, convs := unify(listed, unsafe)
+	if !newTy.IsListType() {
+		return cty.NilType, nil
+	}
+
+	// we have a good conversion, wrap the nested tuple conversions.
+	// We know the tuple conversion is not nil, because we went from tuple to
+	// list
+	for i, idx := range tupleIdxs {
+		listConv := convs[idx]
+		tupleConv := tupleConvs[i]
+
+		if listConv == nil {
+			convs[idx] = tupleConv
+			continue
+		}
+
+		convs[idx] = func(in cty.Value) (out cty.Value, err error) {
+			out, err = tupleConv(in)
+			if err != nil {
+				return out, err
+			}
+
+			return listConv(in)
+		}
+	}
+
+	return newTy, convs
 }
 
 func unifyCollectionTypes(collectionType func(cty.Type) cty.Type, types []cty.Type, unsafe bool, hasDynamic bool) (cty.Type, []Conversion) {
