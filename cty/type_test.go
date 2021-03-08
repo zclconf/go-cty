@@ -55,6 +55,105 @@ func TestHasDynamicTypes(t *testing.T) {
 	}
 }
 
+func TestWithoutOptionalAttributesDeep(t *testing.T) {
+	tests := []struct {
+		ty       Type
+		expected Type
+	}{
+		{
+			DynamicPseudoType,
+			DynamicPseudoType,
+		},
+		{
+			List(DynamicPseudoType),
+			List(DynamicPseudoType),
+		},
+		{
+			Tuple([]Type{String, DynamicPseudoType}),
+			Tuple([]Type{String, DynamicPseudoType}),
+		},
+		{
+			Object(map[string]Type{
+				"a":       String,
+				"unknown": DynamicPseudoType,
+			}),
+			Object(map[string]Type{
+				"a":       String,
+				"unknown": DynamicPseudoType,
+			}),
+		},
+		{
+			ObjectWithOptionalAttrs(map[string]Type{
+				"a":       String,
+				"unknown": DynamicPseudoType,
+			}, []string{"a"}),
+			Object(map[string]Type{
+				"a":       String,
+				"unknown": DynamicPseudoType,
+			}),
+		},
+		{
+			Map(ObjectWithOptionalAttrs(map[string]Type{
+				"a":       String,
+				"unknown": DynamicPseudoType,
+			}, []string{"a"})),
+			Map(Object(map[string]Type{
+				"a":       String,
+				"unknown": DynamicPseudoType,
+			})),
+		},
+		{
+			Set(ObjectWithOptionalAttrs(map[string]Type{
+				"a":       String,
+				"unknown": DynamicPseudoType,
+			}, []string{"a"})),
+			Set(Object(map[string]Type{
+				"a":       String,
+				"unknown": DynamicPseudoType,
+			})),
+		},
+		{
+			List(ObjectWithOptionalAttrs(map[string]Type{
+				"a":       String,
+				"unknown": DynamicPseudoType,
+			}, []string{"a"})),
+			List(Object(map[string]Type{
+				"a":       String,
+				"unknown": DynamicPseudoType,
+			})),
+		},
+		{
+			Tuple([]Type{
+				ObjectWithOptionalAttrs(map[string]Type{
+					"a":       String,
+					"unknown": DynamicPseudoType,
+				}, []string{"a"}),
+				ObjectWithOptionalAttrs(map[string]Type{
+					"b": Number,
+				}, []string{"b"}),
+			}),
+			Tuple([]Type{
+				Object(map[string]Type{
+					"a":       String,
+					"unknown": DynamicPseudoType,
+				}),
+				Object(map[string]Type{
+					"b": Number,
+				}),
+			}),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%#v.HasDynamicTypes()", test.ty), func(t *testing.T) {
+			got := test.ty.WithoutOptionalAttributesDeep()
+			if !test.expected.Equals(got) {
+				t.Errorf("Equals returned %#v; want %#v", got, test.expected)
+			}
+		})
+	}
+}
+
 func TestNilTypeEquals(t *testing.T) {
 	var typ Type
 	if !typ.Equals(NilType) {
