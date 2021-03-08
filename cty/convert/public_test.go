@@ -832,6 +832,47 @@ func TestConvert(t *testing.T) {
 				}),
 			}),
 		},
+		// When converting null values into nested types which include objects
+		// with optional attributes, we expect the resulting value to be of a
+		// recursively concretized type.
+		{
+			Value: cty.NullVal(cty.DynamicPseudoType),
+			Type: cty.Object(
+				map[string]cty.Type{
+					"foo": cty.ObjectWithOptionalAttrs(
+						map[string]cty.Type{
+							"bar": cty.String,
+						},
+						[]string{"bar"},
+					),
+				},
+			),
+			Want: cty.NullVal(cty.Object(map[string]cty.Type{
+				"foo": cty.Object(map[string]cty.Type{
+					"bar": cty.String,
+				}),
+			})),
+		},
+		// The same nested optional attributes flattening should happen for
+		// unknown values, too.
+		{
+			Value: cty.UnknownVal(cty.DynamicPseudoType),
+			Type: cty.Object(
+				map[string]cty.Type{
+					"foo": cty.ObjectWithOptionalAttrs(
+						map[string]cty.Type{
+							"bar": cty.String,
+						},
+						[]string{"bar"},
+					),
+				},
+			),
+			Want: cty.UnknownVal(cty.Object(map[string]cty.Type{
+				"foo": cty.Object(map[string]cty.Type{
+					"bar": cty.String,
+				}),
+			})),
+		},
 		// https://github.com/hashicorp/terraform/issues/21588:
 		{
 			Value: cty.TupleVal([]cty.Value{
