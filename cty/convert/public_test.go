@@ -576,6 +576,45 @@ func TestConvert(t *testing.T) {
 			WantError: true, // Attribute "bar" is required
 		},
 		{
+			Value: cty.NullVal(cty.DynamicPseudoType),
+			Type: cty.ObjectWithOptionalAttrs(
+				map[string]cty.Type{
+					"foo": cty.String,
+					"bar": cty.String,
+				},
+				[]string{"foo"},
+			),
+			Want: cty.NullVal(cty.Object(map[string]cty.Type{
+				"foo": cty.String,
+				"bar": cty.String,
+			})),
+		},
+		{
+			Value: cty.ListVal([]cty.Value{
+				cty.NullVal(cty.DynamicPseudoType),
+				cty.ObjectVal(map[string]cty.Value{
+					"bar": cty.StringVal("bar value"),
+				}),
+			}),
+			Type: cty.List(cty.ObjectWithOptionalAttrs(
+				map[string]cty.Type{
+					"foo": cty.String,
+					"bar": cty.String,
+				},
+				[]string{"foo"},
+			)),
+			Want: cty.ListVal([]cty.Value{
+				cty.NullVal(cty.Object(map[string]cty.Type{
+					"foo": cty.String,
+					"bar": cty.String,
+				})),
+				cty.ObjectVal(map[string]cty.Value{
+					"foo": cty.NullVal(cty.String),
+					"bar": cty.StringVal("bar value"),
+				}),
+			}),
+		},
+		{
 			Value: cty.ObjectVal(map[string]cty.Value{
 				"foo": cty.True,
 			}),
@@ -747,6 +786,92 @@ func TestConvert(t *testing.T) {
 				}),
 				"b": cty.MapValEmpty(cty.String),
 			}),
+		},
+		// reduction of https://github.com/hashicorp/terraform/issues/27269
+		{
+			Value: cty.TupleVal([]cty.Value{
+				cty.ObjectVal(map[string]cty.Value{
+					"a": cty.NullVal(cty.DynamicPseudoType),
+				}),
+				cty.ObjectVal(map[string]cty.Value{
+					"a": cty.ObjectVal(map[string]cty.Value{
+						"b": cty.ListVal([]cty.Value{
+							cty.ObjectVal(map[string]cty.Value{
+								"c": cty.StringVal("d"),
+							}),
+						}),
+					}),
+				}),
+			}),
+			Type: cty.List(cty.Object(map[string]cty.Type{
+				"a": cty.Object(map[string]cty.Type{
+					"b": cty.List(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+						"c": cty.String,
+						"d": cty.String,
+					}, []string{"d"})),
+				}),
+			})),
+			Want: cty.ListVal([]cty.Value{
+				cty.ObjectVal(map[string]cty.Value{
+					"a": cty.NullVal(cty.Object(map[string]cty.Type{
+						"b": cty.List(cty.Object(map[string]cty.Type{
+							"c": cty.String,
+							"d": cty.String,
+						})),
+					})),
+				}),
+				cty.ObjectVal(map[string]cty.Value{
+					"a": cty.ObjectVal(map[string]cty.Value{
+						"b": cty.ListVal([]cty.Value{
+							cty.ObjectVal(map[string]cty.Value{
+								"c": cty.StringVal("d"),
+								"d": cty.NullVal(cty.String),
+							}),
+						}),
+					}),
+				}),
+			}),
+		},
+		// When converting null values into nested types which include objects
+		// with optional attributes, we expect the resulting value to be of a
+		// recursively concretized type.
+		{
+			Value: cty.NullVal(cty.DynamicPseudoType),
+			Type: cty.Object(
+				map[string]cty.Type{
+					"foo": cty.ObjectWithOptionalAttrs(
+						map[string]cty.Type{
+							"bar": cty.String,
+						},
+						[]string{"bar"},
+					),
+				},
+			),
+			Want: cty.NullVal(cty.Object(map[string]cty.Type{
+				"foo": cty.Object(map[string]cty.Type{
+					"bar": cty.String,
+				}),
+			})),
+		},
+		// The same nested optional attributes flattening should happen for
+		// unknown values, too.
+		{
+			Value: cty.UnknownVal(cty.DynamicPseudoType),
+			Type: cty.Object(
+				map[string]cty.Type{
+					"foo": cty.ObjectWithOptionalAttrs(
+						map[string]cty.Type{
+							"bar": cty.String,
+						},
+						[]string{"bar"},
+					),
+				},
+			),
+			Want: cty.UnknownVal(cty.Object(map[string]cty.Type{
+				"foo": cty.Object(map[string]cty.Type{
+					"bar": cty.String,
+				}),
+			})),
 		},
 		// https://github.com/hashicorp/terraform/issues/21588:
 		{
