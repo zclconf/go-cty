@@ -1,3 +1,7 @@
+# 1.8.1 (Unreleased)
+
+* `convert`: Fix for panics and some general misbehavior when converting null values to type constraints containing objects with optional attributes. ([#88](https://github.com/zclconf/go-cty/pull/88))
+
 # 1.8.0 (Unreleased)
 
 * `cty`: When running on Go 1.16 or later, the `cty.String` type will now normalize incoming string values using the Unicode 13 normalization rules.
