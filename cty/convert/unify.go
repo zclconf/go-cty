@@ -55,6 +55,17 @@ func unify(types []cty.Type, unsafe bool) (cty.Type, []Conversion) {
 		switch {
 		case mapCt > 0 && (mapCt+dynamicCt) == len(types):
 			return unifyCollectionTypes(cty.Map, types, unsafe, dynamicCt > 0)
+
+		case mapCt > 0 && (mapCt+objectCt+dynamicCt) == len(types):
+			// Objects often contain map data, but are not directly typed as
+			// such due to language constructs or function types. Try to unify
+			// them as maps first before falling back to heterogeneous type
+			// conversion.
+			ty, convs := unifyObjectsAsMaps(types, unsafe)
+			// If we got a map back, we know the unification was successful.
+			if ty.IsMapType() {
+				return ty, convs
+			}
 		case listCt > 0 && (listCt+dynamicCt) == len(types):
 			return unifyCollectionTypes(cty.List, types, unsafe, dynamicCt > 0)
 		case listCt > 0 && (listCt+tupleCt+dynamicCt) == len(types):
@@ -170,6 +181,63 @@ func unifyTuplesAsList(types []cty.Type, unsafe bool) (cty.Type, []Conversion) {
 			}
 
 			return listConv(in)
+		}
+	}
+
+	return newTy, convs
+}
+
+// unifyObjectsAsMaps attempts to first see if the objects unify as maps, then
+// re-unifies the given types with the map in place of the objects.
+func unifyObjectsAsMaps(types []cty.Type, unsafe bool) (cty.Type, []Conversion) {
+	var objs []cty.Type
+	var objIdxs []int
+	for i, t := range types {
+		if t.IsObjectType() {
+			objs = append(objs, t)
+			objIdxs = append(objIdxs, i)
+		}
+	}
+
+	ty, objConvs := unifyObjectTypesToMap(objs, unsafe)
+	if !ty.IsMapType() {
+		return cty.NilType, nil
+	}
+
+	// the objects themselves unified as a map, get the overall
+	// unification with this map type instead of the object.
+	// Make a copy of the types, so we can fallback to the standard codepath if
+	// something went wrong without changing the original types.
+	mapped := make([]cty.Type, len(types))
+	copy(mapped, types)
+	for _, idx := range objIdxs {
+		mapped[idx] = ty
+	}
+
+	newTy, convs := unify(mapped, unsafe)
+	if !newTy.IsMapType() {
+		return cty.NilType, nil
+	}
+
+	// we have a good conversion, wrap the nested tuple conversions.
+	// We know the tuple conversion is not nil, because we went from tuple to
+	// list
+	for i, idx := range objIdxs {
+		mapConv := convs[idx]
+		objConv := objConvs[i]
+
+		if mapConv == nil {
+			convs[idx] = objConv
+			continue
+		}
+
+		convs[idx] = func(in cty.Value) (out cty.Value, err error) {
+			out, err = objConv(in)
+			if err != nil {
+				return out, err
+			}
+
+			return mapConv(in)
 		}
 	}
 

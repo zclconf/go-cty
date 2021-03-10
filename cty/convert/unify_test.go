@@ -285,6 +285,179 @@ func TestUnify(t *testing.T) {
 			[]bool{true, true},
 		},
 		{
+			// Objects and maps should unify along with the surrounding lists
+			// and tuples.
+			[]cty.Type{
+				cty.List(cty.Object(map[string]cty.Type{
+					"a": cty.Object(map[string]cty.Type{
+						"a": cty.String,
+					}),
+					"b": cty.Object(map[string]cty.Type{
+						"a": cty.String,
+						"b": cty.String,
+					}),
+				})),
+				cty.List(cty.Map(
+					cty.Object(map[string]cty.Type{
+						"a": cty.String,
+						"b": cty.String,
+					}),
+				)),
+			},
+			cty.List(cty.Map(cty.Map(cty.String))),
+			[]bool{true, true},
+		},
+		{
+			// objects can unify as maps within objects
+			[]cty.Type{
+				cty.Object(map[string]cty.Type{
+					"a": cty.Object(map[string]cty.Type{
+						"a": cty.String,
+					}),
+				}),
+				cty.Object(map[string]cty.Type{
+					"a": cty.Object(map[string]cty.Type{
+						"a": cty.String,
+						"b": cty.String,
+					}),
+				}),
+			},
+			cty.Object(map[string]cty.Type{
+				"a": cty.Map(cty.String),
+			}),
+			[]bool{true, true},
+		},
+		{
+			// nested objects can unify as maps
+			[]cty.Type{
+				cty.Object(map[string]cty.Type{
+					"a": cty.Object(map[string]cty.Type{
+						"a": cty.String,
+					}),
+					"b": cty.Object(map[string]cty.Type{
+						"a": cty.String,
+						"b": cty.String,
+					}),
+				}),
+				cty.Map(
+					cty.Object(map[string]cty.Type{
+						"a": cty.String,
+						"b": cty.String,
+					}),
+				),
+			},
+			cty.Map(cty.Map(cty.String)),
+			[]bool{true, true},
+		},
+		{
+			// nested tuples and lists can unify along with the surrounding
+			// objects and maps
+			[]cty.Type{
+				cty.Object(map[string]cty.Type{
+					"a": cty.Object(map[string]cty.Type{
+						"a": cty.List(cty.String),
+					}),
+					"b": cty.Object(map[string]cty.Type{
+						"a": cty.Tuple([]cty.Type{
+							cty.String,
+						}),
+						"b": cty.List(cty.String),
+					}),
+				}),
+				cty.Map(
+					cty.Object(map[string]cty.Type{
+						"a": cty.List(cty.String),
+						"b": cty.List(cty.String),
+					}),
+				),
+			},
+			cty.Map(cty.Map(cty.List(cty.String))),
+			[]bool{true, true},
+		},
+		{
+			// objects can unify as maps containing objects when all attributes
+			// match
+			[]cty.Type{
+				cty.Object(map[string]cty.Type{
+					"a": cty.Object(map[string]cty.Type{
+						"a": cty.String,
+					}),
+					"b": cty.Object(map[string]cty.Type{
+						"a": cty.String,
+					}),
+				}),
+				cty.Map(
+					cty.Object(map[string]cty.Type{
+						"a": cty.String,
+					}),
+				),
+			},
+			cty.Map(
+				cty.Object(map[string]cty.Type{
+					"a": cty.String,
+				}),
+			),
+			[]bool{true, false},
+		},
+		{
+			// objects can unify as maps with dynamic types
+			[]cty.Type{
+				cty.Object(map[string]cty.Type{
+					"a": cty.Object(map[string]cty.Type{
+						"a": cty.String,
+					}),
+					"b": cty.Object(map[string]cty.Type{
+						"a": cty.String,
+					}),
+				}),
+				cty.Map(cty.DynamicPseudoType),
+				cty.Map(
+					cty.Object(map[string]cty.Type{
+						"a": cty.String,
+					}),
+				),
+			},
+			cty.Map(cty.DynamicPseudoType),
+			[]bool{true, false, true},
+		},
+		{
+			// deeply nested objects and maps can unify
+			[]cty.Type{
+				cty.Object(map[string]cty.Type{
+					"a": cty.Object(map[string]cty.Type{
+						"a": cty.Object(map[string]cty.Type{
+							"a": cty.String,
+						}),
+					}),
+					"b": cty.Object(map[string]cty.Type{
+						"c": cty.Object(map[string]cty.Type{
+							"d": cty.String,
+						}),
+					}),
+				}),
+				cty.Map(cty.Map(cty.Map(cty.String))),
+			},
+			cty.Map(cty.Map(cty.Map(cty.String))),
+			[]bool{true, false},
+		},
+		{
+			// deeply nested objects with maps can unify as maps
+			[]cty.Type{
+				cty.Map(cty.Map(cty.Map(cty.String))),
+				cty.Object(map[string]cty.Type{
+					"a": cty.Object(map[string]cty.Type{
+						"a": cty.Object(map[string]cty.Type{
+							"a": cty.String,
+						}),
+						"b": cty.Map(cty.String),
+					}),
+					"b": cty.Map(cty.Map(cty.String)),
+				}),
+			},
+			cty.Map(cty.Map(cty.Map(cty.String))),
+			[]bool{false, true},
+		},
+		{
 			[]cty.Type{
 				cty.DynamicPseudoType,
 				cty.Tuple([]cty.Type{cty.Number}),
