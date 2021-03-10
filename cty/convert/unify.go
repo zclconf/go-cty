@@ -219,9 +219,9 @@ func unifyObjectsAsMaps(types []cty.Type, unsafe bool) (cty.Type, []Conversion) 
 		return cty.NilType, nil
 	}
 
-	// we have a good conversion, wrap the nested tuple conversions.
-	// We know the tuple conversion is not nil, because we went from tuple to
-	// list
+	// we have a good conversion, so wrap the nested object conversions.
+	// We know the object conversion is not nil, because we went from object to
+	// map.
 	for i, idx := range objIdxs {
 		mapConv := convs[idx]
 		objConv := objConvs[i]
