@@ -45,8 +45,10 @@ func conversionCollectionToList(ety cty.Type, conv conversion) conversion {
 		}
 
 		if len(elems) == 0 {
+			// Prefer a concrete type over a dynamic type when returning an
+			// empty list
 			if ety == cty.DynamicPseudoType {
-				ety = val.Type().ElementType()
+				return cty.ListValEmpty(val.Type().ElementType()), nil
 			}
 			return cty.ListValEmpty(ety), nil
 		}
@@ -95,7 +97,7 @@ func conversionCollectionToSet(ety cty.Type, conv conversion) conversion {
 			// Prefer a concrete type over a dynamic type when returning an
 			// empty set
 			if ety == cty.DynamicPseudoType {
-				ety = val.Type().ElementType()
+				return cty.SetValEmpty(val.Type().ElementType()), nil
 			}
 			return cty.SetValEmpty(ety), nil
 		}
@@ -148,7 +150,7 @@ func conversionCollectionToMap(ety cty.Type, conv conversion) conversion {
 			// Prefer a concrete type over a dynamic type when returning an
 			// empty map
 			if ety == cty.DynamicPseudoType {
-				ety = val.Type().ElementType()
+				return cty.MapValEmpty(val.Type().ElementType()), nil
 			}
 			return cty.MapValEmpty(ety), nil
 		}
