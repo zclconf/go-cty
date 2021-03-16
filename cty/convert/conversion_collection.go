@@ -1,8 +1,6 @@
 package convert
 
 import (
-	"fmt"
-
 	"github.com/hashicorp/go-cty/cty"
 )
 
@@ -54,7 +52,7 @@ func conversionCollectionToList(ety cty.Type, conv conversion) conversion {
 		}
 
 		if !cty.CanListVal(elems) {
-			return cty.NilVal, fmt.Errorf("element types must all match for conversion to list")
+			return cty.NilVal, path.NewErrorf("element types must all match for conversion to list")
 		}
 
 		return cty.ListVal(elems), nil
@@ -103,7 +101,7 @@ func conversionCollectionToSet(ety cty.Type, conv conversion) conversion {
 		}
 
 		if !cty.CanSetVal(elems) {
-			return cty.NilVal, fmt.Errorf("element types must all match for conversion to set")
+			return cty.NilVal, path.NewErrorf("element types must all match for conversion to set")
 		}
 
 		return cty.SetVal(elems), nil
@@ -163,7 +161,7 @@ func conversionCollectionToMap(ety cty.Type, conv conversion) conversion {
 		}
 
 		if !cty.CanMapVal(elems) {
-			return cty.NilVal, fmt.Errorf("element types must all match for conversion to map")
+			return cty.NilVal, path.NewErrorf("element types must all match for conversion to map")
 		}
 
 		return cty.MapVal(elems), nil
@@ -248,7 +246,7 @@ func conversionTupleToSet(tupleType cty.Type, setEty cty.Type, unsafe bool) conv
 		}
 
 		if !cty.CanSetVal(elems) {
-			return cty.NilVal, fmt.Errorf("element types must all match for conversion to set")
+			return cty.NilVal, path.NewErrorf("element types must all match for conversion to set")
 		}
 
 		return cty.SetVal(elems), nil
@@ -340,7 +338,7 @@ func conversionTupleToList(tupleType cty.Type, listEty cty.Type, unsafe bool) co
 		}
 
 		if !cty.CanListVal(elems) {
-			return cty.NilVal, fmt.Errorf("element types must all match for conversion to list")
+			return cty.NilVal, path.NewErrorf("element types must all match for conversion to list")
 		}
 
 		return cty.ListVal(elems), nil
@@ -422,7 +420,7 @@ func conversionObjectToMap(objectType cty.Type, mapEty cty.Type, unsafe bool) co
 		}
 
 		if !cty.CanMapVal(elems) {
-			return cty.NilVal, fmt.Errorf("attribute types must all match for conversion to map")
+			return cty.NilVal, path.NewErrorf("attribute types must all match for conversion to map")
 		}
 
 		return cty.MapVal(elems), nil
