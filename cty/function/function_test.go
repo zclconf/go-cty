@@ -122,6 +122,62 @@ func TestReturnTypeForValues(t *testing.T) {
 			Args:    []cty.Value{cty.StringVal("hello")},
 			WantErr: true,
 		},
+		{
+			Spec: &Spec{
+				Params: []Parameter{
+					{
+						Type: cty.List(cty.DynamicPseudoType),
+					},
+				},
+				Type: func(args []cty.Value) (cty.Type, error) {
+					ty := cty.Number
+					for i, arg := range args {
+						if arg.ContainsMarked() {
+							return ty, fmt.Errorf("arg %d %#v contains marks", i, arg)
+						}
+					}
+					return ty, nil
+				},
+				Impl: stubImpl,
+			},
+			Args: []cty.Value{
+				cty.ListVal([]cty.Value{
+					cty.StringVal("ok").Mark("marked"),
+				}),
+			},
+			WantType: cty.Number,
+		},
+		{
+			Spec: &Spec{
+				Params: []Parameter{
+					{
+						Type: cty.List(cty.String),
+					},
+				},
+				VarParam: &Parameter{
+					Type: cty.List(cty.String),
+				},
+				Type: func(args []cty.Value) (cty.Type, error) {
+					ty := cty.Number
+					for i, arg := range args {
+						if arg.ContainsMarked() {
+							return ty, fmt.Errorf("arg %d %#v contains marks", i, arg)
+						}
+					}
+					return ty, nil
+				},
+				Impl: stubImpl,
+			},
+			Args: []cty.Value{
+				cty.ListVal([]cty.Value{
+					cty.StringVal("one"),
+				}),
+				cty.ListVal([]cty.Value{
+					cty.StringVal("two").Mark("marked"),
+				}),
+			},
+			WantType: cty.Number,
+		},
 	}
 
 	for i, test := range tests {
