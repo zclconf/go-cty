@@ -1,16 +1,16 @@
-# 1.8.1 (Unreleased)
+# 1.8.1 (March 16, 2021)
 
 * `convert`: Fix for panics and some general misbehavior when converting null values to type constraints containing objects with optional attributes. ([#88](https://github.com/zclconf/go-cty/pull/88))
 * `convert`: Type unification of a mixture of list and tuple types and for a mixture of map and object types will now do the same recursive unification that we previously did for unification of just list types and just map types respectively, to avoid producing a very different and confusing result in situations where callers try to construct collections from a mixture of nested collections and nested structural types. ([#89](https://github.com/zclconf/go-cty/pull/89))
 * `convert`: Conversion will no longer panic if we can't find a suitable single element type to use when converting to a collection type with a dynamically-selected element type. ([#91](https://github.com/zclconf/go-cty/pull/91))
 * `function`: The `ReturnTypeForValues` and `Call` methods on `Function` will now protect functions from having to deal with nested marked values for arguments that don't specifically declare `AllowMarks: true`, as a concession for the fact that many functions were written prior to the introduction of marks as a concept. ([#92](https://github.com/zclconf/go-cty/pull/92))
 
-# 1.8.0 (February 22, 2020)
+# 1.8.0 (February 22, 2021)
 
 * `cty`: When running on Go 1.16 or later, the `cty.String` type will now normalize incoming string values using the Unicode 13 normalization rules.
 * `function/stdlib`: The various string functions which split strings into individual characters as part of their work will now use the Unicode 13 version of the text segmentation algorithm to do so.
 
-# 1.7.2 (February 22, 2020)
+# 1.7.2 (February 22, 2021)
 
 * `cty`: The `Type.GoString` implementation for object types with optional attributes was previously producing incorrect results due to an implementation bug. ([#86](https://github.com/zclconf/go-cty/pull/86))
 
