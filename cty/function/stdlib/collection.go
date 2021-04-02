@@ -832,45 +832,45 @@ var ReverseListFunc = function.New(&function.Spec{
 // RotateListFunc is a function that takes a list and returns a new list
 // with items rotated.
 var RotateListFunc = function.New(&function.Spec{
-    Params: []function.Parameter{
-        {
-            Name: "list",
-            Type: cty.List(cty.DynamicPseudoType),
-        },
-        {
-            Name: "steps",
-            Type: cty.Number,
-        },
-    },
-    Type: func(args []cty.Value) (cty.Type, error) {
-        return args[0].Type(), nil
-    },
-    Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
-        listVal := args[0]
-        if !listVal.IsWhollyKnown() {
-            return cty.UnknownVal(retType), nil
-        }
-        var steps int
-        err = gocty.FromCtyValue(args[1], &steps)
-        if err != nil {
-            return cty.NilVal, fmt.Errorf("invalid steps: %s", err)
-        }
-        if steps <= 0 {
-            return cty.NilVal, errors.New("the steps argument must be positive")
-        }
-        if listVal.LengthInt() == 0 {
-            return cty.ListValEmpty(retType.ElementType()), nil
-        }
+	Params: []function.Parameter{
+		{
+			Name: "list",
+			Type: cty.List(cty.DynamicPseudoType),
+		},
+		{
+			Name: "steps",
+			Type: cty.Number,
+		},
+	},
+	Type: func(args []cty.Value) (cty.Type, error) {
+		return args[0].Type(), nil
+	},
+	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
+		listVal := args[0]
+		if !listVal.IsWhollyKnown() {
+			return cty.UnknownVal(retType), nil
+		}
+		var steps int
+		err = gocty.FromCtyValue(args[1], &steps)
+		if err != nil {
+			return cty.NilVal, fmt.Errorf("invalid steps: %s", err)
+		}
+		if steps <= 0 {
+			return cty.NilVal, errors.New("the steps argument must be positive")
+		}
+		if listVal.LengthInt() == 0 {
+			return cty.ListValEmpty(retType.ElementType()), nil
+		}
 
-        var list []cty.Value
-        slice := listVal.AsValueSlice()
-        list = append(slice[steps:listVal.LengthInt()], slice[0:steps]...)
+		var list []cty.Value
+		slice := listVal.AsValueSlice()
+		list = append(slice[steps:listVal.LengthInt()], slice[0:steps]...)
 
-        if len(list) == 0 {
-            return cty.ListValEmpty(retType.ElementType()), nil
-        }
-        return cty.ListVal(list), nil
-    },
+		if len(list) == 0 {
+			return cty.ListValEmpty(retType.ElementType()), nil
+		}
+		return cty.ListVal(list), nil
+	},
 })
 
 // SetProductFunc calculates the Cartesian product of two or more sets or
@@ -1363,7 +1363,7 @@ func ReverseList(list cty.Value) (cty.Value, error) {
 
 // RotateList extracts some consecutive elements from within a list.
 func RotateList(list, size cty.Value) (cty.Value, error) {
-    return RotateListFunc.Call([]cty.Value{list, size})
+	return RotateListFunc.Call([]cty.Value{list, size})
 }
 
 // SetProduct computes the Cartesian product of sets or sequences.
