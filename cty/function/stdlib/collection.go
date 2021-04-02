@@ -865,10 +865,6 @@ var RotateListFunc = function.New(&function.Spec{
 		var list []cty.Value
 		slice := listVal.AsValueSlice()
 		list = append(slice[steps:listVal.LengthInt()], slice[0:steps]...)
-
-		if len(list) == 0 {
-			return cty.ListValEmpty(retType.ElementType()), nil
-		}
 		return cty.ListVal(list), nil
 	},
 })
