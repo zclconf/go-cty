@@ -987,7 +987,7 @@ func TestCoalesceList(t *testing.T) {
 func TestRotateList(t *testing.T) {
 	tests := map[string]struct {
 		Values cty.Value
-		Step   cty.Value
+		Steps  cty.Value
 		Want   cty.Value
 		Err    bool
 	}{
@@ -1055,7 +1055,7 @@ func TestRotateList(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			got, err := RotateList(test.Values, test.Step)
+			got, err := RotateList(test.Values, test.Steps)
 
 			if test.Err {
 				if err == nil {
