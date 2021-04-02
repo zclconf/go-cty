@@ -983,3 +983,92 @@ func TestCoalesceList(t *testing.T) {
 		})
 	}
 }
+
+func TestRotateList(t *testing.T) {
+    tests := map[string]struct {
+        Values cty.Value
+        Step   cty.Value
+        Want   cty.Value
+        Err    bool
+    }{
+        "returns empty list if list is empty": {
+            cty.ListValEmpty(cty.String),
+            cty.NumberIntVal(1),
+            cty.ListValEmpty(cty.String),
+            false,
+        },
+        "returns error when step is negative": {
+            cty.ListValEmpty(cty.String),
+            cty.NumberIntVal(-1),
+            cty.ListValEmpty(cty.String),
+            true,
+        },
+        "returns rotated list when step=1": {
+            cty.ListVal([]cty.Value{
+                cty.StringVal("a"),
+                cty.StringVal("b"),
+                cty.StringVal("c"),
+            }),
+            cty.NumberIntVal(1),
+            cty.ListVal([]cty.Value{
+                cty.StringVal("b"),
+                cty.StringVal("c"),
+                cty.StringVal("a"),
+            }),
+            false,
+        },
+        "returns rotated list when step=2": {
+            cty.ListVal([]cty.Value{
+                cty.StringVal("a"),
+                cty.StringVal("b"),
+                cty.StringVal("c"),
+            }),
+            cty.NumberIntVal(2),
+            cty.ListVal([]cty.Value{
+                cty.StringVal("c"),
+                cty.StringVal("a"),
+                cty.StringVal("b"),
+            }),
+            false,
+        },
+        "returns rotated list when step=3 and type is int": {
+            cty.ListVal([]cty.Value{
+                cty.NumberIntVal(1),
+                cty.NumberIntVal(2),
+                cty.NumberIntVal(3),
+                cty.NumberIntVal(4),
+                cty.NumberIntVal(5),
+                cty.NumberIntVal(6),
+            }),
+            cty.NumberIntVal(3),
+            cty.ListVal([]cty.Value{
+                cty.NumberIntVal(4),
+                cty.NumberIntVal(5),
+                cty.NumberIntVal(6),
+                cty.NumberIntVal(1),
+                cty.NumberIntVal(2),
+                cty.NumberIntVal(3),
+            }),
+            false,
+        },
+    }
+
+    for name, test := range tests {
+        t.Run(name, func(t *testing.T) {
+            got, err := RotateList(test.Values, test.Step)
+
+            if test.Err {
+                if err == nil {
+                    t.Fatal("succeeded; want error")
+                }
+                return
+            } else if err != nil {
+                t.Fatalf("unexpected error: %s", err)
+            }
+
+            if !got.RawEquals(test.Want) {
+                t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, test.Want)
+            }
+        })
+    }
+}
