@@ -998,9 +998,40 @@ func TestRotateList(t *testing.T) {
 			false,
 		},
 		"returns error when step is negative": {
+			cty.ListVal([]cty.Value{
+				cty.StringVal("a"),
+				cty.StringVal("b"),
+				cty.StringVal("c"),
+			}), cty.NumberIntVal(-1),
 			cty.ListValEmpty(cty.String),
-			cty.NumberIntVal(-1),
-			cty.ListValEmpty(cty.String),
+			true,
+		},
+		"returns same list when steps=length": {
+			cty.ListVal([]cty.Value{
+				cty.StringVal("a"),
+				cty.StringVal("b"),
+				cty.StringVal("c"),
+			}),
+			cty.NumberIntVal(3),
+			cty.ListVal([]cty.Value{
+				cty.StringVal("a"),
+				cty.StringVal("b"),
+				cty.StringVal("c"),
+			}),
+			false,
+		},
+		"returns error when steps>length": {
+			cty.ListVal([]cty.Value{
+				cty.StringVal("a"),
+				cty.StringVal("b"),
+				cty.StringVal("c"),
+			}),
+			cty.NumberIntVal(4),
+			cty.ListVal([]cty.Value{
+				cty.StringVal("a"),
+				cty.StringVal("b"),
+				cty.StringVal("c"),
+			}),
 			true,
 		},
 		"returns rotated list when step=1": {

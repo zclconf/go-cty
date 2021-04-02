@@ -850,6 +850,9 @@ var RotateListFunc = function.New(&function.Spec{
 		if !listVal.IsWhollyKnown() {
 			return cty.UnknownVal(retType), nil
 		}
+		if listVal.LengthInt() == 0 {
+			return cty.ListValEmpty(retType.ElementType()), nil
+		}
 		var steps int
 		err = gocty.FromCtyValue(args[1], &steps)
 		if err != nil {
@@ -858,8 +861,8 @@ var RotateListFunc = function.New(&function.Spec{
 		if steps <= 0 {
 			return cty.NilVal, errors.New("the steps argument must be positive")
 		}
-		if listVal.LengthInt() == 0 {
-			return cty.ListValEmpty(retType.ElementType()), nil
+		if steps > listVal.LengthInt() {
+			return cty.NilVal, errors.New("the steps argument must be lower than list length")
 		}
 
 		var list []cty.Value
