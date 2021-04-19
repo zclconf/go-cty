@@ -54,6 +54,54 @@ func TestConcat(t *testing.T) {
 					cty.NumberIntVal(1),
 				}),
 				cty.ListVal([]cty.Value{
+					cty.NumberIntVal(2),
+					cty.NumberIntVal(3),
+				}).Mark("a"),
+			},
+			cty.ListVal([]cty.Value{
+				cty.NumberIntVal(1),
+				cty.NumberIntVal(2),
+				cty.NumberIntVal(3),
+			}).Mark("a"),
+		},
+		{
+			[]cty.Value{
+				cty.ListVal([]cty.Value{
+					cty.NumberIntVal(1),
+				}),
+				cty.ListVal([]cty.Value{
+					cty.NumberIntVal(2).Mark("b"),
+					cty.NumberIntVal(3),
+				}),
+			},
+			cty.ListVal([]cty.Value{
+				cty.NumberIntVal(1),
+				cty.NumberIntVal(2).Mark("b"),
+				cty.NumberIntVal(3),
+			}),
+		},
+		{
+			[]cty.Value{
+				cty.ListVal([]cty.Value{
+					cty.NumberIntVal(1),
+				}).Mark("a"),
+				cty.ListVal([]cty.Value{
+					cty.NumberIntVal(2).Mark("b"),
+					cty.NumberIntVal(3),
+				}),
+			},
+			cty.ListVal([]cty.Value{
+				cty.NumberIntVal(1),
+				cty.NumberIntVal(2).Mark("b"),
+				cty.NumberIntVal(3),
+			}).Mark("a"),
+		},
+		{
+			[]cty.Value{
+				cty.ListVal([]cty.Value{
+					cty.NumberIntVal(1),
+				}),
+				cty.ListVal([]cty.Value{
 					cty.StringVal("foo"),
 				}),
 				cty.ListVal([]cty.Value{
