@@ -1,3 +1,7 @@
+# 1.8.2 (Unreleased)
+
+* `function/stdlib`: Improvements to various functions to handle marked values more precisely (individual element vs. whole-collection marks). ([#95](https://github.com/zclconf/go-cty/pull/95))
+
 # 1.8.1 (Unreleased)
 
 * `convert`: Fix for panics and some general misbehavior when converting null values to type constraints containing objects with optional attributes. ([#88](https://github.com/zclconf/go-cty/pull/88))
