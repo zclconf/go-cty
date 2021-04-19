@@ -1082,6 +1082,26 @@ func TestValueRawEquals(t *testing.T) {
 			true,
 		},
 		{
+			MapValEmpty(Number).Mark("a"),
+			MapValEmpty(Number).Mark("a"),
+			true,
+		},
+		{
+			MapValEmpty(Number).Mark("a"),
+			MapValEmpty(Number),
+			false,
+		},
+		{
+			MapValEmpty(Number),
+			MapValEmpty(Number).Mark("a"),
+			false,
+		},
+		{
+			MapValEmpty(Number).Mark("a"),
+			MapValEmpty(Number).Mark("a").Mark("b"),
+			false,
+		},
+		{
 			MapValEmpty(Number),
 			MapValEmpty(Bool),
 			false,
