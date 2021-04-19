@@ -983,3 +983,118 @@ func TestCoalesceList(t *testing.T) {
 		})
 	}
 }
+
+func TestValues(t *testing.T) {
+	tests := []struct {
+		Collection cty.Value
+		Want       cty.Value
+		Err        string
+	}{
+		{
+			cty.MapValEmpty(cty.String),
+			cty.ListValEmpty(cty.String),
+			``,
+		},
+		{
+			cty.MapValEmpty(cty.String).Mark("a"),
+			cty.ListValEmpty(cty.String).Mark("a"),
+			``,
+		},
+		{
+			cty.NullVal(cty.Map(cty.String)),
+			cty.NilVal,
+			`argument must not be null`,
+		},
+		{
+			cty.UnknownVal(cty.Map(cty.String)),
+			cty.UnknownVal(cty.List(cty.String)),
+			``,
+		},
+		{
+			cty.MapVal(map[string]cty.Value{"hello": cty.StringVal("world")}),
+			cty.ListVal([]cty.Value{cty.StringVal("world")}),
+			``,
+		},
+		{ // The map itself is not marked, just an inner element.
+			cty.MapVal(map[string]cty.Value{"hello": cty.StringVal("world").Mark("a")}),
+			cty.ListVal([]cty.Value{cty.StringVal("world").Mark("a")}),
+			``,
+		},
+		{ // The entire map is marked, so the resulting list is also marked.
+			cty.MapVal(map[string]cty.Value{"hello": cty.StringVal("world")}).Mark("a"),
+			cty.ListVal([]cty.Value{cty.StringVal("world")}).Mark("a"),
+			``,
+		},
+		{ // Marked both inside and outside.
+			cty.MapVal(map[string]cty.Value{"hello": cty.StringVal("world").Mark("a")}).Mark("a"),
+			cty.ListVal([]cty.Value{cty.StringVal("world").Mark("a")}).Mark("a"),
+			``,
+		},
+		{
+			cty.ObjectVal(map[string]cty.Value{"hello": cty.StringVal("world")}),
+			cty.TupleVal([]cty.Value{cty.StringVal("world")}),
+			``,
+		},
+		{
+			cty.EmptyObjectVal,
+			cty.EmptyTupleVal,
+			``,
+		},
+		{
+			cty.EmptyObjectVal.Mark("a"),
+			cty.EmptyTupleVal.Mark("a"),
+			``,
+		},
+		{
+			cty.NullVal(cty.EmptyObject),
+			cty.NilVal,
+			`argument must not be null`,
+		},
+		{
+			cty.UnknownVal(cty.EmptyObject),
+			cty.UnknownVal(cty.EmptyTuple),
+			``,
+		},
+		{
+			cty.UnknownVal(cty.Object(map[string]cty.Type{"a": cty.String})),
+			cty.UnknownVal(cty.Tuple([]cty.Type{cty.String})),
+			``,
+		},
+		{ // The object itself is not marked, just an inner attribute value.
+			cty.ObjectVal(map[string]cty.Value{"hello": cty.StringVal("world").Mark("a")}),
+			cty.TupleVal([]cty.Value{cty.StringVal("world").Mark("a")}),
+			``,
+		},
+		{ // The entire object is marked, so the resulting tuple is also marked.
+			cty.ObjectVal(map[string]cty.Value{"hello": cty.StringVal("world")}).Mark("a"),
+			cty.TupleVal([]cty.Value{cty.StringVal("world")}).Mark("a"),
+			``,
+		},
+		{ // Marked both inside and outside.
+			cty.ObjectVal(map[string]cty.Value{"hello": cty.StringVal("world").Mark("a")}).Mark("a"),
+			cty.TupleVal([]cty.Value{cty.StringVal("world").Mark("a")}).Mark("a"),
+			``,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("Values(%#v)", test.Collection), func(t *testing.T) {
+			got, err := Values(test.Collection)
+			if test.Err != "" {
+				if err == nil {
+					t.Fatal("succeeded; want error")
+				}
+				if got, want := err.Error(), test.Err; got != want {
+					t.Fatalf("wrong error\ngot:  %s\nwant: %s", got, want)
+				}
+				return
+			} else if err != nil {
+				t.Fatalf("unexpected error: %s", err)
+			}
+
+			if !got.RawEquals(test.Want) {
+				t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, test.Want)
+			}
+		})
+	}
+}
