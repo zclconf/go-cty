@@ -1,7 +1,7 @@
 # 1.8.2 (Unreleased)
 
-* `cty`: `Value.Mark` will no longer incorrectly create nested markings when applied to a value that is already marked. Instead, it will unpack the reciever and use its underlying value directly, merging all of the marks into a new mark set. [#96](https://github.com/zclconf/go-cty/pull/96)
-* `cty:` `Value.RawEquals` will no longer panic if asked to compare two maps where at least one of them is marked. [#96](https://github.com/zclconf/go-cty/pull/96)
+* `cty`: `Value.Mark` will no longer incorrectly create nested markings when applied to a value that is already marked. Instead, it will unpack the reciever and use its underlying value directly, merging all of the marks into a new mark set. ([#96](https://github.com/zclconf/go-cty/pull/96))
+* `cty:` `Value.RawEquals` will no longer panic if asked to compare two maps where at least one of them is marked. ([#96](https://github.com/zclconf/go-cty/pull/96))
 * `function/stdlib`: Improvements to various functions to handle marked values more precisely (individual element vs. whole-collection marks). ([#95](https://github.com/zclconf/go-cty/pull/95), [#96](https://github.com/zclconf/go-cty/pull/96), [#97](https://github.com/zclconf/go-cty/pull/97))
 
 # 1.8.1 (March 16, 2021)
