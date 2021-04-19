@@ -244,6 +244,15 @@ func TestMarks(t *testing.T) {
 		t.Fatalf("still marked after unmark: %#v", marks)
 	}
 	wantMarks(marks, "a", "b", "c")
+
+	// Multiple marks, applied separately
+	val = val.Mark("a").Mark("b")
+	wantMarks(val.Marks(), "a", "b")
+	val, marks = val.Unmark()
+	if val.IsMarked() {
+		t.Fatalf("still marked after unmark: %#v", marks)
+	}
+	wantMarks(marks, "a", "b")
 }
 
 func TestUnmarkDeep(t *testing.T) {
