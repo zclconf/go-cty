@@ -539,6 +539,7 @@ var KeysFunc = function.New(&function.Spec{
 			Name:         "inputMap",
 			Type:         cty.DynamicPseudoType,
 			AllowUnknown: true,
+			AllowMarked:  true,
 		},
 	},
 	Type: func(args []cty.Value) (cty.Type, error) {
@@ -563,7 +564,11 @@ var KeysFunc = function.New(&function.Spec{
 		}
 	},
 	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
-		m := args[0]
+		// We must unmark the value before we can use ElementIterator on it, and
+		// then re-apply the same marks (possibly none) when we return. Since we
+		// don't mark map keys, we can throw away any nested marks, which would
+		// only apply to values.
+		m, marks := args[0].Unmark()
 		var keys []cty.Value
 
 		switch {
@@ -576,28 +581,28 @@ var KeysFunc = function.New(&function.Spec{
 			}
 			sort.Strings(names) // same ordering guaranteed by cty's ElementIterator
 			if len(names) == 0 {
-				return cty.EmptyTupleVal, nil
+				return cty.EmptyTupleVal.WithMarks(marks), nil
 			}
 			keys = make([]cty.Value, len(names))
 			for i, name := range names {
 				keys[i] = cty.StringVal(name)
 			}
-			return cty.TupleVal(keys), nil
+			return cty.TupleVal(keys).WithMarks(marks), nil
 		default:
 			if !m.IsKnown() {
-				return cty.UnknownVal(retType), nil
+				return cty.UnknownVal(retType).WithMarks(marks), nil
 			}
 
 			// cty guarantees that ElementIterator will iterate in lexicographical
 			// order by key.
-			for it := args[0].ElementIterator(); it.Next(); {
+			for it := m.ElementIterator(); it.Next(); {
 				k, _ := it.Element()
 				keys = append(keys, k)
 			}
 			if len(keys) == 0 {
-				return cty.ListValEmpty(cty.String), nil
+				return cty.ListValEmpty(cty.String).WithMarks(marks), nil
 			}
-			return cty.ListVal(keys), nil
+			return cty.ListVal(keys).WithMarks(marks), nil
 		}
 	},
 })
