@@ -1078,8 +1078,9 @@ func sliceIndexes(args []cty.Value) (int, int, bool, error) {
 var ValuesFunc = function.New(&function.Spec{
 	Params: []function.Parameter{
 		{
-			Name: "values",
-			Type: cty.DynamicPseudoType,
+			Name:        "values",
+			Type:        cty.DynamicPseudoType,
+			AllowMarked: true,
 		},
 	},
 	Type: func(args []cty.Value) (ret cty.Type, err error) {
@@ -1112,6 +1113,13 @@ var ValuesFunc = function.New(&function.Spec{
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		mapVar := args[0]
 
+		// We must unmark the value before we can use ElementIterator on it,
+		// and then re-apply the same marks (possibly none) when we return.
+		// (We leave the inner values just as they are, because we won't be
+		// doing anything with them aside from copying them verbatim into the
+		// result, marks and all.)
+		mapVar, marks := mapVar.Unmark()
+
 		// We can just iterate the map/object value here because cty guarantees
 		// that these types always iterate in key lexicographical order.
 		var values []cty.Value
@@ -1120,13 +1128,15 @@ var ValuesFunc = function.New(&function.Spec{
 			values = append(values, val)
 		}
 
+		// All of the return paths must include .WithMarks(marks) so that we
+		// will preserve the markings of the overall map/object we were given.
 		if retType.IsTupleType() {
-			return cty.TupleVal(values), nil
+			return cty.TupleVal(values).WithMarks(marks), nil
 		}
 		if len(values) == 0 {
-			return cty.ListValEmpty(retType.ElementType()), nil
+			return cty.ListValEmpty(retType.ElementType()).WithMarks(marks), nil
 		}
-		return cty.ListVal(values), nil
+		return cty.ListVal(values).WithMarks(marks), nil
 	},
 })
 
