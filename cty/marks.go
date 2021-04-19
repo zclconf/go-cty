@@ -180,6 +180,9 @@ func (val Value) Mark(mark interface{}) Value {
 		for k, v := range mr.marks {
 			newMarker.marks[k] = v
 		}
+		// unwrap the inner marked value, so we don't get multiple layers
+		// of marking.
+		newMarker.realV = mr.realV
 	} else {
 		// It's not a marker yet, so we're creating the first mark.
 		newMarker.marks = make(ValueMarks, 1)
