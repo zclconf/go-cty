@@ -1098,3 +1098,232 @@ func TestValues(t *testing.T) {
 		})
 	}
 }
+
+func TestZipMap(t *testing.T) {
+	tests := []struct {
+		Keys   cty.Value
+		Values cty.Value
+		Want   cty.Value
+		Err    string
+	}{
+		// Lists of values (map result)
+		{
+			cty.ListValEmpty(cty.String),
+			cty.ListValEmpty(cty.String),
+			cty.MapValEmpty(cty.String),
+			``,
+		},
+		{
+			cty.ListVal([]cty.Value{cty.StringVal("bleep")}),
+			cty.ListVal([]cty.Value{cty.StringVal("bloop")}),
+			cty.MapVal(map[string]cty.Value{
+				"bleep": cty.StringVal("bloop"),
+			}),
+			``,
+		},
+		{
+			cty.ListVal([]cty.Value{cty.StringVal("bleep"), cty.StringVal("beep")}),
+			cty.ListVal([]cty.Value{cty.StringVal("bloop"), cty.StringVal("boop")}),
+			cty.MapVal(map[string]cty.Value{
+				"beep":  cty.StringVal("boop"),
+				"bleep": cty.StringVal("bloop"),
+			}),
+			``,
+		},
+		{
+			cty.UnknownVal(cty.List(cty.String)),
+			cty.UnknownVal(cty.List(cty.String)),
+			cty.UnknownVal(cty.Map(cty.String)),
+			``,
+		},
+		{
+			cty.UnknownVal(cty.List(cty.String)),
+			cty.ListValEmpty(cty.String),
+			cty.UnknownVal(cty.Map(cty.String)),
+			``,
+		},
+		{
+			cty.ListValEmpty(cty.String),
+			cty.UnknownVal(cty.List(cty.String)),
+			cty.UnknownVal(cty.Map(cty.String)),
+			``,
+		},
+		{
+			cty.ListVal([]cty.Value{cty.StringVal("bleep")}).Mark("a"),
+			cty.ListVal([]cty.Value{cty.StringVal("bloop")}),
+			cty.MapVal(map[string]cty.Value{
+				"bleep": cty.StringVal("bloop"),
+			}).Mark("a"),
+			``,
+		},
+		{
+			cty.ListVal([]cty.Value{cty.StringVal("bleep")}),
+			cty.ListVal([]cty.Value{cty.StringVal("bloop")}).Mark("b"),
+			cty.MapVal(map[string]cty.Value{
+				"bleep": cty.StringVal("bloop"),
+			}).Mark("b"),
+			``,
+		},
+		{
+			cty.ListVal([]cty.Value{cty.StringVal("bleep")}).Mark("a"),
+			cty.ListVal([]cty.Value{cty.StringVal("bloop")}).Mark("b"),
+			cty.MapVal(map[string]cty.Value{
+				"bleep": cty.StringVal("bloop"),
+			}).Mark("a").Mark("b"),
+			``,
+		},
+		{
+			// cty map keys don't have individual marks, so marks on elements
+			// in the keys list aggregate with the resulting map as a whole.
+			cty.ListVal([]cty.Value{cty.StringVal("bleep").Mark("a")}),
+			cty.ListVal([]cty.Value{cty.StringVal("bloop")}),
+			cty.MapVal(map[string]cty.Value{
+				"bleep": cty.StringVal("bloop"),
+			}).Mark("a"),
+			``,
+		},
+		{
+			// cty map _values_ can have individual marks, so individual
+			// elements in the values list should have their marks preserved.
+			cty.ListVal([]cty.Value{cty.StringVal("bleep")}),
+			cty.ListVal([]cty.Value{cty.StringVal("bloop").Mark("a")}),
+			cty.MapVal(map[string]cty.Value{
+				"bleep": cty.StringVal("bloop").Mark("a"),
+			}),
+			``,
+		},
+		{
+			cty.ListVal([]cty.Value{cty.StringVal("boop")}),
+			cty.ListValEmpty(cty.String),
+			cty.NilVal,
+			`number of keys (1) does not match number of values (0)`,
+		},
+		{
+			cty.ListValEmpty(cty.String),
+			cty.ListVal([]cty.Value{cty.StringVal("boop")}),
+			cty.NilVal,
+			`number of keys (0) does not match number of values (1)`,
+		},
+
+		// Tuple of values (object result)
+		{
+			cty.ListValEmpty(cty.String),
+			cty.EmptyTupleVal,
+			cty.EmptyObjectVal,
+			``,
+		},
+		{
+			cty.ListVal([]cty.Value{cty.StringVal("bleep")}),
+			cty.TupleVal([]cty.Value{cty.StringVal("bloop")}),
+			cty.ObjectVal(map[string]cty.Value{
+				"bleep": cty.StringVal("bloop"),
+			}),
+			``,
+		},
+		{
+			cty.ListVal([]cty.Value{cty.StringVal("bleep"), cty.StringVal("beep")}),
+			cty.TupleVal([]cty.Value{cty.StringVal("bloop"), cty.StringVal("boop")}),
+			cty.ObjectVal(map[string]cty.Value{
+				"beep":  cty.StringVal("boop"),
+				"bleep": cty.StringVal("bloop"),
+			}),
+			``,
+		},
+		{
+			cty.UnknownVal(cty.List(cty.String)),
+			cty.UnknownVal(cty.EmptyTuple),
+			cty.DynamicVal,
+			``,
+		},
+		{
+			cty.UnknownVal(cty.List(cty.String)),
+			cty.EmptyTupleVal,
+			cty.DynamicVal,
+			``,
+		},
+		{
+			cty.ListValEmpty(cty.String),
+			cty.UnknownVal(cty.EmptyTuple),
+			cty.UnknownVal(cty.EmptyObject),
+			``,
+		},
+		{
+			cty.ListVal([]cty.Value{cty.StringVal("bleep")}).Mark("a"),
+			cty.TupleVal([]cty.Value{cty.StringVal("bloop")}),
+			cty.ObjectVal(map[string]cty.Value{
+				"bleep": cty.StringVal("bloop"),
+			}).Mark("a"),
+			``,
+		},
+		{
+			cty.ListVal([]cty.Value{cty.StringVal("bleep")}),
+			cty.TupleVal([]cty.Value{cty.StringVal("bloop")}).Mark("b"),
+			cty.ObjectVal(map[string]cty.Value{
+				"bleep": cty.StringVal("bloop"),
+			}).Mark("b"),
+			``,
+		},
+		{
+			cty.ListVal([]cty.Value{cty.StringVal("bleep")}).Mark("a"),
+			cty.TupleVal([]cty.Value{cty.StringVal("bloop")}).Mark("b"),
+			cty.ObjectVal(map[string]cty.Value{
+				"bleep": cty.StringVal("bloop"),
+			}).Mark("a").Mark("b"),
+			``,
+		},
+		{
+			// cty object attributes don't have individual marks, so marks on
+			// elements in the keys list aggregate with the resulting object as
+			// a whole.
+			cty.ListVal([]cty.Value{cty.StringVal("bleep").Mark("a")}),
+			cty.TupleVal([]cty.Value{cty.StringVal("bloop")}),
+			cty.ObjectVal(map[string]cty.Value{
+				"bleep": cty.StringVal("bloop"),
+			}).Mark("a"),
+			``,
+		},
+		{
+			// cty attribute _values_ can have individual marks, so individual
+			// elements in the values list should have their marks preserved.
+			cty.ListVal([]cty.Value{cty.StringVal("bleep")}),
+			cty.TupleVal([]cty.Value{cty.StringVal("bloop").Mark("a")}),
+			cty.ObjectVal(map[string]cty.Value{
+				"bleep": cty.StringVal("bloop").Mark("a"),
+			}),
+			``,
+		},
+		{
+			cty.ListVal([]cty.Value{cty.StringVal("boop")}),
+			cty.EmptyTupleVal,
+			cty.NilVal,
+			`number of keys (1) does not match number of values (0)`,
+		},
+		{
+			cty.ListValEmpty(cty.String),
+			cty.TupleVal([]cty.Value{cty.StringVal("boop")}),
+			cty.NilVal,
+			`number of keys (0) does not match number of values (1)`,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("ZipMap(%#v, %#v)", test.Keys, test.Values), func(t *testing.T) {
+			got, err := Zipmap(test.Keys, test.Values)
+			if test.Err != "" {
+				if err == nil {
+					t.Fatal("succeeded; want error")
+				}
+				if got, want := err.Error(), test.Err; got != want {
+					t.Fatalf("wrong error\ngot:  %s\nwant: %s", got, want)
+				}
+				return
+			} else if err != nil {
+				t.Fatalf("unexpected error: %s", err)
+			}
+
+			if !got.RawEquals(test.Want) {
+				t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, test.Want)
+			}
+		})
+	}
+}

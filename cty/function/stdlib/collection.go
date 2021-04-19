@@ -1145,12 +1145,14 @@ var ValuesFunc = function.New(&function.Spec{
 var ZipmapFunc = function.New(&function.Spec{
 	Params: []function.Parameter{
 		{
-			Name: "keys",
-			Type: cty.List(cty.String),
+			Name:        "keys",
+			Type:        cty.List(cty.String),
+			AllowMarked: true,
 		},
 		{
-			Name: "values",
-			Type: cty.DynamicPseudoType,
+			Name:        "values",
+			Type:        cty.DynamicPseudoType,
+			AllowMarked: true,
 		},
 	},
 	Type: func(args []cty.Value) (ret cty.Type, err error) {
@@ -1168,6 +1170,13 @@ var ZipmapFunc = function.New(&function.Spec{
 				return cty.DynamicPseudoType, nil
 			}
 
+			// NOTE: Marking of the keys list can't be represented in the
+			// result type, so the tuple type here will disclose the keys.
+			// This is unfortunate but is a common compromise with dynamic
+			// return types; the result from Impl will still reflect the marks
+			// from the keys list, so a mark-using caller should look out for
+			// that if it's important for their use-case.
+			keys, _ := keys.Unmark()
 			keysRaw := keys.AsValueSlice()
 			valueTypesRaw := valuesTy.TupleElementTypes()
 			if len(keysRaw) != len(valueTypesRaw) {
@@ -1175,6 +1184,7 @@ var ZipmapFunc = function.New(&function.Spec{
 			}
 			atys := make(map[string]cty.Type, len(valueTypesRaw))
 			for i, keyVal := range keysRaw {
+				keyVal, _ = keyVal.Unmark()
 				if keyVal.IsNull() {
 					return cty.NilType, fmt.Errorf("keys list has null value at index %d", i)
 				}
@@ -1190,11 +1200,17 @@ var ZipmapFunc = function.New(&function.Spec{
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		keys := args[0]
 		values := args[1]
+		keys, keysMarks := keys.Unmark()
+		values, valuesMarks := values.Unmark()
+
+		// All of our return paths must pass through the merged marks from
+		// both the keys and the values, if any, using .WithMarks(retMarks)
+		retMarks := cty.NewValueMarks(keysMarks, valuesMarks)
 
 		if !keys.IsWhollyKnown() {
 			// Unknown map keys and object attributes are not supported, so
 			// our entire result must be unknown in this case.
-			return cty.UnknownVal(retType), nil
+			return cty.UnknownVal(retType).WithMarks(retMarks), nil
 		}
 
 		// both keys and values are guaranteed to be shallowly-known here,
@@ -1208,19 +1224,25 @@ var ZipmapFunc = function.New(&function.Spec{
 		i := 0
 		for it := keys.ElementIterator(); it.Next(); {
 			_, v := it.Element()
+			v, vMarks := v.Unmark()
 			val := values.Index(cty.NumberIntVal(int64(i)))
 			output[v.AsString()] = val
+
+			// We also need to accumulate the individual key marks on the
+			// returned map, because keys can't carry marks on their own.
+			retMarks = cty.NewValueMarks(retMarks, vMarks)
+
 			i++
 		}
 
 		switch {
 		case retType.IsMapType():
 			if len(output) == 0 {
-				return cty.MapValEmpty(retType.ElementType()), nil
+				return cty.MapValEmpty(retType.ElementType()).WithMarks(retMarks), nil
 			}
-			return cty.MapVal(output), nil
+			return cty.MapVal(output).WithMarks(retMarks), nil
 		case retType.IsObjectType():
-			return cty.ObjectVal(output), nil
+			return cty.ObjectVal(output).WithMarks(retMarks), nil
 		default:
 			// Should never happen because the type-check function should've
 			// caught any other case.
