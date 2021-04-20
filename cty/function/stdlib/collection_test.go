@@ -1927,3 +1927,258 @@ func TestFlatten(t *testing.T) {
 		})
 	}
 }
+
+func TestSetproduct(t *testing.T) {
+	tests := []struct {
+		Collections []cty.Value
+		Want        cty.Value
+		Err         string
+	}{
+		{
+			[]cty.Value{cty.ListValEmpty(cty.String)},
+			cty.NilVal,
+			`at least two arguments are required`,
+		},
+		{
+			[]cty.Value{
+				cty.ListVal([]cty.Value{cty.ListValEmpty(cty.String)}),
+				cty.ListVal([]cty.Value{cty.ListValEmpty(cty.String)}),
+			},
+			cty.ListVal([]cty.Value{cty.TupleVal([]cty.Value{cty.ListValEmpty(cty.String), cty.ListValEmpty(cty.String)})}),
+			``,
+		},
+		{
+			[]cty.Value{
+				cty.SetVal([]cty.Value{cty.ListValEmpty(cty.String)}),
+				cty.SetVal([]cty.Value{cty.ListValEmpty(cty.String)}),
+			},
+			cty.SetVal([]cty.Value{cty.TupleVal([]cty.Value{cty.ListValEmpty(cty.String), cty.ListValEmpty(cty.String)})}),
+			``,
+		},
+		{
+			[]cty.Value{
+				cty.SetVal([]cty.Value{cty.ListValEmpty(cty.String).Mark("a")}),
+				cty.SetVal([]cty.Value{cty.ListValEmpty(cty.String)}),
+			},
+			cty.SetVal([]cty.Value{cty.TupleVal([]cty.Value{cty.ListValEmpty(cty.String).Mark("a"), cty.ListValEmpty(cty.String)})}),
+			``,
+		},
+		{
+			[]cty.Value{
+				cty.TupleVal([]cty.Value{
+					cty.StringVal("the"),
+					cty.StringVal("brown"),
+				}),
+				cty.TupleVal([]cty.Value{
+					cty.StringVal("fox"),
+					cty.NumberIntVal(3),
+				}),
+			},
+			cty.ListVal([]cty.Value{
+				cty.TupleVal([]cty.Value{cty.StringVal("the"), cty.StringVal("fox")}),
+				cty.TupleVal([]cty.Value{cty.StringVal("the"), cty.StringVal("3")}),
+				cty.TupleVal([]cty.Value{cty.StringVal("brown"), cty.StringVal("fox")}),
+				cty.TupleVal([]cty.Value{cty.StringVal("brown"), cty.StringVal("3")}),
+			}),
+			``,
+		},
+		{
+			[]cty.Value{
+				cty.SetVal([]cty.Value{
+					cty.StringVal("the"),
+					cty.StringVal("brown"),
+				}),
+				cty.SetVal([]cty.Value{
+					cty.StringVal("quick"),
+					cty.StringVal("fox"),
+				}),
+			},
+			cty.SetVal([]cty.Value{
+				cty.TupleVal([]cty.Value{cty.StringVal("the"), cty.StringVal("quick")}),
+				cty.TupleVal([]cty.Value{cty.StringVal("the"), cty.StringVal("fox")}),
+				cty.TupleVal([]cty.Value{cty.StringVal("brown"), cty.StringVal("quick")}),
+				cty.TupleVal([]cty.Value{cty.StringVal("brown"), cty.StringVal("fox")}),
+			}),
+			``,
+		},
+		{ // The collection itself is not marked, just some elements
+			[]cty.Value{
+				cty.SetVal([]cty.Value{
+					cty.StringVal("the"),
+					cty.StringVal("brown").Mark("a"),
+				}),
+				cty.SetVal([]cty.Value{
+					cty.StringVal("quick"),
+					cty.StringVal("fox").Mark("b"),
+				}),
+			},
+			// Sets don't allow individually-marked elements, so the marks
+			// end up aggregating on the set itself anyway in this case.
+			cty.SetVal([]cty.Value{
+				cty.TupleVal([]cty.Value{cty.StringVal("the"), cty.StringVal("quick")}),
+				cty.TupleVal([]cty.Value{cty.StringVal("the"), cty.StringVal("fox")}),
+				cty.TupleVal([]cty.Value{cty.StringVal("brown"), cty.StringVal("quick")}),
+				cty.TupleVal([]cty.Value{cty.StringVal("brown"), cty.StringVal("fox")}),
+			}).Mark("a").Mark("b"),
+			``,
+		},
+		{ // The collections are marked
+			[]cty.Value{
+				cty.SetVal([]cty.Value{
+					cty.StringVal("the"),
+					cty.StringVal("brown"),
+				}).Mark("a"),
+				cty.SetVal([]cty.Value{
+					cty.StringVal("quick"),
+					cty.StringVal("fox"),
+				}).Mark("b"),
+			},
+			cty.SetVal([]cty.Value{
+				cty.TupleVal([]cty.Value{cty.StringVal("the"), cty.StringVal("quick")}),
+				cty.TupleVal([]cty.Value{cty.StringVal("the"), cty.StringVal("fox")}),
+				cty.TupleVal([]cty.Value{cty.StringVal("brown"), cty.StringVal("quick")}),
+				cty.TupleVal([]cty.Value{cty.StringVal("brown"), cty.StringVal("fox")}),
+			}).Mark("a").Mark("b"),
+			``,
+		},
+		{ // One collection is marked
+			[]cty.Value{
+				cty.SetVal([]cty.Value{
+					cty.StringVal("the"),
+					cty.StringVal("brown"),
+				}).Mark("a"),
+				cty.SetVal([]cty.Value{
+					cty.StringVal("quick"),
+					cty.StringVal("fox"),
+				}),
+			},
+			cty.SetVal([]cty.Value{
+				cty.TupleVal([]cty.Value{cty.StringVal("the"), cty.StringVal("quick")}),
+				cty.TupleVal([]cty.Value{cty.StringVal("the"), cty.StringVal("fox")}),
+				cty.TupleVal([]cty.Value{cty.StringVal("brown"), cty.StringVal("quick")}),
+				cty.TupleVal([]cty.Value{cty.StringVal("brown"), cty.StringVal("fox")}),
+			}).Mark("a"),
+			``,
+		},
+		{ // Inner and outer marks
+			[]cty.Value{
+				cty.SetVal([]cty.Value{
+					cty.StringVal("the"),
+					cty.StringVal("brown").Mark("a"),
+				}).Mark("b"),
+				cty.SetVal([]cty.Value{
+					cty.StringVal("quick"),
+					cty.StringVal("fox").Mark("c"),
+				}),
+			},
+			cty.SetVal([]cty.Value{
+				cty.TupleVal([]cty.Value{cty.StringVal("the"), cty.StringVal("quick")}),
+				cty.TupleVal([]cty.Value{cty.StringVal("the"), cty.StringVal("fox")}),
+				cty.TupleVal([]cty.Value{cty.StringVal("brown"), cty.StringVal("quick")}),
+				cty.TupleVal([]cty.Value{cty.StringVal("brown"), cty.StringVal("fox")}),
+			}).WithMarks(cty.NewValueMarks("b", "c", "a")),
+			``,
+		},
+
+		// SetproductFunc supports lists too, in which case it preserves the
+		// input order and returns a list as the result. In this case we can
+		// preserve the marks more precisely.
+		{ // The collection itself is not marked, just some elements
+			[]cty.Value{
+				cty.ListVal([]cty.Value{
+					cty.StringVal("the"),
+					cty.StringVal("brown").Mark("a"),
+				}),
+				cty.ListVal([]cty.Value{
+					cty.StringVal("quick"),
+					cty.StringVal("fox").Mark("b"),
+				}),
+			},
+			cty.ListVal([]cty.Value{
+				cty.TupleVal([]cty.Value{cty.StringVal("the"), cty.StringVal("quick")}),
+				cty.TupleVal([]cty.Value{cty.StringVal("the"), cty.StringVal("fox").Mark("b")}),
+				cty.TupleVal([]cty.Value{cty.StringVal("brown").Mark("a"), cty.StringVal("quick")}),
+				cty.TupleVal([]cty.Value{cty.StringVal("brown").Mark("a"), cty.StringVal("fox").Mark("b")}),
+			}),
+			``,
+		},
+		{ // The collections are marked
+			[]cty.Value{
+				cty.ListVal([]cty.Value{
+					cty.StringVal("the"),
+					cty.StringVal("brown"),
+				}).Mark("a"),
+				cty.ListVal([]cty.Value{
+					cty.StringVal("quick"),
+					cty.StringVal("fox"),
+				}).Mark("b"),
+			},
+			cty.ListVal([]cty.Value{
+				cty.TupleVal([]cty.Value{cty.StringVal("the"), cty.StringVal("quick")}),
+				cty.TupleVal([]cty.Value{cty.StringVal("the"), cty.StringVal("fox")}),
+				cty.TupleVal([]cty.Value{cty.StringVal("brown"), cty.StringVal("quick")}),
+				cty.TupleVal([]cty.Value{cty.StringVal("brown"), cty.StringVal("fox")}),
+			}).Mark("a").Mark("b"),
+			``,
+		},
+		{ // One collection is marked
+			[]cty.Value{
+				cty.ListVal([]cty.Value{
+					cty.StringVal("the"),
+					cty.StringVal("brown"),
+				}).Mark("a"),
+				cty.ListVal([]cty.Value{
+					cty.StringVal("quick"),
+					cty.StringVal("fox"),
+				}),
+			},
+			cty.ListVal([]cty.Value{
+				cty.TupleVal([]cty.Value{cty.StringVal("the"), cty.StringVal("quick")}),
+				cty.TupleVal([]cty.Value{cty.StringVal("the"), cty.StringVal("fox")}),
+				cty.TupleVal([]cty.Value{cty.StringVal("brown"), cty.StringVal("quick")}),
+				cty.TupleVal([]cty.Value{cty.StringVal("brown"), cty.StringVal("fox")}),
+			}).Mark("a"),
+			``,
+		},
+		{ // Inner and outer marks
+			[]cty.Value{
+				cty.ListVal([]cty.Value{
+					cty.StringVal("the"),
+					cty.StringVal("brown").Mark("a"),
+				}).Mark("b"),
+				cty.ListVal([]cty.Value{
+					cty.StringVal("quick"),
+					cty.StringVal("fox").Mark("c"),
+				}),
+			},
+			cty.ListVal([]cty.Value{
+				cty.TupleVal([]cty.Value{cty.StringVal("the"), cty.StringVal("quick")}),
+				cty.TupleVal([]cty.Value{cty.StringVal("the"), cty.StringVal("fox").Mark("c")}),
+				cty.TupleVal([]cty.Value{cty.StringVal("brown").Mark("a"), cty.StringVal("quick")}),
+				cty.TupleVal([]cty.Value{cty.StringVal("brown").Mark("a"), cty.StringVal("fox").Mark("c")}),
+			}).Mark("b"),
+			``,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("Setproduct(%#v)", test.Collections), func(t *testing.T) {
+			got, err := SetProduct(test.Collections...)
+			if test.Err != "" {
+				if err == nil {
+					t.Fatal("succeeded; want error")
+				}
+				if got, want := err.Error(), test.Err; got != want {
+					t.Fatalf("wrong error\ngot:  %s\nwant: %s", got, want)
+				}
+				return
+			} else if err != nil {
+				t.Fatalf("unexpected error: %s", err)
+			}
+
+			if !got.RawEquals(test.Want) {
+				t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, test.Want)
+			}
+		})
+	}
+}
