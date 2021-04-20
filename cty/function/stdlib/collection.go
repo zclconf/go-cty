@@ -398,12 +398,14 @@ var DistinctFunc = function.New(&function.Spec{
 var ChunklistFunc = function.New(&function.Spec{
 	Params: []function.Parameter{
 		{
-			Name: "list",
-			Type: cty.List(cty.DynamicPseudoType),
+			Name:        "list",
+			Type:        cty.List(cty.DynamicPseudoType),
+			AllowMarked: true,
 		},
 		{
-			Name: "size",
-			Type: cty.Number,
+			Name:        "size",
+			Type:        cty.Number,
+			AllowMarked: true,
 		},
 	},
 	Type: func(args []cty.Value) (cty.Type, error) {
@@ -411,22 +413,27 @@ var ChunklistFunc = function.New(&function.Spec{
 	},
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		listVal := args[0]
-		if !listVal.IsKnown() {
-			return cty.UnknownVal(retType), nil
-		}
-
-		if listVal.LengthInt() == 0 {
-			return cty.ListValEmpty(listVal.Type()), nil
-		}
+		sizeVal := args[1]
+		listVal, listMarks := listVal.Unmark()
+		sizeVal, sizeMarks := sizeVal.Unmark()
+		// All return paths below must include .WithMarks(retMarks) to propagate
+		// the top-level marks into the return value. Deep marks inside the
+		// list will just propagate naturally because we treat those values
+		// as opaque here.
+		retMarks := cty.NewValueMarks(listMarks, sizeMarks)
 
 		var size int
-		err = gocty.FromCtyValue(args[1], &size)
+		err = gocty.FromCtyValue(sizeVal, &size)
 		if err != nil {
-			return cty.NilVal, fmt.Errorf("invalid index: %s", err)
+			return cty.NilVal, fmt.Errorf("invalid size: %s", err)
 		}
 
 		if size < 0 {
 			return cty.NilVal, errors.New("the size argument must be positive")
+		}
+
+		if listVal.LengthInt() == 0 {
+			return cty.ListValEmpty(listVal.Type()).WithMarks(retMarks), nil
 		}
 
 		output := make([]cty.Value, 0)
@@ -434,12 +441,12 @@ var ChunklistFunc = function.New(&function.Spec{
 		// if size is 0, returns a list made of the initial list
 		if size == 0 {
 			output = append(output, listVal)
-			return cty.ListVal(output), nil
+			return cty.ListVal(output).WithMarks(retMarks), nil
 		}
 
 		chunk := make([]cty.Value, 0)
 
-		l := args[0].LengthInt()
+		l := listVal.LengthInt()
 		i := 0
 
 		for it := listVal.ElementIterator(); it.Next(); {
@@ -454,7 +461,7 @@ var ChunklistFunc = function.New(&function.Spec{
 			i++
 		}
 
-		return cty.ListVal(output), nil
+		return cty.ListVal(output).WithMarks(retMarks), nil
 	},
 })
 
