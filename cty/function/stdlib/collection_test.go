@@ -1719,3 +1719,136 @@ func TestKeys(t *testing.T) {
 		})
 	}
 }
+
+func TestFlatten(t *testing.T) {
+	tests := []struct {
+		List cty.Value
+		Want cty.Value
+		Err  string
+	}{
+		{ // Empty case is easy
+			cty.ListValEmpty(cty.String),
+			cty.EmptyTupleVal,
+			"",
+		},
+		{ // Lists can contain unknown values
+			cty.ListVal([]cty.Value{
+				cty.ListVal([]cty.Value{
+					cty.UnknownVal(cty.String),
+					cty.StringVal("a"),
+				}),
+				cty.ListVal([]cty.Value{
+					cty.UnknownVal(cty.String),
+					cty.StringVal("b"),
+					cty.UnknownVal(cty.String),
+				}),
+			}),
+			cty.TupleVal([]cty.Value{
+				cty.UnknownVal(cty.String),
+				cty.StringVal("a"),
+				cty.UnknownVal(cty.String),
+				cty.StringVal("b"),
+				cty.UnknownVal(cty.String),
+			}),
+			"",
+		},
+		{ // If the list itself is unknown this is the best we can do
+			cty.UnknownVal(cty.List(cty.List(cty.String))),
+			cty.UnknownVal(cty.DynamicPseudoType),
+			"",
+		},
+		{ // Type error
+			cty.MapValEmpty(cty.String),
+			cty.DynamicVal,
+			"can only flatten lists, sets and tuples",
+		},
+		{ // Top-level list marks should carry over
+			cty.ListVal([]cty.Value{
+				cty.ListVal([]cty.Value{
+					cty.StringVal("a"),
+				}),
+				cty.ListVal([]cty.Value{
+					cty.StringVal("b"),
+					cty.StringVal("c"),
+				}),
+				cty.ListValEmpty(cty.String),
+			}).Mark("mark"),
+			cty.TupleVal([]cty.Value{
+				cty.StringVal("a"),
+				cty.StringVal("b"),
+				cty.StringVal("c"),
+			}).Mark("mark"),
+			"",
+		},
+		{ // Inner list marks should apply to the result collection
+			cty.ListVal([]cty.Value{
+				cty.ListVal([]cty.Value{
+					cty.StringVal("a"),
+				}).Mark("first"),
+				cty.ListVal([]cty.Value{
+					cty.StringVal("b"),
+					cty.StringVal("c"),
+				}).Mark("second"),
+				cty.ListValEmpty(cty.String).Mark("third"),
+			}),
+			cty.TupleVal([]cty.Value{
+				cty.StringVal("a"),
+				cty.StringVal("b"),
+				cty.StringVal("c"),
+			}).WithMarks(cty.NewValueMarks("first", "second", "third")),
+			"",
+		},
+		{ // Non-list element marks should be retained on the element only
+			cty.ListVal([]cty.Value{
+				cty.ListVal([]cty.Value{
+					cty.StringVal("a").Mark("a"),
+				}),
+				cty.ListVal([]cty.Value{
+					cty.StringVal("b").Mark("b"),
+					cty.StringVal("c").Mark("b"),
+				}),
+			}),
+			cty.TupleVal([]cty.Value{
+				cty.StringVal("a").Mark("a"),
+				cty.StringVal("b").Mark("b"),
+				cty.StringVal("c").Mark("b"),
+			}),
+			"",
+		},
+		{ // Nested unknown lists/sets/tuples should still propagate marks
+			cty.ListVal([]cty.Value{
+				cty.ListVal([]cty.Value{cty.StringVal("a")}).Mark("first"),
+				cty.UnknownVal(cty.List(cty.String)).Mark("second"),
+				cty.ListVal([]cty.Value{cty.StringVal("c")}).Mark("third"),
+			}),
+			cty.UnknownVal(cty.DynamicPseudoType).WithMarks(cty.NewValueMarks("first", "second", "third")),
+			"",
+		},
+		{ // Empty marked list retains marks
+			cty.ListValEmpty(cty.String).Mark("a"),
+			cty.EmptyTupleVal.Mark("a"),
+			"",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("Flatten(%#v)", test.List), func(t *testing.T) {
+			got, err := Flatten(test.List)
+			if test.Err != "" {
+				if err == nil {
+					t.Fatal("succeeded; want error")
+				}
+				if got, want := err.Error(), test.Err; got != want {
+					t.Fatalf("wrong error\ngot:  %s\nwant: %s", got, want)
+				}
+				return
+			} else if err != nil {
+				t.Fatalf("unexpected error: %s", err)
+			}
+
+			if !got.RawEquals(test.Want) {
+				t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, test.Want)
+			}
+		})
+	}
+}
