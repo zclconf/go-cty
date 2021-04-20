@@ -699,6 +699,7 @@ var MergeFunc = function.New(&function.Spec{
 		Type:             cty.DynamicPseudoType,
 		AllowDynamicType: true,
 		AllowNull:        true,
+		AllowMarked:      true,
 	},
 	Type: func(args []cty.Value) (cty.Type, error) {
 		// empty args is accepted, so assume an empty object since we have no
@@ -724,6 +725,8 @@ var MergeFunc = function.New(&function.Spec{
 			if !ty.IsMapType() && !ty.IsObjectType() {
 				return cty.NilType, fmt.Errorf("arguments must be maps or objects, got %#v", ty.FriendlyName())
 			}
+			// marks are attached to values, so ignore while determining type
+			arg, _ = arg.Unmark()
 
 			switch {
 			case ty.IsObjectType() && !arg.IsNull():
@@ -773,10 +776,15 @@ var MergeFunc = function.New(&function.Spec{
 	},
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		outputMap := make(map[string]cty.Value)
+		var markses []cty.ValueMarks // remember any marked maps/objects we find
 
 		for _, arg := range args {
 			if arg.IsNull() {
 				continue
+			}
+			arg, argMarks := arg.Unmark()
+			if len(argMarks) > 0 {
+				markses = append(markses, argMarks)
 			}
 			for it := arg.ElementIterator(); it.Next(); {
 				k, v := it.Element()
@@ -787,11 +795,11 @@ var MergeFunc = function.New(&function.Spec{
 		switch {
 		case retType.IsMapType():
 			if len(outputMap) == 0 {
-				return cty.MapValEmpty(retType.ElementType()), nil
+				return cty.MapValEmpty(retType.ElementType()).WithMarks(markses...), nil
 			}
-			return cty.MapVal(outputMap), nil
+			return cty.MapVal(outputMap).WithMarks(markses...), nil
 		case retType.IsObjectType(), retType.Equals(cty.DynamicPseudoType):
-			return cty.ObjectVal(outputMap), nil
+			return cty.ObjectVal(outputMap).WithMarks(markses...), nil
 		default:
 			panic(fmt.Sprintf("unexpected return type: %#v", retType))
 		}
