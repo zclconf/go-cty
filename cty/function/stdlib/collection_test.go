@@ -769,6 +769,61 @@ func TestMerge(t *testing.T) {
 			cty.MapValEmpty(cty.String),
 			false,
 		},
+		{ // Preserve marks from chosen elements
+			[]cty.Value{
+				cty.MapVal(map[string]cty.Value{
+					"a": cty.StringVal("a").Mark("first"),
+					"c": cty.StringVal("c"),
+					"d": cty.StringVal("d").Mark("first"),
+				}),
+				cty.MapVal(map[string]cty.Value{
+					"a": cty.StringVal("a"),
+					"b": cty.StringVal("b").Mark("second"),
+					"c": cty.StringVal("c").Mark("second"),
+				}),
+			},
+			cty.MapVal(map[string]cty.Value{
+				"a": cty.StringVal("a"),
+				"b": cty.StringVal("b").Mark("second"),
+				"c": cty.StringVal("c").Mark("second"),
+				"d": cty.StringVal("d").Mark("first"),
+			}),
+			false,
+		},
+		{ // Marks on the collections must be merged, even if empty
+			[]cty.Value{
+				cty.MapVal(map[string]cty.Value{
+					"a": cty.StringVal("a"),
+				}).Mark("first"),
+				cty.MapVal(map[string]cty.Value{
+					"a": cty.StringVal("a"),
+					"b": cty.StringVal("b"),
+				}).Mark("second"),
+				cty.MapValEmpty(cty.String).Mark("third"),
+			},
+			cty.MapVal(map[string]cty.Value{
+				"a": cty.StringVal("a"),
+				"b": cty.StringVal("b"),
+			}).WithMarks(cty.NewValueMarks("first", "second", "third")),
+			false,
+		},
+		{ // Similar test but where all args are the same object type
+			[]cty.Value{
+				cty.ObjectVal(map[string]cty.Value{
+					"a": cty.StringVal("a"),
+					"b": cty.NullVal(cty.String),
+				}).Mark("first"),
+				cty.ObjectVal(map[string]cty.Value{
+					"a": cty.StringVal("A"),
+					"b": cty.StringVal("B"),
+				}).Mark("second"),
+			},
+			cty.ObjectVal(map[string]cty.Value{
+				"a": cty.StringVal("A"),
+				"b": cty.StringVal("B"),
+			}).WithMarks(cty.NewValueMarks("first", "second")),
+			false,
+		},
 	}
 
 	for _, test := range tests {
