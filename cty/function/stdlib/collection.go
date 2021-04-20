@@ -886,8 +886,9 @@ var ReverseListFunc = function.New(&function.Spec{
 var SetProductFunc = function.New(&function.Spec{
 	Params: []function.Parameter{},
 	VarParam: &function.Parameter{
-		Name: "sets",
-		Type: cty.DynamicPseudoType,
+		Name:        "sets",
+		Type:        cty.DynamicPseudoType,
+		AllowMarked: true,
 	},
 	Type: func(args []cty.Value) (retType cty.Type, err error) {
 		if len(args) < 2 {
@@ -931,11 +932,15 @@ var SetProductFunc = function.New(&function.Spec{
 	},
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		ety := retType.ElementType()
+		var retMarks cty.ValueMarks
 
 		total := 1
 		for _, arg := range args {
+			arg, marks := arg.Unmark()
+			retMarks = cty.NewValueMarks(retMarks, marks)
+
 			if !arg.Length().IsKnown() {
-				return cty.UnknownVal(retType), nil
+				return cty.UnknownVal(retType).Mark(marks), nil
 			}
 
 			// Because of our type checking function, we are guaranteed that
@@ -948,9 +953,9 @@ var SetProductFunc = function.New(&function.Spec{
 			// If any of the arguments was an empty collection then our result
 			// is also an empty collection, which we'll short-circuit here.
 			if retType.IsListType() {
-				return cty.ListValEmpty(ety), nil
+				return cty.ListValEmpty(ety).Mark(retMarks), nil
 			}
-			return cty.SetValEmpty(ety), nil
+			return cty.SetValEmpty(ety).Mark(retMarks), nil
 		}
 
 		subEtys := ety.TupleElementTypes()
@@ -961,6 +966,8 @@ var SetProductFunc = function.New(&function.Spec{
 		s := 0
 		argVals := make([][]cty.Value, len(args))
 		for i, arg := range args {
+			// We've already stored the marks in retMarks
+			arg, _ := arg.Unmark()
 			argVals[i] = arg.AsValueSlice()
 		}
 
@@ -1000,9 +1007,9 @@ var SetProductFunc = function.New(&function.Spec{
 		}
 
 		if retType.IsListType() {
-			return cty.ListVal(productVals), nil
+			return cty.ListVal(productVals).WithMarks(retMarks), nil
 		}
-		return cty.SetVal(productVals), nil
+		return cty.SetVal(productVals).WithMarks(retMarks), nil
 	},
 })
 
