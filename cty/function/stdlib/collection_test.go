@@ -90,6 +90,233 @@ func TestHasIndex(t *testing.T) {
 	}
 }
 
+func TestChunklist(t *testing.T) {
+	tests := []struct {
+		List cty.Value
+		Len  cty.Value
+		Want cty.Value
+		Err  string
+	}{
+		{
+			cty.ListValEmpty(cty.String),
+			cty.NumberIntVal(2),
+			cty.ListValEmpty(cty.List(cty.String)),
+			``,
+		},
+		{
+			cty.UnknownVal(cty.List(cty.String)),
+			cty.NumberIntVal(2),
+			cty.UnknownVal(cty.List(cty.List(cty.String))),
+			``,
+		},
+		{
+			cty.ListVal([]cty.Value{
+				cty.StringVal("a"),
+			}),
+			cty.NumberIntVal(2),
+			cty.ListVal([]cty.Value{
+				cty.ListVal([]cty.Value{
+					cty.StringVal("a"),
+				}),
+			}),
+			``,
+		},
+		{
+			cty.ListVal([]cty.Value{
+				cty.StringVal("a").Mark("b"),
+			}),
+			cty.NumberIntVal(2),
+			cty.ListVal([]cty.Value{
+				cty.ListVal([]cty.Value{
+					cty.StringVal("a").Mark("b"),
+				}),
+			}),
+			``,
+		},
+		{
+			cty.ListVal([]cty.Value{
+				cty.StringVal("a"),
+			}).Mark("a"),
+			cty.NumberIntVal(2),
+			cty.ListVal([]cty.Value{
+				cty.ListVal([]cty.Value{
+					cty.StringVal("a"),
+				}),
+			}).Mark("a"),
+			``,
+		},
+		{
+			cty.ListVal([]cty.Value{
+				cty.StringVal("a").Mark("b"),
+			}).Mark("a"),
+			cty.NumberIntVal(2),
+			cty.ListVal([]cty.Value{
+				cty.ListVal([]cty.Value{
+					cty.StringVal("a").Mark("b"),
+				}),
+			}).Mark("a"),
+			``,
+		},
+		{
+			cty.ListVal([]cty.Value{
+				cty.UnknownVal(cty.String),
+			}),
+			cty.NumberIntVal(2),
+			cty.ListVal([]cty.Value{
+				cty.ListVal([]cty.Value{
+					cty.UnknownVal(cty.String),
+				}),
+			}),
+			``,
+		},
+		{
+			cty.ListVal([]cty.Value{
+				cty.StringVal("a"),
+				cty.StringVal("b"),
+			}),
+			cty.NumberIntVal(2),
+			cty.ListVal([]cty.Value{
+				cty.ListVal([]cty.Value{
+					cty.StringVal("a"),
+					cty.StringVal("b"),
+				}),
+			}),
+			``,
+		},
+		{ // Multiple result elements, one shorter
+			cty.ListVal([]cty.Value{
+				cty.StringVal("a"),
+				cty.StringVal("b"),
+				cty.StringVal("c"),
+			}),
+			cty.NumberIntVal(2),
+			cty.ListVal([]cty.Value{
+				cty.ListVal([]cty.Value{
+					cty.StringVal("a"),
+					cty.StringVal("b"),
+				}),
+				cty.ListVal([]cty.Value{
+					cty.StringVal("c"),
+				}),
+			}),
+			``,
+		},
+		{ // Multiple result elements, all "full"
+			cty.ListVal([]cty.Value{
+				cty.StringVal("a"),
+				cty.StringVal("b"),
+				cty.StringVal("c"),
+				cty.StringVal("d"),
+				cty.StringVal("e"),
+				cty.StringVal("f"),
+			}),
+			cty.NumberIntVal(2),
+			cty.ListVal([]cty.Value{
+				cty.ListVal([]cty.Value{
+					cty.StringVal("a"),
+					cty.StringVal("b"),
+				}),
+				cty.ListVal([]cty.Value{
+					cty.StringVal("c"),
+					cty.StringVal("d"),
+				}),
+				cty.ListVal([]cty.Value{
+					cty.StringVal("e"),
+					cty.StringVal("f"),
+				}),
+			}),
+			``,
+		},
+		{ // We treat length zero as infinite length
+			cty.ListVal([]cty.Value{
+				cty.StringVal("a"),
+			}),
+			cty.Zero,
+			cty.ListVal([]cty.Value{
+				cty.ListVal([]cty.Value{
+					cty.StringVal("a"),
+				}),
+			}),
+			``,
+		},
+		{
+			cty.ListVal([]cty.Value{
+				cty.StringVal("a"),
+			}).Mark("a"),
+			cty.Zero,
+			cty.ListVal([]cty.Value{
+				cty.ListVal([]cty.Value{
+					cty.StringVal("a"),
+				}),
+			}).Mark("a"),
+			``,
+		},
+		{
+			cty.ListVal([]cty.Value{
+				cty.StringVal("a"),
+			}),
+			cty.Zero.Mark("a"),
+			cty.ListVal([]cty.Value{
+				cty.ListVal([]cty.Value{
+					cty.StringVal("a"),
+				}),
+			}).Mark("a"),
+			``,
+		},
+		{
+			cty.ListVal([]cty.Value{
+				cty.StringVal("a").Mark("b"),
+			}),
+			cty.Zero,
+			cty.ListVal([]cty.Value{
+				cty.ListVal([]cty.Value{
+					cty.StringVal("a").Mark("b"),
+				}),
+			}),
+			``,
+		},
+		{
+			cty.ListValEmpty(cty.String),
+			cty.NumberIntVal(-1),
+			cty.NilVal,
+			`the size argument must be positive`,
+		},
+		{
+			cty.ListValEmpty(cty.String),
+			cty.PositiveInfinity,
+			cty.NilVal,
+			`invalid size: value must be a whole number, between -9223372036854775808 and 9223372036854775807`,
+		},
+		{
+			cty.ListValEmpty(cty.String),
+			cty.NumberFloatVal(1.5),
+			cty.NilVal,
+			`invalid size: value must be a whole number, between -9223372036854775808 and 9223372036854775807`,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("Chunklist(%#v, %#v)", test.List, test.Len), func(t *testing.T) {
+			got, err := Chunklist(test.List, test.Len)
+			if test.Err != "" {
+				if err == nil {
+					t.Fatal("succeeded; want error")
+				}
+				if got, want := err.Error(), test.Err; got != want {
+					t.Fatalf("wrong error\ngot:  %s\nwant: %s", got, want)
+				}
+				return
+			} else if err != nil {
+				t.Fatalf("unexpected error: %s", err)
+			}
+
+			if !got.RawEquals(test.Want) {
+				t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, test.Want)
+			}
+		})
+	}
+}
+
 func TestContains(t *testing.T) {
 	listOfStrings := cty.ListVal([]cty.Value{
 		cty.StringVal("the"),
