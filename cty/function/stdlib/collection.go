@@ -111,6 +111,7 @@ var LengthFunc = function.New(&function.Spec{
 			Name:             "collection",
 			Type:             cty.DynamicPseudoType,
 			AllowDynamicType: true,
+			AllowMarked:      true,
 		},
 	},
 	Type: func(args []cty.Value) (ret cty.Type, err error) {

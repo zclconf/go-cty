@@ -976,6 +976,20 @@ func TestLength(t *testing.T) {
 			cty.DynamicVal,
 			cty.UnknownVal(cty.Number),
 		},
+		{ // Marked collections return a marked length
+			cty.ListVal([]cty.Value{
+				cty.StringVal("hello"),
+				cty.StringVal("world"),
+			}).Mark("secret"),
+			cty.NumberIntVal(2).Mark("secret"),
+		},
+		{ // Marks on values in unmarked collections do not propagate
+			cty.ListVal([]cty.Value{
+				cty.StringVal("hello").Mark("a"),
+				cty.StringVal("world").Mark("b"),
+			}),
+			cty.NumberIntVal(2),
+		},
 	}
 
 	for _, test := range tests {
