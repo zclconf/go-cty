@@ -470,8 +470,9 @@ var ChunklistFunc = function.New(&function.Spec{
 var FlattenFunc = function.New(&function.Spec{
 	Params: []function.Parameter{
 		{
-			Name: "list",
-			Type: cty.DynamicPseudoType,
+			Name:        "list",
+			Type:        cty.DynamicPseudoType,
+			AllowMarked: true,
 		},
 	},
 	Type: func(args []cty.Value) (cty.Type, error) {
@@ -484,7 +485,8 @@ var FlattenFunc = function.New(&function.Spec{
 			return cty.NilType, errors.New("can only flatten lists, sets and tuples")
 		}
 
-		retVal, known := flattener(args[0])
+		// marks are attached to values, so ignore while determining type
+		retVal, _, known := flattener(args[0])
 		if !known {
 			return cty.DynamicPseudoType, nil
 		}
@@ -497,46 +499,58 @@ var FlattenFunc = function.New(&function.Spec{
 	},
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		inputList := args[0]
-		if inputList.LengthInt() == 0 {
-			return cty.EmptyTupleVal, nil
+
+		if unmarked, marks := inputList.Unmark(); unmarked.LengthInt() == 0 {
+			return cty.EmptyTupleVal.WithMarks(marks), nil
 		}
 
-		out, known := flattener(inputList)
+		out, markses, known := flattener(inputList)
 		if !known {
-			return cty.UnknownVal(retType), nil
+			return cty.UnknownVal(retType).WithMarks(markses...), nil
 		}
 
-		return cty.TupleVal(out), nil
+		return cty.TupleVal(out).WithMarks(markses...), nil
 	},
 })
 
 // Flatten until it's not a cty.List, and return whether the value is known.
 // We can flatten lists with unknown values, as long as they are not
 // lists themselves.
-func flattener(flattenList cty.Value) ([]cty.Value, bool) {
+func flattener(flattenList cty.Value) ([]cty.Value, []cty.ValueMarks, bool) {
+	var markses []cty.ValueMarks
+	flattenList, flattenListMarks := flattenList.Unmark()
+	if len(flattenListMarks) > 0 {
+		markses = append(markses, flattenListMarks)
+	}
 	if !flattenList.Length().IsKnown() {
 		// If we don't know the length of what we're flattening then we can't
 		// predict the length of our result yet either.
-		return nil, false
+		return nil, markses, false
 	}
 	out := make([]cty.Value, 0)
+	isKnown := true
 	for it := flattenList.ElementIterator(); it.Next(); {
 		_, val := it.Element()
 		if val.Type().IsListType() || val.Type().IsSetType() || val.Type().IsTupleType() {
 			if !val.IsKnown() {
-				return out, false
+				isKnown = false
+				_, unknownMarks := val.Unmark()
+				markses = append(markses, unknownMarks)
+				continue
 			}
 
-			res, known := flattener(val)
-			if !known {
-				return res, known
+			res, resMarks, known := flattener(val)
+			markses = append(markses, resMarks...)
+			if known {
+				out = append(out, res...)
+			} else {
+				isKnown = false
 			}
-			out = append(out, res...)
 		} else {
 			out = append(out, val)
 		}
 	}
-	return out, true
+	return out, markses, isKnown
 }
 
 // KeysFunc is a function that takes a map and returns a sorted list of the map keys.
