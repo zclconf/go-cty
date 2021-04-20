@@ -1028,6 +1028,67 @@ func TestLookup(t *testing.T) {
 			cty.StringVal("nope"),
 			cty.StringVal("bar"),
 		},
+		{ // successful marked collection lookup returns marked value
+			cty.MapVal(map[string]cty.Value{
+				"boop": cty.StringVal("beep"),
+			}).Mark("a"),
+			cty.StringVal("boop"),
+			cty.StringVal("nope"),
+			cty.StringVal("beep").Mark("a"),
+		},
+		{ // apply collection marks to unknown return vaue
+			cty.MapVal(map[string]cty.Value{
+				"boop": cty.StringVal("beep"),
+				"frob": cty.UnknownVal(cty.String),
+			}).Mark("a"),
+			cty.StringVal("boop"),
+			cty.StringVal("nope"),
+			cty.UnknownVal(cty.String).Mark("a"),
+		},
+		{ // propagate collection marks to default when returning
+			cty.MapVal(map[string]cty.Value{
+				"boop": cty.StringVal("beep"),
+			}).Mark("a"),
+			cty.StringVal("frob"),
+			cty.StringVal("nope").Mark("b"),
+			cty.StringVal("nope").WithMarks(cty.NewValueMarks("a", "b")),
+		},
+		{ // on unmarked collection, return only marks from found value
+			cty.MapVal(map[string]cty.Value{
+				"boop": cty.StringVal("beep").Mark("a"),
+				"frob": cty.StringVal("honk").Mark("b"),
+			}),
+			cty.StringVal("frob"),
+			cty.StringVal("nope").Mark("c"),
+			cty.StringVal("honk").Mark("b"),
+		},
+		{ // on unmarked collection, return default exactly on missing
+			cty.MapVal(map[string]cty.Value{
+				"boop": cty.StringVal("beep").Mark("a"),
+				"frob": cty.StringVal("honk").Mark("b"),
+			}),
+			cty.StringVal("squish"),
+			cty.StringVal("nope").Mark("c"),
+			cty.StringVal("nope").Mark("c"),
+		},
+		{ // retain marks on default if converted
+			cty.MapVal(map[string]cty.Value{
+				"boop": cty.StringVal("beep").Mark("a"),
+				"frob": cty.StringVal("honk").Mark("b"),
+			}),
+			cty.StringVal("squish"),
+			cty.NumberIntVal(5).Mark("c"),
+			cty.StringVal("5").Mark("c"),
+		},
+		{ // propagate marks from key
+			cty.MapVal(map[string]cty.Value{
+				"boop": cty.StringVal("beep"),
+				"frob": cty.StringVal("honk"),
+			}),
+			cty.StringVal("boop").Mark("a"),
+			cty.StringVal("nope"),
+			cty.StringVal("beep").Mark("a"),
+		},
 	}
 
 	for _, test := range tests {
