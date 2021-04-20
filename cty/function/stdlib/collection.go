@@ -633,16 +633,19 @@ var KeysFunc = function.New(&function.Spec{
 var LookupFunc = function.New(&function.Spec{
 	Params: []function.Parameter{
 		{
-			Name: "inputMap",
-			Type: cty.DynamicPseudoType,
+			Name:        "inputMap",
+			Type:        cty.DynamicPseudoType,
+			AllowMarked: true,
 		},
 		{
-			Name: "key",
-			Type: cty.String,
+			Name:        "key",
+			Type:        cty.String,
+			AllowMarked: true,
 		},
 		{
-			Name: "default",
-			Type: cty.DynamicPseudoType,
+			Name:        "default",
+			Type:        cty.DynamicPseudoType,
+			AllowMarked: true,
 		},
 	},
 	Type: func(args []cty.Value) (ret cty.Type, err error) {
@@ -654,7 +657,8 @@ var LookupFunc = function.New(&function.Spec{
 				return cty.DynamicPseudoType, nil
 			}
 
-			key := args[1].AsString()
+			keyVal, _ := args[1].Unmark()
+			key := keyVal.AsString()
 			if ty.HasAttribute(key) {
 				return args[0].GetAttr(key).Type(), nil
 			} else if len(args) == 3 {
@@ -676,28 +680,39 @@ var LookupFunc = function.New(&function.Spec{
 		}
 	},
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
+		// leave default value marked
 		defaultVal := args[2]
 
-		mapVar := args[0]
-		lookupKey := args[1].AsString()
+		var markses []cty.ValueMarks
+
+		// unmark collection, retain marks to reapply later
+		mapVar, mapMarks := args[0].Unmark()
+		markses = append(markses, mapMarks)
+
+		// include marks on the key in the result
+		keyVal, keyMarks := args[1].Unmark()
+		if len(keyMarks) > 0 {
+			markses = append(markses, keyMarks)
+		}
+		lookupKey := keyVal.AsString()
 
 		if !mapVar.IsWhollyKnown() {
-			return cty.UnknownVal(retType), nil
+			return cty.UnknownVal(retType).WithMarks(markses...), nil
 		}
 
 		if mapVar.Type().IsObjectType() {
 			if mapVar.Type().HasAttribute(lookupKey) {
-				return mapVar.GetAttr(lookupKey), nil
+				return mapVar.GetAttr(lookupKey).WithMarks(markses...), nil
 			}
 		} else if mapVar.HasIndex(cty.StringVal(lookupKey)) == cty.True {
-			return mapVar.Index(cty.StringVal(lookupKey)), nil
+			return mapVar.Index(cty.StringVal(lookupKey)).WithMarks(markses...), nil
 		}
 
 		defaultVal, err = convert.Convert(defaultVal, retType)
 		if err != nil {
 			return cty.NilVal, err
 		}
-		return defaultVal, nil
+		return defaultVal.WithMarks(markses...), nil
 	},
 })
 
