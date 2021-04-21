@@ -1023,8 +1023,9 @@ var SetProductFunc = function.New(&function.Spec{
 var SliceFunc = function.New(&function.Spec{
 	Params: []function.Parameter{
 		{
-			Name: "list",
-			Type: cty.DynamicPseudoType,
+			Name:        "list",
+			Type:        cty.DynamicPseudoType,
+			AllowMarked: true,
 		},
 		{
 			Name: "start_index",
@@ -1063,10 +1064,10 @@ var SliceFunc = function.New(&function.Spec{
 		return cty.Tuple(argTy.TupleElementTypes()[startIndex:endIndex]), nil
 	},
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
-		inputList := args[0]
+		inputList, marks := args[0].Unmark()
 
 		if retType == cty.DynamicPseudoType {
-			return cty.DynamicVal, nil
+			return cty.DynamicVal.WithMarks(marks), nil
 		}
 
 		// we ignore idxsKnown return value here because the indices are always
@@ -1078,18 +1079,18 @@ var SliceFunc = function.New(&function.Spec{
 
 		if endIndex-startIndex == 0 {
 			if retType.IsTupleType() {
-				return cty.EmptyTupleVal, nil
+				return cty.EmptyTupleVal.WithMarks(marks), nil
 			}
-			return cty.ListValEmpty(retType.ElementType()), nil
+			return cty.ListValEmpty(retType.ElementType()).WithMarks(marks), nil
 		}
 
 		outputList := inputList.AsValueSlice()[startIndex:endIndex]
 
 		if retType.IsTupleType() {
-			return cty.TupleVal(outputList), nil
+			return cty.TupleVal(outputList).WithMarks(marks), nil
 		}
 
-		return cty.ListVal(outputList), nil
+		return cty.ListVal(outputList).WithMarks(marks), nil
 	},
 })
 
@@ -1097,9 +1098,12 @@ func sliceIndexes(args []cty.Value) (int, int, bool, error) {
 	var startIndex, endIndex, length int
 	var startKnown, endKnown, lengthKnown bool
 
+	// remove marks from args[0]
+	list, _ := args[0].Unmark()
+
 	// If it's a tuple then we always know the length by the type, but collections might be unknown or have unknown length
-	if args[0].Type().IsTupleType() || args[0].Length().IsKnown() {
-		length = args[0].LengthInt()
+	if list.Type().IsTupleType() || list.Length().IsKnown() {
+		length = list.LengthInt()
 		lengthKnown = true
 	}
 

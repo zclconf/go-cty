@@ -2309,3 +2309,77 @@ func TestReverseList(t *testing.T) {
 		})
 	}
 }
+
+func TestSlice(t *testing.T) {
+	tests := []struct {
+		Input cty.Value
+		Start cty.Value
+		End   cty.Value
+		Want  cty.Value
+		Err   string
+	}{
+		{
+			Input: cty.ListVal([]cty.Value{
+				cty.StringVal("a"),
+				cty.StringVal("b"),
+				cty.StringVal("c"),
+			}),
+			Start: cty.NumberIntVal(0),
+			End:   cty.NumberIntVal(2),
+			Want: cty.ListVal([]cty.Value{
+				cty.StringVal("a"),
+				cty.StringVal("b"),
+			}),
+			Err: ``,
+		},
+		{ // The entire input list is marked, so the return should be marked
+			Input: cty.ListVal([]cty.Value{
+				cty.StringVal("a"),
+				cty.StringVal("b"),
+				cty.StringVal("c"),
+			}).Mark("bloop"),
+			Start: cty.NumberIntVal(0),
+			End:   cty.NumberIntVal(2),
+			Want: cty.ListVal([]cty.Value{
+				cty.StringVal("a"),
+				cty.StringVal("b"),
+			}).Mark("bloop"),
+			Err: ``,
+		},
+		{ // individual element marks should be preserved
+			Input: cty.ListVal([]cty.Value{
+				cty.StringVal("a"),
+				cty.StringVal("b").Mark("bloop"),
+				cty.StringVal("c"),
+			}),
+			Start: cty.NumberIntVal(0),
+			End:   cty.NumberIntVal(2),
+			Want: cty.ListVal([]cty.Value{
+				cty.StringVal("a"),
+				cty.StringVal("b").Mark("bloop"),
+			}),
+			Err: ``,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("Slice(%#v)", test.Input), func(t *testing.T) {
+			got, err := Slice(test.Input, test.Start, test.End)
+			if test.Err != "" {
+				if err == nil {
+					t.Fatal("succeeded; want error")
+				}
+				if got, want := err.Error(), test.Err; got != want {
+					t.Fatalf("wrong error\ngot:  %s\nwant: %s", got, want)
+				}
+				return
+			} else if err != nil {
+				t.Fatalf("unexpected error: %s", err)
+			}
+
+			if !got.RawEquals(test.Want) {
+				t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, test.Want)
+			}
+		})
+	}
+}
