@@ -129,8 +129,9 @@ var LengthFunc = function.New(&function.Spec{
 var ElementFunc = function.New(&function.Spec{
 	Params: []function.Parameter{
 		{
-			Name: "list",
-			Type: cty.DynamicPseudoType,
+			Name:        "list",
+			Type:        cty.DynamicPseudoType,
+			AllowMarked: true,
 		},
 		{
 			Name: "index",
@@ -185,11 +186,12 @@ var ElementFunc = function.New(&function.Spec{
 			return cty.DynamicVal, fmt.Errorf("cannot use element function with a negative index")
 		}
 
-		if !args[0].IsKnown() {
+		input, marks := args[0].Unmark()
+		if !input.IsKnown() {
 			return cty.UnknownVal(retType), nil
 		}
 
-		l := args[0].LengthInt()
+		l := input.LengthInt()
 		if l == 0 {
 			return cty.DynamicVal, errors.New("cannot use element function with an empty list")
 		}
@@ -197,7 +199,7 @@ var ElementFunc = function.New(&function.Spec{
 
 		// We did all the necessary type checks in the type function above,
 		// so this is guaranteed not to fail.
-		return args[0].Index(cty.NumberIntVal(int64(index))), nil
+		return input.Index(cty.NumberIntVal(int64(index))).WithMarks(marks), nil
 	},
 })
 
