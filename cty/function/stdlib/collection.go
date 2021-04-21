@@ -843,8 +843,9 @@ var MergeFunc = function.New(&function.Spec{
 var ReverseListFunc = function.New(&function.Spec{
 	Params: []function.Parameter{
 		{
-			Name: "list",
-			Type: cty.DynamicPseudoType,
+			Name:        "list",
+			Type:        cty.DynamicPseudoType,
+			AllowMarked: true,
 		},
 	},
 	Type: func(args []cty.Value) (cty.Type, error) {
@@ -864,19 +865,21 @@ var ReverseListFunc = function.New(&function.Spec{
 		}
 	},
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
-		in := args[0].AsValueSlice()
-		outVals := make([]cty.Value, len(in))
-		for i, v := range in {
+		in, marks := args[0].Unmark()
+		inVals := in.AsValueSlice()
+		outVals := make([]cty.Value, len(inVals))
+
+		for i, v := range inVals {
 			outVals[len(outVals)-i-1] = v
 		}
 		switch {
 		case retType.IsTupleType():
-			return cty.TupleVal(outVals), nil
+			return cty.TupleVal(outVals).WithMarks(marks), nil
 		default:
 			if len(outVals) == 0 {
-				return cty.ListValEmpty(retType.ElementType()), nil
+				return cty.ListValEmpty(retType.ElementType()).WithMarks(marks), nil
 			}
-			return cty.ListVal(outVals), nil
+			return cty.ListVal(outVals).WithMarks(marks), nil
 		}
 	},
 })
