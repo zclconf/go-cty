@@ -1125,6 +1125,12 @@ func TestElement(t *testing.T) {
 		cty.StringVal("brown"),
 		cty.UnknownVal(cty.String),
 	})
+	listWithMarks := cty.ListVal([]cty.Value{
+		cty.StringVal("the"),
+		cty.StringVal("quick"),
+		cty.StringVal("brown").Mark("fox"),
+		cty.UnknownVal(cty.String),
+	})
 
 	tests := []struct {
 		List  cty.Value
@@ -1172,6 +1178,24 @@ func TestElement(t *testing.T) {
 			listWithUnknown,
 			cty.NumberIntVal(3),
 			cty.UnknownVal(cty.String),
+			false,
+		},
+		{ // preserve marks
+			listWithMarks,
+			cty.NumberIntVal(2),
+			cty.StringVal("brown").Mark("fox"),
+			false,
+		},
+		{ // marked items
+			listWithMarks,
+			cty.NumberIntVal(1),
+			cty.StringVal("quick"),
+			false,
+		},
+		{ // The entire list is marked
+			listWithMarks.Mark("thewholeshebang"),
+			cty.NumberIntVal(2),
+			cty.StringVal("brown").WithMarks(cty.NewValueMarks("thewholeshebang", "fox")),
 			false,
 		},
 		{
