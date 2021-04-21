@@ -2244,3 +2244,106 @@ func TestSetproduct(t *testing.T) {
 		})
 	}
 }
+
+func TestReverseList(t *testing.T) {
+	tests := []struct {
+		Input cty.Value
+		Want  cty.Value
+		Err   string
+	}{
+		{
+			cty.NilVal,
+			cty.NilVal,
+			`argument must not be null`,
+		},
+		{
+			cty.ListValEmpty(cty.String),
+			cty.ListValEmpty(cty.String),
+			``,
+		},
+		{
+			cty.ListValEmpty(cty.String).Mark("foo"),
+			cty.ListValEmpty(cty.String).Mark("foo"),
+			``,
+		},
+		{
+			cty.UnknownVal(cty.List(cty.String)),
+			cty.UnknownVal(cty.List(cty.String)),
+			``,
+		},
+		{ // marks on list elements
+			cty.ListVal([]cty.Value{
+				cty.StringVal("beep").Mark("boop"),
+				cty.StringVal("bop"),
+				cty.StringVal("bloop"),
+			}),
+			cty.ListVal([]cty.Value{
+				cty.StringVal("bloop"),
+				cty.StringVal("bop"),
+				cty.StringVal("beep").Mark("boop"),
+			}),
+			``,
+		},
+		{ // marks on the entire input are preserved
+			cty.ListVal([]cty.Value{
+				cty.StringVal("beep").Mark("boop"),
+				cty.StringVal("bop"),
+				cty.StringVal("bloop"),
+			}).Mark("outer"),
+			cty.ListVal([]cty.Value{
+				cty.StringVal("bloop"),
+				cty.StringVal("bop"),
+				cty.StringVal("beep").Mark("boop"),
+			}).Mark("outer"),
+			``,
+		},
+		{ // marks on tuple elements
+			cty.TupleVal([]cty.Value{
+				cty.StringVal("beep").Mark("boop"),
+				cty.StringVal("bop"),
+				cty.StringVal("bloop"),
+			}),
+			cty.TupleVal([]cty.Value{
+				cty.StringVal("bloop"),
+				cty.StringVal("bop"),
+				cty.StringVal("beep").Mark("boop"),
+			}),
+			``,
+		},
+		{ // Set elements don't support individual marks; any marks on elements get propegated to the entire set.
+			cty.SetVal([]cty.Value{
+				cty.StringVal("beep").Mark("boop"),
+				cty.StringVal("bop"),
+				cty.StringVal("bloop"),
+			}),
+			// sets end up sorted alphabetically when converted to lists
+			cty.ListVal([]cty.Value{
+				cty.StringVal("bop"),
+				cty.StringVal("bloop"),
+				cty.StringVal("beep"),
+			}).Mark("boop"),
+			``,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("ReverseList(%#v)", test.Input), func(t *testing.T) {
+			got, err := ReverseList(test.Input)
+			if test.Err != "" {
+				if err == nil {
+					t.Fatal("succeeded; want error")
+				}
+				if got, want := err.Error(), test.Err; got != want {
+					t.Fatalf("wrong error\ngot:  %s\nwant: %s", got, want)
+				}
+				return
+			} else if err != nil {
+				t.Fatalf("unexpected error: %s", err)
+			}
+
+			if !got.RawEquals(test.Want) {
+				t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, test.Want)
+			}
+		})
+	}
+}
