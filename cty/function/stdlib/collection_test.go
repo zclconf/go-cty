@@ -1941,6 +1941,44 @@ func TestSetproduct(t *testing.T) {
 		},
 		{
 			[]cty.Value{
+				cty.ListValEmpty(cty.EmptyObject),
+				cty.ListVal([]cty.Value{
+					cty.StringVal("quick"),
+					cty.StringVal("fox"),
+				}),
+			},
+			cty.ListValEmpty(cty.Tuple([]cty.Type{cty.EmptyObject, cty.String})),
+			``,
+		},
+		{
+			[]cty.Value{
+				cty.SetValEmpty(cty.EmptyObject),
+				cty.SetVal([]cty.Value{
+					cty.StringVal("quick"),
+					cty.StringVal("fox"),
+				}),
+			},
+			cty.SetValEmpty(cty.Tuple([]cty.Type{cty.EmptyObject, cty.String})),
+			``,
+		},
+		{
+			[]cty.Value{
+				cty.ListValEmpty(cty.EmptyObject),
+				cty.ListValEmpty(cty.EmptyObject),
+			},
+			cty.ListValEmpty(cty.Tuple([]cty.Type{cty.EmptyObject, cty.EmptyObject})),
+			``,
+		},
+		{
+			[]cty.Value{
+				cty.SetValEmpty(cty.EmptyObject),
+				cty.SetValEmpty(cty.EmptyObject),
+			},
+			cty.SetValEmpty(cty.Tuple([]cty.Type{cty.EmptyObject, cty.EmptyObject})),
+			``,
+		},
+		{
+			[]cty.Value{
 				cty.ListVal([]cty.Value{cty.ListValEmpty(cty.String)}),
 				cty.ListVal([]cty.Value{cty.ListValEmpty(cty.String)}),
 			},

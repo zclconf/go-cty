@@ -953,9 +953,9 @@ var SetProductFunc = function.New(&function.Spec{
 			// If any of the arguments was an empty collection then our result
 			// is also an empty collection, which we'll short-circuit here.
 			if retType.IsListType() {
-				return cty.ListValEmpty(ety).Mark(retMarks), nil
+				return cty.ListValEmpty(ety).WithMarks(retMarks), nil
 			}
-			return cty.SetValEmpty(ety).Mark(retMarks), nil
+			return cty.SetValEmpty(ety).WithMarks(retMarks), nil
 		}
 
 		subEtys := ety.TupleElementTypes()
