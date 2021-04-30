@@ -1939,7 +1939,7 @@ func TestSetproduct(t *testing.T) {
 			cty.NilVal,
 			`at least two arguments are required`,
 		},
-		{ // Ensure that we don't panic when having an empty list as an argument
+		{
 			[]cty.Value{
 				cty.ListValEmpty(cty.EmptyObject),
 				cty.ListVal([]cty.Value{
@@ -1948,6 +1948,33 @@ func TestSetproduct(t *testing.T) {
 				}),
 			},
 			cty.ListValEmpty(cty.Tuple([]cty.Type{cty.EmptyObject, cty.String})),
+			``,
+		},
+		{
+			[]cty.Value{
+				cty.SetValEmpty(cty.EmptyObject),
+				cty.SetVal([]cty.Value{
+					cty.StringVal("quick"),
+					cty.StringVal("fox"),
+				}),
+			},
+			cty.SetValEmpty(cty.Tuple([]cty.Type{cty.EmptyObject, cty.String})),
+			``,
+		},
+		{
+			[]cty.Value{
+				cty.ListValEmpty(cty.EmptyObject),
+				cty.ListValEmpty(cty.EmptyObject),
+			},
+			cty.ListValEmpty(cty.Tuple([]cty.Type{cty.EmptyObject, cty.EmptyObject})),
+			``,
+		},
+		{
+			[]cty.Value{
+				cty.SetValEmpty(cty.EmptyObject),
+				cty.SetValEmpty(cty.EmptyObject),
+			},
+			cty.SetValEmpty(cty.Tuple([]cty.Type{cty.EmptyObject, cty.EmptyObject})),
 			``,
 		},
 		{
