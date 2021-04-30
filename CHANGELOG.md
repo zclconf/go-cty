@@ -1,6 +1,7 @@
 # 1.8.3 (Unreleased)
 
 * `function/stdlib`: Fix a panic in `SetproductFunc` in situations where one of the input collections is empty. ([#103](https://github.com/zclconf/go-cty/pull/103))
+* `function/stdlib`: Improvements to `ElementFunc`, `ReverseListFunc`, and `SliceFunc` to handle marked values more precisely (individual element vs. whole-collection marks). ([#101](https://github.com/zclconf/go-cty/pull/101))
 
 # 1.8.2 (April 20, 2021)
 
