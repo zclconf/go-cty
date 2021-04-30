@@ -1,3 +1,7 @@
+# 1.8.3 (Unreleased)
+
+* `function/stdlib`: Fix a panic in `SetproductFunc` in situations where one of the input collections is empty. ([#103](https://github.com/zclconf/go-cty/pull/103))
+
 # 1.8.2 (April 20, 2021)
 
 * `cty`: `Value.Mark` will no longer incorrectly create nested markings when applied to a value that is already marked. Instead, it will unpack the reciever and use its underlying value directly, merging all of the marks into a new mark set. ([#96](https://github.com/zclconf/go-cty/pull/96))
