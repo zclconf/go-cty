@@ -1928,6 +1928,59 @@ func TestFlatten(t *testing.T) {
 			cty.EmptyTupleVal.Mark("a"),
 			"",
 		},
+		{
+			cty.ListValEmpty(cty.Number),
+			cty.EmptyTupleVal,
+			"",
+		},
+		{
+			cty.ListVal([]cty.Value{
+				cty.DynamicVal,
+			}),
+			cty.DynamicVal,
+			"",
+		},
+		{
+			cty.TupleVal([]cty.Value{
+				cty.ListVal([]cty.Value{
+					cty.ListVal([]cty.Value{
+						cty.DynamicVal,
+					}),
+				}),
+				cty.ListVal([]cty.Value{
+					cty.ListVal([]cty.Value{
+						cty.DynamicVal,
+					}).Mark("marked"),
+				}),
+			}),
+			cty.DynamicVal,
+			"",
+		},
+		{
+			cty.TupleVal([]cty.Value{
+				cty.StringVal("a"),
+				cty.ListVal([]cty.Value{
+					cty.StringVal("b"),
+				}),
+				cty.TupleVal([]cty.Value{
+					cty.ListVal([]cty.Value{
+						cty.StringVal("c"),
+					}),
+					cty.ListVal([]cty.Value{
+						cty.StringVal("d"),
+						cty.StringVal("e"),
+					}),
+				}),
+			}),
+			cty.TupleVal([]cty.Value{
+				cty.StringVal("a"),
+				cty.StringVal("b"),
+				cty.StringVal("c"),
+				cty.StringVal("d"),
+				cty.StringVal("e"),
+			}),
+			"",
+		},
 	}
 
 	for _, test := range tests {

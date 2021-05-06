@@ -530,6 +530,12 @@ func flattener(flattenList cty.Value) ([]cty.Value, []cty.ValueMarks, bool) {
 		// predict the length of our result yet either.
 		return nil, markses, false
 	}
+	// Any dynamic types could result in more collection that need to be
+	// flattened, so the type cannot be known.
+	if flattenList.Type().HasDynamicTypes() {
+		return nil, markses, false
+	}
+
 	out := make([]cty.Value, 0)
 	isKnown := true
 	for it := flattenList.ElementIterator(); it.Next(); {
