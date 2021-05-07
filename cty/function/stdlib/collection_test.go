@@ -1953,7 +1953,57 @@ func TestFlatten(t *testing.T) {
 					}).Mark("marked"),
 				}),
 			}),
-			cty.DynamicVal,
+			cty.DynamicVal.Mark("marked"),
+			"",
+		},
+		{
+			cty.TupleVal([]cty.Value{
+				cty.ListVal([]cty.Value{
+					cty.ObjectVal(map[string]cty.Value{
+						"blop": cty.ListVal([]cty.Value{
+							cty.DynamicVal,
+						}),
+					}),
+				}),
+				cty.ListVal([]cty.Value{
+					cty.ObjectVal(map[string]cty.Value{
+						"bloop": cty.DynamicVal,
+					}),
+				}),
+			}),
+			cty.TupleVal([]cty.Value{
+				cty.ObjectVal(map[string]cty.Value{
+					"blop": cty.ListVal([]cty.Value{
+						cty.DynamicVal,
+					}),
+				}),
+				cty.ObjectVal(map[string]cty.Value{
+					"bloop": cty.DynamicVal,
+				}),
+			}),
+			"",
+		},
+		{
+			cty.ListVal([]cty.Value{
+				cty.ListVal([]cty.Value{
+					cty.ObjectVal(map[string]cty.Value{
+						"bloop": cty.DynamicVal,
+					}),
+				}),
+				cty.ListVal([]cty.Value{
+					cty.ObjectVal(map[string]cty.Value{
+						"bloop": cty.DynamicVal,
+					}),
+				}),
+			}),
+			cty.TupleVal([]cty.Value{
+				cty.ObjectVal(map[string]cty.Value{
+					"bloop": cty.DynamicVal,
+				}),
+				cty.ObjectVal(map[string]cty.Value{
+					"bloop": cty.DynamicVal,
+				}),
+			}),
 			"",
 		},
 		{
