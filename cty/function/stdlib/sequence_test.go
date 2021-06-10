@@ -98,6 +98,32 @@ func TestConcat(t *testing.T) {
 		},
 		{
 			[]cty.Value{
+				cty.ListValEmpty(cty.DynamicPseudoType).Mark("a"),
+				cty.ListVal([]cty.Value{
+					cty.NumberIntVal(2).Mark("b"),
+					cty.NumberIntVal(3),
+				}).Mark("c"),
+			},
+			cty.ListVal([]cty.Value{
+				cty.NumberIntVal(2).Mark("b"),
+				cty.NumberIntVal(3),
+			}).WithMarks(cty.NewValueMarks("a", "c")),
+		},
+		{
+			[]cty.Value{
+				cty.ListValEmpty(cty.DynamicPseudoType).Mark("a"),
+				cty.TupleVal([]cty.Value{
+					cty.NumberIntVal(2).Mark("b"),
+					cty.NumberIntVal(3),
+				}).Mark("c"),
+			},
+			cty.TupleVal([]cty.Value{
+				cty.NumberIntVal(2).Mark("b"),
+				cty.NumberIntVal(3),
+			}).WithMarks(cty.NewValueMarks("a", "c")),
+		},
+		{
+			[]cty.Value{
 				cty.ListVal([]cty.Value{
 					cty.NumberIntVal(1),
 				}),
