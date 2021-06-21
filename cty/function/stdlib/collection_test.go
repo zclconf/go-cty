@@ -2324,6 +2324,36 @@ func TestSetproduct(t *testing.T) {
 			}).Mark("b"),
 			``,
 		},
+		{
+			// Empty lists with marks should propagate the marks
+			[]cty.Value{
+				cty.ListValEmpty(cty.String).Mark("a"),
+				cty.ListValEmpty(cty.Bool).Mark("b"),
+			},
+			cty.ListValEmpty(cty.Tuple([]cty.Type{cty.String, cty.Bool})).WithMarks(cty.NewValueMarks("a", "b")),
+			``,
+		},
+		{
+			// Empty sets with marks should propagate the marks
+			[]cty.Value{
+				cty.SetValEmpty(cty.String).Mark("a"),
+				cty.SetValEmpty(cty.Bool).Mark("b"),
+			},
+			cty.SetValEmpty(cty.Tuple([]cty.Type{cty.String, cty.Bool})).WithMarks(cty.NewValueMarks("a", "b")),
+			``,
+		},
+		{
+			// Arguments which are sets with partially unknown values results
+			// in unknown length (since the unknown values may already be
+			// present in the set). This gives an unknown result preserving all
+			// marks
+			[]cty.Value{
+				cty.SetVal([]cty.Value{cty.StringVal("x"), cty.UnknownVal(cty.String)}).Mark("a"),
+				cty.SetVal([]cty.Value{cty.True, cty.False}).Mark("b"),
+			},
+			cty.UnknownVal(cty.Set(cty.Tuple([]cty.Type{cty.String, cty.Bool}))).WithMarks(cty.NewValueMarks("a", "b")),
+			``,
+		},
 	}
 
 	for _, test := range tests {

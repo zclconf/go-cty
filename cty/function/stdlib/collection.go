@@ -948,18 +948,26 @@ var SetProductFunc = function.New(&function.Spec{
 		var retMarks cty.ValueMarks
 
 		total := 1
+		var hasUnknownLength bool
 		for _, arg := range args {
 			arg, marks := arg.Unmark()
 			retMarks = cty.NewValueMarks(retMarks, marks)
 
+			// Continue processing after we find an argument with unknown
+			// length to ensure that we cover all the marks
 			if !arg.Length().IsKnown() {
-				return cty.UnknownVal(retType).Mark(marks), nil
+				hasUnknownLength = true
+				continue
 			}
 
 			// Because of our type checking function, we are guaranteed that
 			// all of the arguments are known, non-null values of types that
 			// support LengthInt.
 			total *= arg.LengthInt()
+		}
+
+		if hasUnknownLength {
+			return cty.UnknownVal(retType).WithMarks(retMarks), nil
 		}
 
 		if total == 0 {
