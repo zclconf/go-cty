@@ -1,3 +1,6 @@
+# 1.8.5 (Unreleased)
+
+
 # 1.8.4 (June 22, 2021)
 
 * `function/stdlib`: The `flatten` function will now correctly return `cty.DynamicVal` if it encounters `cty.DynamicVal` anywhere in the given data structure, because it can't predict how many elements the result will have in that situation. ([#106](https://github.com/zclconf/go-cty/pull/106), [#107](https://github.com/zclconf/go-cty/pull/107))
