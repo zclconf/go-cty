@@ -1,7 +1,7 @@
 # 1.8.4 (Unreleased)
 
 * `function/stdlib`: The `flatten` function will now correctly return `cty.DynamicVal` if it encounters `cty.DynamicVal` anywhere in the given data structure, because it can't predict how many elements the result will have in that situation. ([#106](https://github.com/zclconf/go-cty/pull/106), [#107](https://github.com/zclconf/go-cty/pull/107))
-* `function/stdlib`: The `setproduct` function will no longer panic when given a set containing unknown values, which would therefore be a set with an unknown length. [#109](https://github.com/zclconf/go-cty/pull/109))
+* `function/stdlib`: The `setproduct` function will no longer panic when given a set containing unknown values, which would therefore be a set with an unknown length. ([#109](https://github.com/zclconf/go-cty/pull/109))
 
 # 1.8.3 (May 4, 2021)
 
