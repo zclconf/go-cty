@@ -1,5 +1,6 @@
 # 1.8.5 (Unreleased)
 
+* `cty`: `cty.Walk`, `cty.Transform`, and `cty.TransformWithTransformer` now all correctly support marked values. Previously they would panic when encountering marked collections, because they would try to recurse into them without handling the markings.
 
 # 1.8.4 (June 22, 2021)
 
