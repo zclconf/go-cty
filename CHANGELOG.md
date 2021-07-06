@@ -1,6 +1,7 @@
 # 1.8.5 (Unreleased)
 
 * `cty`: `cty.Walk`, `cty.Transform`, and `cty.TransformWithTransformer` now all correctly support marked values. Previously they would panic when encountering marked collections, because they would try to recurse into them without handling the markings.
+* `function/stdlib`: The `floor` and `ceil` functions no longer lower the precision of arguments to what would fit inside a 64-bit float, instead preserving precision in a similar way as most other arithmetic functions. [#111](https://github.com/zclconf/go-cty/pull/111)
 
 # 1.8.4 (June 22, 2021)
 
