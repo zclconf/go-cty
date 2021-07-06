@@ -2056,7 +2056,7 @@ func TestFlatten(t *testing.T) {
 					cty.StringVal("a"),
 					cty.StringVal("b"),
 				}),
-				cty.UnknownVal(cty.DynamicPseudoType),
+				cty.DynamicVal,
 				cty.TupleVal([]cty.Value{
 					cty.StringVal("c"),
 				}),
