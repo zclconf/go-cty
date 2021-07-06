@@ -817,6 +817,16 @@ func TestCeil(t *testing.T) {
 			cty.NumberFloatVal(math.Inf(-1)),
 			false,
 		},
+		{
+			cty.MustParseNumberVal("99999999999999999999999999999999999999999999999999998.123"),
+			cty.MustParseNumberVal("99999999999999999999999999999999999999999999999999999"),
+			false,
+		},
+		{
+			cty.MustParseNumberVal("-99999999999999999999999999999999999999999999999999998.123"),
+			cty.MustParseNumberVal("-99999999999999999999999999999999999999999999999999998"),
+			false,
+		},
 	}
 
 	for _, test := range tests {
@@ -863,6 +873,16 @@ func TestFloor(t *testing.T) {
 		{
 			cty.NumberFloatVal(math.Inf(-1)),
 			cty.NumberFloatVal(math.Inf(-1)),
+			false,
+		},
+		{
+			cty.MustParseNumberVal("99999999999999999999999999999999999999999999999999999.123"),
+			cty.MustParseNumberVal("99999999999999999999999999999999999999999999999999999"),
+			false,
+		},
+		{
+			cty.MustParseNumberVal("-99999999999999999999999999999999999999999999999999998.123"),
+			cty.MustParseNumberVal("-99999999999999999999999999999999999999999999999999999"),
 			false,
 		},
 	}
