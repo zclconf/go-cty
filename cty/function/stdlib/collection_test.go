@@ -2031,6 +2031,39 @@ func TestFlatten(t *testing.T) {
 			}),
 			"",
 		},
+		{
+			cty.TupleVal([]cty.Value{
+				cty.TupleVal([]cty.Value{
+					cty.StringVal("a"),
+					cty.StringVal("b"),
+				}),
+				cty.NullVal(cty.DynamicPseudoType),
+				cty.TupleVal([]cty.Value{
+					cty.StringVal("c"),
+				}),
+			}),
+			cty.TupleVal([]cty.Value{
+				cty.StringVal("a"),
+				cty.StringVal("b"),
+				cty.NullVal(cty.DynamicPseudoType),
+				cty.StringVal("c"),
+			}),
+			"",
+		},
+		{
+			cty.TupleVal([]cty.Value{
+				cty.TupleVal([]cty.Value{
+					cty.StringVal("a"),
+					cty.StringVal("b"),
+				}),
+				cty.DynamicVal,
+				cty.TupleVal([]cty.Value{
+					cty.StringVal("c"),
+				}),
+			}),
+			cty.UnknownVal(cty.DynamicPseudoType),
+			"",
+		},
 	}
 
 	for _, test := range tests {
