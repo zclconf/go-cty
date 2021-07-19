@@ -753,6 +753,16 @@ func TestValueEquals(t *testing.T) {
 			StringVal("b").Mark(2),
 			False.WithMarks(NewValueMarks(1, 2)),
 		},
+
+		{
+			MapVal(map[string]Value{
+				"a": StringVal("a").Mark("boop"),
+			}),
+			MapVal(map[string]Value{
+				"a": StringVal("a").Mark("blop"),
+			}),
+			True.WithMarks(NewValueMarks("boop", "blop")),
+		},
 	}
 
 	for _, test := range tests {
