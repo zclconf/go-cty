@@ -1,3 +1,7 @@
+# 1.9.1 (Unreleased)
+
+* `cty`: Don't panic in `Value.Equals` if comparing complex data structures with nested marked values. Instead, `Equals` will aggregate all of the marks on the resulting boolean value as we typically expect for operations that derived from marked values. ([#112](https://github.com/zclconf/go-cty/pull/112))
+
 # 1.9.0 (July 6, 2021)
 
 * `cty`: `cty.Walk`, `cty.Transform`, and `cty.TransformWithTransformer` now all correctly support marked values. Previously they would panic when encountering marked collections, because they would try to recurse into them without handling the markings.
