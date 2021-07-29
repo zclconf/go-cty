@@ -86,6 +86,16 @@ var FormatDateFunc = function.New(&function.Spec{
 					default:
 						return cty.DynamicVal, function.NewArgErrorf(0, "invalid date format verb %q: month must be \"M\", \"MM\", \"MMM\", or \"MMMM\"", tok)
 					}
+				case 'W':
+					_, w := t.ISOWeek()
+					switch len(tok) {
+					case 1:
+						fmt.Fprintf(&buf, "%d", w)
+					case 2:
+						fmt.Fprintf(&buf, "%02d", w)
+					default:
+						return cty.DynamicVal, function.NewArgErrorf(0, "invalid date format verb %q: week of year must either be \"W\" or \"WW\"", tok)
+					}
 				case 'D':
 					d := t.Day()
 					switch len(tok) {
@@ -246,6 +256,8 @@ var TimeAddFunc = function.New(&function.Spec{
 //     MM       Month number zero-padded to two digits, like "01".
 //     MMM      English month name abbreviated to three letters, like "Jan".
 //     MMMM     English month name unabbreviated, like "January".
+//     W        Week of the year number, like "3".
+//     WW       Week of the year number zero-padded to two digits, like "26".
 //     D        Day of month number, like "2".
 //     DD       Day of month number zero-padded to two digits, like "02".
 //     EEE      English day of week name abbreviated to three letters, like "Mon".
