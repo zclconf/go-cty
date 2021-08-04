@@ -1283,9 +1283,7 @@ func (val Value) AsBigFloat() *big.Float {
 	}
 
 	// Copy the float so that callers can't mutate our internal state
-	ret := *(val.v.(*big.Float))
-
-	return &ret
+	return new(big.Float).Copy(val.v.(*big.Float))
 }
 
 // AsValueSlice returns a []cty.Value representation of a non-null, non-unknown
