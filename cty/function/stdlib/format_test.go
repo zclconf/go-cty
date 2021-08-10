@@ -836,6 +836,15 @@ func TestFormatList(t *testing.T) {
 			cty.UnknownVal(cty.List(cty.String)),
 			``,
 		},
+		23: {
+			cty.StringVal("%v"),
+			[]cty.Value{cty.DynamicVal},
+			// The current Function implementation will default to DynamicVal
+			// if AllowUnknown is true, even though this function has a static
+			// return type
+			cty.DynamicVal,
+			``,
+		},
 	}
 
 	for i, test := range tests {
