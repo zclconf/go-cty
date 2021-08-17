@@ -1,6 +1,7 @@
 # 1.9.1 (Unreleased)
 
 * `cty`: Don't panic in `Value.Equals` if comparing complex data structures with nested marked values. Instead, `Equals` will aggregate all of the marks on the resulting boolean value as we typically expect for operations that derived from marked values. ([#112](https://github.com/zclconf/go-cty/pull/112))
+* `cty`: `Value.AsBigFloat` now properly isolates its result from the internal state of the associated value. It previously _attempted_ to do this (so that modifying the result would not affect the supposedly-immutable `cty.Number` value) but ended up creating an object which still had some shared buffers. The result is now entirely separate from the internal state of the recieving value. ([#114](https://github.com/zclconf/go-cty/pull/114))
 
 # 1.9.0 (July 6, 2021)
 
