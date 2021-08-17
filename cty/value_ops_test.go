@@ -3442,3 +3442,16 @@ func TestHasWhollyKnownType(t *testing.T) {
 		})
 	}
 }
+
+func TestFloatCopy(t *testing.T) {
+	// ensure manipulating floats does not modify the cty.Value
+	v := NumberFloatVal(1.9)
+	vString := v.GoString()
+
+	// do something that will modify the internal big.Float mantissa
+	v.AsBigFloat().SetInt64(1)
+
+	if vString != v.GoString() {
+		t.Fatalf("original value changed from %s to %#v", vString, v)
+	}
+}
