@@ -189,6 +189,18 @@ var FormatDateFunc = function.New(&function.Spec{
 					default:
 						return cty.DynamicVal, function.NewArgErrorf(0, "invalid date format verb %q: timezone must be Z, ZZZZ, or ZZZZZ", tok)
 					}
+				case 'u':
+					if len(tok) == 1 {
+						d := t.Weekday()
+						dayOfWeekAsNum := int(d)
+						buf.WriteString(fmt.Sprint(dayOfWeekAsNum))
+					} else {
+						return cty.DynamicVal, function.NewArgErrorf(
+							0,
+							"invalid date format verb %q: day of week must be u",
+							tok,
+						)
+					}
 				default:
 					return cty.DynamicVal, function.NewArgErrorf(0, "invalid date format verb %q", tok)
 				}

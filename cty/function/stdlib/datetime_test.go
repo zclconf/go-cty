@@ -69,6 +69,11 @@ func TestFormatDate(t *testing.T) {
 			cty.StringVal("pm"),
 			``,
 		},
+		{
+			cty.StringVal("u"),
+			cty.StringVal("1"),
+			``,
+		},
 
 		// Some common standard machine-oriented formats
 		{
@@ -97,6 +102,11 @@ func TestFormatDate(t *testing.T) {
 			cty.StringVal("Y"),
 			cty.NilVal,
 			`invalid date format verb "Y": year must either be "YY" or "YYYY"`,
+		},
+		{
+			cty.StringVal("uu"),
+			cty.NilVal,
+			`invalid date format verb "uu": day of week must be u`,
 		},
 		{
 			cty.StringVal("YYYYY"),
