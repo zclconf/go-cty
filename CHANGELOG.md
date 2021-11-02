@@ -1,5 +1,10 @@
-# 1.9.1 (Unreleased)
+# 1.10.0 (Unreleased)
 
+* `cty`: The documented definition and comparison logic of `cty.Number` is now refined to acknowledge that its true range is limited only to values that have both a binary floating point and decimal representation, because `cty` values are primarily designed to traverse JSON serialization where numbers are always defined as decimal strings.
+
+    In particular, that means that two `cty.Number` values now always compare as equal if their representation in JSON (under `cty`'s own JSON encoder) would be equal, even though the decimal approximation we use for that conversion is slightly lossy. This pragmatic compromise avoids confusing situations where a round-trip through JSON serialization (or other serializations that use the same number format) may produce a value that doesn't compare equal to the original.
+    
+    This new definition of equals should not cause any significant behavior change for any integer in our in-memory storage range, but may cause some fractional values to compare equal where they didn't before if they differ only by a small fraction.
 * `cty`: Don't panic in `Value.Equals` if comparing complex data structures with nested marked values. Instead, `Equals` will aggregate all of the marks on the resulting boolean value as we typically expect for operations that derived from marked values. ([#112](https://github.com/zclconf/go-cty/pull/112))
 * `cty`: `Value.AsBigFloat` now properly isolates its result from the internal state of the associated value. It previously _attempted_ to do this (so that modifying the result would not affect the supposedly-immutable `cty.Number` value) but ended up creating an object which still had some shared buffers. The result is now entirely separate from the internal state of the recieving value. ([#114](https://github.com/zclconf/go-cty/pull/114))
 * `function/stdlib`: The `FormatList` function will now return an unknown value if any of the arguments have an unknown type, because in that case it can't tell whether that value will ultimately become a string or a list of strings, and thus it can't predict how many elements the result will have. ([#115](https://github.com/zclconf/go-cty/pull/115))
