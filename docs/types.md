@@ -29,13 +29,24 @@ value.
 
 ### `cty.Number`
 
-The number type represents arbitrary-precision floating point numbers.
+The number type represents what we'll clumsily call "JSON numbers".
+Technically, this means the set of numbers that have a canonical decimal
+representation in our JSON encoding _and_ that can be represented in memory
+with 512 bits of binary floating point precision.
 
-Since numbers are arbitrary-precision, there is no need to worry about
-integer overflow/underflow or loss of precision during arithmetic operations.
-However, eventually a calling application will probably want to convert a
+Since these numbers have high precision, there is little need to worry about
+integer overflow/underflow or over-zealous rounding during arithmetic
+operations. In particular, `cty.Number` can represent the full range of
+`int64` with no loss. However, numbers _are_ still finite in memory and subject
+to approximation in binary-to-decimal and decimal-to-binary conversions, and so
+can't accurately represent _all_ real numbers.
+
+Eventually a calling application will probably want to convert a
 number to one of the Go numeric types, at which point its range will be
 constrained to fit within that type, generating an error if it does not fit.
+Because the number range is larger than all of the Go integer types, it's
+always possible to convert a whole number to a Go integer without any loss,
+as long as it value is within the required range.
 
 The following additional operations are supported on numbers:
 
@@ -60,10 +71,17 @@ The following additional operations are supported on numbers:
 `cty.Number` values can be constructed using several different factory
 functions:
 
-* `NumberVal` creates a number value from a `*big.Float`, from the `math/big` package.
+* `ParseNumberVal` creates a number value by parsing a decimal representation
+  of it given as a string. This is the constructor that most properly
+  represents the full documented range of number values; the others below
+  care convenient for many cases, but have a more limited range.
 * `NumberIntVal` creates a number value from a native `int64` value.
 * `NumberUIntVal` creates a number value from a native `uint64` value.
 * `NumberFloatVal` creates a number value from a native `float64` value.
+* `NumberVal` creates a number value from a `*big.Float`, from the `math/big` package.
+  This can preserve arbitrary big floats without modification, but comes
+  at the risk of introducing precision inconsisistencies. Prefer the other
+  constructors for most uses.
 
 The core API only allows extracting the value from a known number as a
 `*big.Float` using the `AsBigFloat` method. However,
@@ -78,6 +96,9 @@ The following numbers are provided as package variables for convenience:
   numbers are less than this value.
 * `cty.NegativeInfinity` represents negative infinity as a number. All other
   numbers are greater than this value.
+
+Note that the two infinity values are always out of range for a conversion to
+any Go primitive integer type.
 
 ### `cty.String`
 

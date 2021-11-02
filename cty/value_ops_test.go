@@ -44,6 +44,51 @@ func TestValueEquals(t *testing.T) {
 			NumberIntVal(2),
 			BoolVal(true),
 		},
+		{
+			NumberIntVal(2),
+			NumberFloatVal(2.2),
+			BoolVal(false),
+		},
+		{
+			NumberFloatVal(2.0),
+			NumberFloatVal(2.2),
+			BoolVal(false),
+		},
+		{
+			MustParseNumberVal("0.0"),
+			MustParseNumberVal("-0.0"), // a statically-generated negative zero
+			BoolVal(true),
+		},
+		{
+			NumberFloatVal(0.0),
+			NumberFloatVal(0.0).Multiply(NumberIntVal(-1)), // a dynamically-generated negative zero
+			BoolVal(true),
+		},
+		{
+			MustParseNumberVal("3.14159265358979323846264338327950288419716939937510582097494459"),
+			MustParseNumberVal("3.14159265358979323846264338327950288419716939937510582097494459"),
+			BoolVal(true),
+		},
+		{
+			MustParseNumberVal("-3.14159265358979323846264338327950288419716939937510582097494459"),
+			MustParseNumberVal("-3.14159265358979323846264338327950288419716939937510582097494459"),
+			BoolVal(true),
+		},
+		{
+			MustParseNumberVal("3.14159265358979323846264338327950288419716939937510582097494459"),
+			MustParseNumberVal("-3.14159265358979323846264338327950288419716939937510582097494459"),
+			BoolVal(false),
+		},
+		{
+			MustParseNumberVal("1.2"),
+			NumberFloatVal(1.2),
+			BoolVal(true),
+		},
+		{
+			MustParseNumberVal("1.22222"),
+			NumberFloatVal(1.22222),
+			BoolVal(true),
+		},
 
 		// Strings
 		{
@@ -1812,11 +1857,10 @@ func TestValueMultiply(t *testing.T) {
 			NumberFloatVal(12345),
 			MustParseNumberVal("11941607769527758779715454277313298036253933804947715"),
 		},
-		//
 		{
 			NumberFloatVal(22337203685475.5),
 			NumberFloatVal(22337203685475.5),
-			MustParseNumberVal("498950668486420259929661100.25"),
+			MustParseNumberVal("498950668486420259929661100.2"),
 		},
 	}
 
