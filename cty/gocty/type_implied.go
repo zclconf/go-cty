@@ -86,6 +86,7 @@ func impliedStructType(rt reflect.Type, path cty.Path) (cty.Type, error) {
 	}
 
 	atys := make(map[string]cty.Type, len(fieldIdxs))
+	var optionals []string
 
 	{
 		// Temporary extension of path for attributes
@@ -100,9 +101,13 @@ func impliedStructType(rt reflect.Type, path cty.Path) (cty.Type, error) {
 				return cty.NilType, err
 			}
 
+			if ft.Kind() == reflect.Ptr {
+				optionals = append(optionals, k)
+			}
+
 			atys[k] = aty
 		}
 	}
 
-	return cty.Object(atys), nil
+	return cty.ObjectWithOptionalAttrs(atys, optionals), nil
 }
