@@ -80,28 +80,28 @@ func impliedStructType(rt reflect.Type, path cty.Path) (cty.Type, error) {
 		return cty.DynamicPseudoType, nil
 	}
 
-	fieldIdxs := structTagIndices(rt)
-	if len(fieldIdxs) == 0 {
+	fieldInfos := structTagInfo(rt)
+	if len(fieldInfos) == 0 {
 		return cty.NilType, path.NewErrorf("no cty.Type for %s (no cty field tags)", rt)
 	}
 
-	atys := make(map[string]cty.Type, len(fieldIdxs))
+	atys := make(map[string]cty.Type, len(fieldInfos))
 	var optionals []string
 
 	{
 		// Temporary extension of path for attributes
 		path := append(path, nil)
 
-		for k, fi := range fieldIdxs {
+		for k, info := range fieldInfos {
 			path[len(path)-1] = cty.GetAttrStep{Name: k}
 
-			ft := rt.Field(fi).Type
+			ft := rt.Field(info.index).Type
 			aty, err := impliedType(ft, path)
 			if err != nil {
 				return cty.NilType, err
 			}
 
-			if ft.Kind() == reflect.Ptr {
+			if info.optional {
 				optionals = append(optionals, k)
 			}
 
