@@ -44,6 +44,12 @@ func Convert(in cty.Value, want cty.Type) (cty.Value, error) {
 		return in, nil
 	}
 
+	if want.Equals(cty.EmptyObject) || want.Equals(cty.EmptyTuple) {
+		// error when trying to convert `{"foo": "bar"}` to the empty type
+		// instead of returning `{}`.
+		return cty.NilVal, errors.New(MismatchMessage(in.Type(), want))
+	}
+
 	conv := GetConversionUnsafe(in.Type(), want)
 	if conv == nil {
 		return cty.NilVal, errors.New(MismatchMessage(in.Type(), want))
