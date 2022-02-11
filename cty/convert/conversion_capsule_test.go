@@ -102,6 +102,18 @@ func TestConvertCapsuleType(t *testing.T) {
 			To:      cty.Bool,
 			WantErr: `bool required`,
 		},
+		{
+			From: cty.ObjectVal(map[string]cty.Value{
+				"foo": cty.StringVal("var"),
+			}),
+			To:      cty.EmptyObject,
+			WantErr: `incorrect object attributes`,
+		},
+		{
+			From:    cty.TupleVal([]cty.Value{cty.StringVal("foo")}),
+			To:      cty.EmptyTuple,
+			WantErr: `tuple required`,
+		},
 	}
 
 	for _, test := range tests {
