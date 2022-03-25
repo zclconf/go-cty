@@ -78,13 +78,13 @@ propagate the argument marks to the result value so that most functions do
 not need to worry about handling marks.
 
 A function may opt in to handling marks itself for a particular parameter by
-setting `AllowMarks: true` on the definition of that parameter. If a function
+setting `AllowMarked: true` on the definition of that parameter. If a function
 opts in, it is therefore responsible for correctly propagating any marks onto
 its result.
 
 A function's `Type` implementation will receive automatically-unmarked values
-unless `AllowMarks` is set, which means that return-type checking alone will
-disregard any marks unless `AllowMarks` is set. Because type checking does not
+unless `AllowMarked` is set, which means that return-type checking alone will
+disregard any marks unless `AllowMarked` is set. Because type checking does not
 return a value, there is no way for type checking alone to communicate which
 marks it encountered during its work.
 
