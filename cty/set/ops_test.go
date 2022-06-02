@@ -11,13 +11,13 @@ import (
 // directly on the underlying data structure. The remaining operations are implemented
 // in terms of these.
 func TestBasicSetOps(t *testing.T) {
-	s := NewSet(testRules{})
-	want := map[int][]interface{}{}
+	s := NewSet(newTestRules())
+	want := map[int][]int{}
 	if !reflect.DeepEqual(s.vals, want) {
 		t.Fatalf("new set has unexpected contents %#v; want %#v", s.vals, want)
 	}
 	s.Add(1)
-	want[1] = []interface{}{1}
+	want[1] = []int{1}
 	if !reflect.DeepEqual(s.vals, want) {
 		t.Fatalf("after s.Add(1) set has unexpected contents %#v; want %#v", s.vals, want)
 	}
@@ -25,7 +25,7 @@ func TestBasicSetOps(t *testing.T) {
 		t.Fatalf("s.Has(1) returned false; want true")
 	}
 	s.Add(2)
-	want[2] = []interface{}{2}
+	want[2] = []int{2}
 	if !reflect.DeepEqual(s.vals, want) {
 		t.Fatalf("after s.Add(2) set has unexpected contents %#v; want %#v", s.vals, want)
 	}
@@ -52,8 +52,8 @@ func TestBasicSetOps(t *testing.T) {
 	}
 
 	vals := make([]int, 0)
-	s.EachValue(func(v interface{}) {
-		vals = append(vals, v.(int))
+	s.EachValue(func(v int) {
+		vals = append(vals, v)
 	})
 	sort.Ints(vals)
 	if want := []int{1, 2, 17, 33}; !reflect.DeepEqual(vals, want) {
@@ -67,13 +67,13 @@ func TestBasicSetOps(t *testing.T) {
 	}
 
 	s.Remove(17)
-	want[1] = []interface{}{1, 33}
+	want[1] = []int{1, 33}
 	if !reflect.DeepEqual(s.vals, want) {
 		t.Fatalf("after s.Remove(17) set has unexpected contents %#v; want %#v", s.vals, want)
 	}
 
 	s.Remove(1)
-	want[1] = []interface{}{33}
+	want[1] = []int{33}
 	if !reflect.DeepEqual(s.vals, want) {
 		t.Fatalf("after s.Remove(1) set has unexpected contents %#v; want %#v", s.vals, want)
 	}
@@ -85,8 +85,8 @@ func TestBasicSetOps(t *testing.T) {
 	}
 
 	vals = make([]int, 0)
-	s.EachValue(func(v interface{}) {
-		vals = append(vals, v.(int))
+	s.EachValue(func(v int) {
+		vals = append(vals, v)
 	})
 	if len(vals) > 0 {
 		t.Fatalf("s.EachValue produced values %#v; want no calls", vals)
@@ -95,38 +95,38 @@ func TestBasicSetOps(t *testing.T) {
 
 func TestUnion(t *testing.T) {
 	tests := []struct {
-		s1         Set
-		s2         Set
+		s1         Set[int]
+		s2         Set[int]
 		wantValues []int
 	}{
 		{
-			NewSet(testRules{}),
-			NewSet(testRules{}),
+			NewSet(newTestRules()),
+			NewSet(newTestRules()),
 			nil,
 		},
 		{
-			NewSetFromSlice(testRules{}, []interface{}{1}),
-			NewSet(testRules{}),
+			NewSetFromSlice(newTestRules(), []int{1}),
+			NewSet(newTestRules()),
 			[]int{1},
 		},
 		{
-			NewSetFromSlice(testRules{}, []interface{}{1}),
-			NewSetFromSlice(testRules{}, []interface{}{2}),
+			NewSetFromSlice(newTestRules(), []int{1}),
+			NewSetFromSlice(newTestRules(), []int{2}),
 			[]int{1, 2},
 		},
 		{
-			NewSetFromSlice(testRules{}, []interface{}{1}),
-			NewSetFromSlice(testRules{}, []interface{}{1}),
+			NewSetFromSlice(newTestRules(), []int{1}),
+			NewSetFromSlice(newTestRules(), []int{1}),
 			[]int{1},
 		},
 		{
-			NewSetFromSlice(testRules{}, []interface{}{17, 33}),
-			NewSetFromSlice(testRules{}, []interface{}{1}),
+			NewSetFromSlice(newTestRules(), []int{17, 33}),
+			NewSetFromSlice(newTestRules(), []int{1}),
 			[]int{1, 17, 33},
 		},
 		{
-			NewSetFromSlice(testRules{}, []interface{}{17, 33}),
-			NewSetFromSlice(testRules{}, []interface{}{2, 1}),
+			NewSetFromSlice(newTestRules(), []int{17, 33}),
+			NewSetFromSlice(newTestRules(), []int{2, 1}),
 			[]int{1, 2, 17, 33},
 		},
 	}
@@ -135,8 +135,8 @@ func TestUnion(t *testing.T) {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
 			got := test.s1.Union(test.s2)
 			var gotValues []int
-			got.EachValue(func(v interface{}) {
-				gotValues = append(gotValues, v.(int))
+			got.EachValue(func(v int) {
+				gotValues = append(gotValues, v)
 			})
 			sort.Ints(gotValues)
 			sort.Ints(test.wantValues)
@@ -157,48 +157,48 @@ func TestUnion(t *testing.T) {
 
 func TestIntersection(t *testing.T) {
 	tests := []struct {
-		s1         Set
-		s2         Set
+		s1         Set[int]
+		s2         Set[int]
 		wantValues []int
 	}{
 		{
-			NewSet(testRules{}),
-			NewSet(testRules{}),
+			NewSet(newTestRules()),
+			NewSet(newTestRules()),
 			nil,
 		},
 		{
-			NewSetFromSlice(testRules{}, []interface{}{1}),
-			NewSet(testRules{}),
+			NewSetFromSlice(newTestRules(), []int{1}),
+			NewSet(newTestRules()),
 			nil,
 		},
 		{
-			NewSetFromSlice(testRules{}, []interface{}{1}),
-			NewSetFromSlice(testRules{}, []interface{}{2}),
+			NewSetFromSlice(newTestRules(), []int{1}),
+			NewSetFromSlice(newTestRules(), []int{2}),
 			nil,
 		},
 		{
-			NewSetFromSlice(testRules{}, []interface{}{1}),
-			NewSetFromSlice(testRules{}, []interface{}{1}),
+			NewSetFromSlice(newTestRules(), []int{1}),
+			NewSetFromSlice(newTestRules(), []int{1}),
 			[]int{1},
 		},
 		{
-			NewSetFromSlice(testRules{}, []interface{}{1, 17}),
-			NewSetFromSlice(testRules{}, []interface{}{1, 2, 3}),
+			NewSetFromSlice(newTestRules(), []int{1, 17}),
+			NewSetFromSlice(newTestRules(), []int{1, 2, 3}),
 			[]int{1},
 		},
 		{
-			NewSetFromSlice(testRules{}, []interface{}{3, 2, 1}),
-			NewSetFromSlice(testRules{}, []interface{}{1, 2, 3}),
+			NewSetFromSlice(newTestRules(), []int{3, 2, 1}),
+			NewSetFromSlice(newTestRules(), []int{1, 2, 3}),
 			[]int{1, 2, 3},
 		},
 		{
-			NewSetFromSlice(testRules{}, []interface{}{17, 33}),
-			NewSetFromSlice(testRules{}, []interface{}{1}),
+			NewSetFromSlice(newTestRules(), []int{17, 33}),
+			NewSetFromSlice(newTestRules(), []int{1}),
 			nil,
 		},
 		{
-			NewSetFromSlice(testRules{}, []interface{}{17, 33}),
-			NewSetFromSlice(testRules{}, []interface{}{2, 1}),
+			NewSetFromSlice(newTestRules(), []int{17, 33}),
+			NewSetFromSlice(newTestRules(), []int{2, 1}),
 			nil,
 		},
 	}
@@ -207,8 +207,8 @@ func TestIntersection(t *testing.T) {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
 			got := test.s1.Intersection(test.s2)
 			var gotValues []int
-			got.EachValue(func(v interface{}) {
-				gotValues = append(gotValues, v.(int))
+			got.EachValue(func(v int) {
+				gotValues = append(gotValues, v)
 			})
 			sort.Ints(gotValues)
 			sort.Ints(test.wantValues)
@@ -229,48 +229,48 @@ func TestIntersection(t *testing.T) {
 
 func TestSubtract(t *testing.T) {
 	tests := []struct {
-		s1         Set
-		s2         Set
+		s1         Set[int]
+		s2         Set[int]
 		wantValues []int
 	}{
 		{
-			NewSet(testRules{}),
-			NewSet(testRules{}),
+			NewSet(newTestRules()),
+			NewSet(newTestRules()),
 			nil,
 		},
 		{
-			NewSetFromSlice(testRules{}, []interface{}{1}),
-			NewSet(testRules{}),
+			NewSetFromSlice(newTestRules(), []int{1}),
+			NewSet(newTestRules()),
 			[]int{1},
 		},
 		{
-			NewSetFromSlice(testRules{}, []interface{}{1}),
-			NewSetFromSlice(testRules{}, []interface{}{2}),
+			NewSetFromSlice(newTestRules(), []int{1}),
+			NewSetFromSlice(newTestRules(), []int{2}),
 			[]int{1},
 		},
 		{
-			NewSetFromSlice(testRules{}, []interface{}{1}),
-			NewSetFromSlice(testRules{}, []interface{}{1}),
+			NewSetFromSlice(newTestRules(), []int{1}),
+			NewSetFromSlice(newTestRules(), []int{1}),
 			nil,
 		},
 		{
-			NewSetFromSlice(testRules{}, []interface{}{1, 17}),
-			NewSetFromSlice(testRules{}, []interface{}{1, 2, 3}),
+			NewSetFromSlice(newTestRules(), []int{1, 17}),
+			NewSetFromSlice(newTestRules(), []int{1, 2, 3}),
 			[]int{17},
 		},
 		{
-			NewSetFromSlice(testRules{}, []interface{}{3, 2, 1}),
-			NewSetFromSlice(testRules{}, []interface{}{1, 2, 3}),
+			NewSetFromSlice(newTestRules(), []int{3, 2, 1}),
+			NewSetFromSlice(newTestRules(), []int{1, 2, 3}),
 			nil,
 		},
 		{
-			NewSetFromSlice(testRules{}, []interface{}{17, 33}),
-			NewSetFromSlice(testRules{}, []interface{}{1}),
+			NewSetFromSlice(newTestRules(), []int{17, 33}),
+			NewSetFromSlice(newTestRules(), []int{1}),
 			[]int{17, 33},
 		},
 		{
-			NewSetFromSlice(testRules{}, []interface{}{17, 33}),
-			NewSetFromSlice(testRules{}, []interface{}{2, 1}),
+			NewSetFromSlice(newTestRules(), []int{17, 33}),
+			NewSetFromSlice(newTestRules(), []int{2, 1}),
 			[]int{17, 33},
 		},
 	}
@@ -279,8 +279,8 @@ func TestSubtract(t *testing.T) {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
 			got := test.s1.Subtract(test.s2)
 			var gotValues []int
-			got.EachValue(func(v interface{}) {
-				gotValues = append(gotValues, v.(int))
+			got.EachValue(func(v int) {
+				gotValues = append(gotValues, v)
 			})
 			sort.Ints(gotValues)
 			sort.Ints(test.wantValues)
@@ -301,48 +301,48 @@ func TestSubtract(t *testing.T) {
 
 func TestSymmetricDifference(t *testing.T) {
 	tests := []struct {
-		s1         Set
-		s2         Set
+		s1         Set[int]
+		s2         Set[int]
 		wantValues []int
 	}{
 		{
-			NewSet(testRules{}),
-			NewSet(testRules{}),
+			NewSet(newTestRules()),
+			NewSet(newTestRules()),
 			nil,
 		},
 		{
-			NewSetFromSlice(testRules{}, []interface{}{1}),
-			NewSet(testRules{}),
+			NewSetFromSlice(newTestRules(), []int{1}),
+			NewSet(newTestRules()),
 			[]int{1},
 		},
 		{
-			NewSetFromSlice(testRules{}, []interface{}{1}),
-			NewSetFromSlice(testRules{}, []interface{}{2}),
+			NewSetFromSlice(newTestRules(), []int{1}),
+			NewSetFromSlice(newTestRules(), []int{2}),
 			[]int{1, 2},
 		},
 		{
-			NewSetFromSlice(testRules{}, []interface{}{1}),
-			NewSetFromSlice(testRules{}, []interface{}{1}),
+			NewSetFromSlice(newTestRules(), []int{1}),
+			NewSetFromSlice(newTestRules(), []int{1}),
 			nil,
 		},
 		{
-			NewSetFromSlice(testRules{}, []interface{}{1, 17}),
-			NewSetFromSlice(testRules{}, []interface{}{1, 2, 3}),
+			NewSetFromSlice(newTestRules(), []int{1, 17}),
+			NewSetFromSlice(newTestRules(), []int{1, 2, 3}),
 			[]int{2, 3, 17},
 		},
 		{
-			NewSetFromSlice(testRules{}, []interface{}{3, 2, 1}),
-			NewSetFromSlice(testRules{}, []interface{}{1, 2, 3}),
+			NewSetFromSlice(newTestRules(), []int{3, 2, 1}),
+			NewSetFromSlice(newTestRules(), []int{1, 2, 3}),
 			nil,
 		},
 		{
-			NewSetFromSlice(testRules{}, []interface{}{17, 33}),
-			NewSetFromSlice(testRules{}, []interface{}{1}),
+			NewSetFromSlice(newTestRules(), []int{17, 33}),
+			NewSetFromSlice(newTestRules(), []int{1}),
 			[]int{1, 17, 33},
 		},
 		{
-			NewSetFromSlice(testRules{}, []interface{}{17, 33}),
-			NewSetFromSlice(testRules{}, []interface{}{2, 1}),
+			NewSetFromSlice(newTestRules(), []int{17, 33}),
+			NewSetFromSlice(newTestRules(), []int{2, 1}),
 			[]int{1, 2, 17, 33},
 		},
 	}
@@ -351,8 +351,8 @@ func TestSymmetricDifference(t *testing.T) {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
 			got := test.s1.SymmetricDifference(test.s2)
 			var gotValues []int
-			got.EachValue(func(v interface{}) {
-				gotValues = append(gotValues, v.(int))
+			got.EachValue(func(v int) {
+				gotValues = append(gotValues, v)
 			})
 			sort.Ints(gotValues)
 			sort.Ints(test.wantValues)

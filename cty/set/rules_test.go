@@ -6,14 +6,20 @@ package set
 // situation where two non-equivalent values have the same hash value.
 type testRules struct{}
 
-func (r testRules) Hash(val interface{}) int {
-	return val.(int) % 16
+func newTestRules() Rules[int] {
+	return testRules{}
 }
 
-func (r testRules) Equivalent(val1 interface{}, val2 interface{}) bool {
+func (r testRules) Hash(val int) int {
+	return val % 16
+}
+
+func (r testRules) Equivalent(val1 int, val2 int) bool {
 	return val1 == val2
 }
 
-func (r testRules) SameRules(other Rules) bool {
-	return r == other // true if "other" is also a testRules
+func (r testRules) SameRules(other Rules[int]) bool {
+	// All testRules values are equal, so type-checking is enough.
+	_, ok := other.(testRules)
+	return ok
 }

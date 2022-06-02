@@ -303,8 +303,8 @@ func TestSetOrder(t *testing.T) {
 
 func TestSetRulesSameRules(t *testing.T) {
 	tests := []struct {
-		a    set.Rules
-		b    set.Rules
+		a    set.Rules[interface{}]
+		b    set.Rules[interface{}]
 		want bool
 	}{
 		{
@@ -330,16 +330,6 @@ func TestSetRulesSameRules(t *testing.T) {
 		{
 			setRules{Object(map[string]Type{"a": String})},
 			setRules{Object(map[string]Type{"a": Bool})},
-			false,
-		},
-		{
-			pathSetRules{},
-			pathSetRules{},
-			true,
-		},
-		{
-			setRules{DynamicPseudoType},
-			pathSetRules{},
 			false,
 		},
 	}

@@ -243,12 +243,12 @@ func TestIn(t *testing.T) {
 			Want:    cty.SetValEmpty(cty.Number),
 		},
 		{
-			GoValue: set.NewSet(&testSetRules{}),
+			GoValue: set.NewSet(set.Rules[interface{}](&testSetRules{})),
 			Type:    cty.Set(cty.Number),
 			Want:    cty.SetValEmpty(cty.Number),
 		},
 		{
-			GoValue: set.NewSetFromSlice(&testSetRules{}, []interface{}{1, 2}),
+			GoValue: set.NewSetFromSlice(set.Rules[interface{}](&testSetRules{}), []interface{}{1, 2}),
 			Type:    cty.Set(cty.Number),
 			Want: cty.SetVal([]cty.Value{
 				cty.NumberIntVal(1),
@@ -480,7 +480,7 @@ func (r testSetRules) Equivalent(v1 interface{}, v2 interface{}) bool {
 	return v1 == v2
 }
 
-func (r testSetRules) SameRules(other set.Rules) bool {
+func (r testSetRules) SameRules(other set.Rules[interface{}]) bool {
 	return r == other
 }
 
