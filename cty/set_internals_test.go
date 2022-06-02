@@ -45,21 +45,6 @@ func TestSetHashBytes(t *testing.T) {
 			nil,
 		},
 		{
-			// This weird case is an intentionally-invalid number value that
-			// mimics the incorrect result of a gob round-trip of a cty.Number
-			// value. For more information, see the function
-			// gobDecodeFixNumberPtr. Unfortunately the set internals need to
-			// be tolerant of this situation because gob-decoding a set
-			// causes this situation to arise before we have had an opportunity
-			// to run gobDecodeFixNumberPtr yet.
-			Value{
-				ty: Number,
-				v:  *big.NewFloat(13),
-			},
-			"13",
-			nil,
-		},
-		{
 			StringVal(""),
 			`""`,
 			nil,
@@ -178,7 +163,7 @@ func TestSetHashBytes(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(gobDecodeFixNumberPtrVal(test.value).GoString(), func(t *testing.T) {
+		t.Run(test.value.GoString(), func(t *testing.T) {
 			gotRaw, gotMarks := makeSetHashBytes(test.value)
 			got := string(gotRaw)
 			if got != test.want {

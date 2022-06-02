@@ -1,5 +1,12 @@
-# 1.10.1 (Unreleased)
+# 1.11.0 (Unreleased)
 
+## Upgrade Notes
+
+This release contains some changes to some aspects of the API that are either legacy or de-facto internal (from before the Go toolchain had an explicit idea of that). Any external module using these will experience these as breaking changes, but we know of no such caller and so are admitting these without a major release in the interests of not creating churn for users of the main API.
+
+* **`encoding/gob` support utilities removed**: we added these as a concession to HashiCorp who wanted to try to send `cty` values over some legacy protocols/formats used by legacy versions of HashiCorp Terraform. In the end those efforts were not successful for other reasons and so no Terraform release ever relied on this functionality.
+
+    `encoding/gob` support has been burdensome due to how its unmarshaler interface is defined and so `cty` values and types are no longer automatically compatible with `encoding/gob`. Callers should instead use explicitly-implemented encodings, such as the built-in JSON and msgpack encodings or external libraries which use the public `cty` API to encode and decode.
 
 # 1.10.0 (November 2, 2021)
 
