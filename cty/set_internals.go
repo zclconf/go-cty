@@ -254,6 +254,25 @@ func appendSetHashBytes(val Value, buf *bytes.Buffer, marks ValueMarks) {
 		return
 	}
 
+	if val.ty.IsCapsuleType() {
+		buf.WriteRune('«')
+		ops := val.ty.CapsuleOps()
+		if ops != nil && ops.HashKey != nil {
+			key := ops.HashKey(val.EncapsulatedValue())
+			buf.WriteString(fmt.Sprintf("%q", key))
+		} else {
+			// If there isn't an explicit hash implementation then we'll
+			// just generate the same hash value for every value of this
+			// type, which is logically fine but less efficient for
+			// larger sets because we'll have to bucket all values
+			// together and scan over them with Equals to determine
+			// set membership.
+			buf.WriteRune('?')
+		}
+		buf.WriteRune('»')
+		return
+	}
+
 	// should never get down here
-	panic("unsupported type in set hash")
+	panic(fmt.Sprintf("unsupported type %#v in set hash", val.ty))
 }

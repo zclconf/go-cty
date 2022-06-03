@@ -11,6 +11,10 @@ This release contains some changes to some aspects of the API that are either le
 
     Since type parameters are not supported by earlier versions of the Go compiler, callers must upgrade to Go 1.18 before using cty v1.11.0 or later.
 
+## Other changes in this release
+
+* `cty`: It's now possible to use capsule types in the elements of sets. Previously `cty` would panic if asked to construct a value of a set type whose element type either is or contains a capsule type, but there is now explicit support for storing encapsulated values in sets and optional (but recommended) support for a custom hashing function per type in order to improve performance for sets with a large number of elements.
+
 # 1.10.0 (November 2, 2021)
 
 * `cty`: The documented definition and comparison logic of `cty.Number` is now refined to acknowledge that its true range is limited only to values that have both a binary floating point and decimal representation, because `cty` values are primarily designed to traverse JSON serialization where numbers are always defined as decimal strings.

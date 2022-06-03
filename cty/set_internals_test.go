@@ -3,12 +3,30 @@ package cty
 import (
 	"fmt"
 	"math/big"
+	"reflect"
 	"testing"
 
 	"github.com/zclconf/go-cty/cty/set"
 )
 
 func TestSetHashBytes(t *testing.T) {
+	type encapsulated struct {
+		name string
+	}
+	typeWithHash := CapsuleWithOps("with hash function", reflect.TypeOf(encapsulated{}), &CapsuleOps{
+		RawEquals: func(a, b interface{}) bool {
+			return a.(*encapsulated).name == b.(*encapsulated).name
+		},
+		HashKey: func(v interface{}) string {
+			return v.(*encapsulated).name
+		},
+	})
+	typeWithoutHash := CapsuleWithOps("without hash function", reflect.TypeOf(encapsulated{}), &CapsuleOps{
+		RawEquals: func(a, b interface{}) bool {
+			return a.(*encapsulated).name == b.(*encapsulated).name
+		},
+	})
+
 	tests := []struct {
 		value     Value
 		want      string
@@ -159,6 +177,18 @@ func TestSetHashBytes(t *testing.T) {
 			}),
 			`<54;"ermintrude";>`,
 			NewValueMarks(1, 2),
+		},
+
+		// Encapsulated values
+		{
+			CapsuleVal(typeWithHash, &encapsulated{"boop"}),
+			`«"boop"»`, // we use the guillemets to differentiate this from a cty.String hash
+			nil,
+		},
+		{
+			CapsuleVal(typeWithoutHash, &encapsulated{"boop"}),
+			`«?»`, // we use the guillemets to differentiate a known value without a hash func from an unknown value
+			nil,
 		},
 	}
 
