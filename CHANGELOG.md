@@ -13,6 +13,7 @@ This release contains some changes to some aspects of the API that are either le
 
 ## Other changes in this release
 
+* `cty`: Improved performance when comparing nonzero numbers to zero, by performing a relatively-cheap sign check on both numbers before falling back on the more expensive general equality implementation. ([#125](https://github.com/zclconf/go-cty/pull/125))
 * `cty`: It's now possible to use capsule types in the elements of sets. Previously `cty` would panic if asked to construct a value of a set type whose element type either is or contains a capsule type, but there is now explicit support for storing encapsulated values in sets and optional (but recommended) support for a custom hashing function per type in order to improve performance for sets with a large number of elements.
 
 # 1.10.0 (November 2, 2021)
