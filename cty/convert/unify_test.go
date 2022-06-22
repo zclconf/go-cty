@@ -164,6 +164,23 @@ func TestUnify(t *testing.T) {
 			[]bool{true, true},
 		},
 		{
+			// The second tuple value could be anything, so we can't unify
+			// these as a list.
+			// FIXME: While a unification is possible, we get a NilType for
+			// now until we can handle more complex recursive unification.
+			[]cty.Type{
+				cty.Tuple([]cty.Type{
+					cty.Object(map[string]cty.Type{
+						"a": cty.String,
+					}),
+					cty.DynamicPseudoType,
+				}),
+				cty.List(cty.DynamicPseudoType),
+			},
+			cty.NilType,
+			nil,
+		},
+		{
 			// unifies to the same result as above, since the only difference
 			// is the addition of a list
 			[]cty.Type{
