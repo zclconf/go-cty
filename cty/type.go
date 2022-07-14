@@ -44,6 +44,10 @@ func (t Type) Equals(other Type) bool {
 
 // FriendlyName returns a human-friendly *English* name for the given type.
 func (t Type) FriendlyName() string {
+	if t.typeImpl == nil {
+		return "nil"
+	}
+
 	return t.typeImpl.FriendlyName(friendlyTypeName)
 }
 

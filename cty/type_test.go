@@ -248,3 +248,37 @@ func TestTypeGoString(t *testing.T) {
 		})
 	}
 }
+
+func TestTypeFriendlyName(t *testing.T) {
+	tests := []struct {
+		Type Type
+		Want string
+	}{
+		{
+			String,
+			`string`,
+		},
+		{
+			Number,
+			`number`,
+		},
+		{
+			Bool,
+			`bool`,
+		},
+		{
+			NilType,
+			`nil`,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.Type.GoString(), func(t *testing.T) {
+			got := test.Type.FriendlyName()
+			want := test.Want
+			if got != want {
+				t.Errorf("wrong result\ngot:  %s\nwant: %s", got, want)
+			}
+		})
+	}
+}
