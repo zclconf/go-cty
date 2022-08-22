@@ -2064,6 +2064,110 @@ func TestFlatten(t *testing.T) {
 			cty.UnknownVal(cty.DynamicPseudoType),
 			"",
 		},
+		{
+			// null of an unknown type
+			cty.TupleVal([]cty.Value{
+				cty.NullVal(cty.DynamicPseudoType),
+				cty.True,
+			}),
+			cty.TupleVal([]cty.Value{
+				cty.NullVal(cty.DynamicPseudoType),
+				cty.True,
+			}),
+			"",
+		},
+		{
+			// null of a string type
+			cty.TupleVal([]cty.Value{
+				cty.NullVal(cty.String),
+				cty.True,
+			}),
+			cty.TupleVal([]cty.Value{
+				cty.NullVal(cty.String),
+				cty.True,
+			}),
+			"",
+		},
+		{
+			// null of a list type
+			cty.TupleVal([]cty.Value{
+				cty.NullVal(cty.List(cty.String)),
+				cty.True,
+			}),
+			cty.TupleVal([]cty.Value{
+				cty.NullVal(cty.List(cty.String)),
+				cty.True,
+			}),
+			"",
+		},
+		{
+			// null of a tuple type
+			cty.TupleVal([]cty.Value{
+				cty.NullVal(cty.EmptyTuple),
+				cty.True,
+			}),
+			cty.TupleVal([]cty.Value{
+				cty.NullVal(cty.EmptyTuple),
+				cty.True,
+			}),
+			"",
+		},
+		{
+			// nested null of an unknown type
+			cty.TupleVal([]cty.Value{
+				cty.TupleVal([]cty.Value{
+					cty.NullVal(cty.DynamicPseudoType),
+				}),
+				cty.True,
+			}),
+			cty.TupleVal([]cty.Value{
+				cty.NullVal(cty.DynamicPseudoType),
+				cty.True,
+			}),
+			"",
+		},
+		{
+			// nested null of a string type
+			cty.TupleVal([]cty.Value{
+				cty.TupleVal([]cty.Value{
+					cty.NullVal(cty.String),
+				}),
+				cty.True,
+			}),
+			cty.TupleVal([]cty.Value{
+				cty.NullVal(cty.String),
+				cty.True,
+			}),
+			"",
+		},
+		{
+			// nested null of a list type
+			cty.TupleVal([]cty.Value{
+				cty.TupleVal([]cty.Value{
+					cty.NullVal(cty.List(cty.String)),
+				}),
+				cty.True,
+			}),
+			cty.TupleVal([]cty.Value{
+				cty.NullVal(cty.List(cty.String)),
+				cty.True,
+			}),
+			"",
+		},
+		{
+			// nested null of a tuple type
+			cty.TupleVal([]cty.Value{
+				cty.TupleVal([]cty.Value{
+					cty.NullVal(cty.EmptyTuple),
+				}),
+				cty.True,
+			}),
+			cty.TupleVal([]cty.Value{
+				cty.NullVal(cty.EmptyTuple),
+				cty.True,
+			}),
+			"",
+		},
 	}
 
 	for _, test := range tests {
