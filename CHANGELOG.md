@@ -16,6 +16,7 @@ This release contains some changes to some aspects of the API that are either le
 * `cty`: Improved performance when comparing nonzero numbers to zero, by performing a relatively-cheap sign check on both numbers before falling back on the more expensive general equality implementation. ([#125](https://github.com/zclconf/go-cty/pull/125))
 * `cty`: It's now possible to use capsule types in the elements of sets. Previously `cty` would panic if asked to construct a value of a set type whose element type either is or contains a capsule type, but there is now explicit support for storing encapsulated values in sets and optional (but recommended) support for a custom hashing function per type in order to improve performance for sets with a large number of elements.
 * `convert`: Unify will no longer panic when asked to find a common base type for a tuple type and a list of unknown element type, and will instead just signal that such a unification is not possible. ([#126](https://github.com/zclconf/go-cty/pull/126))
+* `stdlib`: `FlattenFunc` will no longer panic if it encounters a null value of a type that would normally be subject to flattening. Instead, it will treat it in the same way as a null value of any non-flattenable type. ([#129](https://github.com/zclconf/go-cty/pull/129))
 
 # 1.10.0 (November 2, 2021)
 
