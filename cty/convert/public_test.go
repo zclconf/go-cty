@@ -2,6 +2,7 @@ package convert
 
 import (
 	"fmt"
+	"math/big"
 	"testing"
 
 	"github.com/zclconf/go-cty/cty"
@@ -988,6 +989,114 @@ func TestConvert(t *testing.T) {
 				cty.NullVal(cty.DynamicPseudoType),
 				cty.NullVal(cty.DynamicPseudoType),
 			}),
+			WantError: false,
+		},
+		{
+			Value: cty.ListVal([]cty.Value{
+				cty.ObjectVal(map[string]cty.Value{
+					"xs": cty.ListVal([]cty.Value{
+						cty.ObjectVal(map[string]cty.Value{
+							"x": cty.NumberVal(big.NewFloat(1234)),
+						}),
+					}),
+				}),
+				cty.ObjectVal(map[string]cty.Value{
+					"xs": cty.ListValEmpty(cty.Object(map[string]cty.Type{
+						"x": cty.Number,
+					})),
+				})},
+			),
+			Type: cty.List(cty.Object(map[string]cty.Type{
+				"xs": cty.List(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+					"x": cty.Number,
+				}, []string{"x"})),
+			})),
+			Want: cty.ListVal([]cty.Value{
+				cty.ObjectVal(map[string]cty.Value{
+					"xs": cty.ListVal([]cty.Value{
+						cty.ObjectVal(map[string]cty.Value{
+							"x": cty.NumberVal(big.NewFloat(1234)),
+						}),
+					}),
+				}),
+				cty.ObjectVal(map[string]cty.Value{
+					"xs": cty.ListValEmpty(cty.Object(map[string]cty.Type{
+						"x": cty.Number,
+					})),
+				})},
+			),
+			WantError: false,
+		},
+		{
+			Value: cty.SetVal([]cty.Value{
+				cty.ObjectVal(map[string]cty.Value{
+					"xs": cty.SetVal([]cty.Value{
+						cty.ObjectVal(map[string]cty.Value{
+							"x": cty.NumberVal(big.NewFloat(1234)),
+						}),
+					}),
+				}),
+				cty.ObjectVal(map[string]cty.Value{
+					"xs": cty.SetValEmpty(cty.Object(map[string]cty.Type{
+						"x": cty.Number,
+					})),
+				})},
+			),
+			Type: cty.Set(cty.Object(map[string]cty.Type{
+				"xs": cty.Set(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+					"x": cty.Number,
+				}, []string{"x"})),
+			})),
+			Want: cty.SetVal([]cty.Value{
+				cty.ObjectVal(map[string]cty.Value{
+					"xs": cty.SetVal([]cty.Value{
+						cty.ObjectVal(map[string]cty.Value{
+							"x": cty.NumberVal(big.NewFloat(1234)),
+						}),
+					}),
+				}),
+				cty.ObjectVal(map[string]cty.Value{
+					"xs": cty.SetValEmpty(cty.Object(map[string]cty.Type{
+						"x": cty.Number,
+					})),
+				})},
+			),
+			WantError: false,
+		},
+		{
+			Value: cty.MapVal(map[string]cty.Value{
+				"foo": cty.ObjectVal(map[string]cty.Value{
+					"xs": cty.MapVal(map[string]cty.Value{
+						"nested_foo": cty.ObjectVal(map[string]cty.Value{
+							"x": cty.NumberVal(big.NewFloat(1234)),
+						}),
+					}),
+				}),
+				"bar": cty.ObjectVal(map[string]cty.Value{
+					"xs": cty.MapValEmpty(cty.Object(map[string]cty.Type{
+						"x": cty.Number,
+					})),
+				})},
+			),
+			Type: cty.Map(cty.Object(map[string]cty.Type{
+				"xs": cty.Map(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+					"x": cty.Number,
+				}, []string{"x"})),
+			})),
+			Want: cty.MapVal(map[string]cty.Value{
+				"foo": cty.ObjectVal(map[string]cty.Value{
+					"xs": cty.MapVal(map[string]cty.Value{
+						"nested_foo": cty.ObjectVal(map[string]cty.Value{
+							"x": cty.NumberVal(big.NewFloat(1234)),
+						}),
+					}),
+				}),
+				"bar": cty.ObjectVal(map[string]cty.Value{
+					"xs": cty.MapValEmpty(cty.Object(map[string]cty.Type{
+						"x": cty.Number,
+					})),
+				})},
+			),
 			WantError: false,
 		},
 	}
