@@ -1,6 +1,8 @@
 # cty
 
-`cty` (pronounced "see-tie") is a dynamic type system for applications written
+`cty` (pronounced "see-tie", emoji: :eyes: :necktie:,
+[IPA](https://en.wikipedia.org/wiki/International_Phonetic_Alphabet): /si'tʰaɪ/)
+is a dynamic type system for applications written
 in Go that need to represent user-supplied values without losing type
 information. The primary intended use is for implementing configuration
 languages, but other uses may be possible too.
