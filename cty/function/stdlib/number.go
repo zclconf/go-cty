@@ -11,9 +11,11 @@ import (
 )
 
 var AbsoluteFunc = function.New(&function.Spec{
+	Description: "abs returns the absolute value of the given number.",
 	Params: []function.Parameter{
 		{
 			Name:             "num",
+			Description:      "The numeric value to process.",
 			Type:             cty.Number,
 			AllowDynamicType: true,
 			AllowMarked:      true,
@@ -293,9 +295,11 @@ var NegateFunc = function.New(&function.Spec{
 })
 
 var MinFunc = function.New(&function.Spec{
-	Params: []function.Parameter{},
+	Description: "min takes one or more numbers and returns the smallest number from the set.",
+	Params:      []function.Parameter{},
 	VarParam: &function.Parameter{
 		Name:             "numbers",
+		Description:      "One or more numbers.",
 		Type:             cty.Number,
 		AllowDynamicType: true,
 	},
@@ -317,9 +321,11 @@ var MinFunc = function.New(&function.Spec{
 })
 
 var MaxFunc = function.New(&function.Spec{
-	Params: []function.Parameter{},
+	Description: "max takes one or more numbers and returns the greatest number from the set.",
+	Params:      []function.Parameter{},
 	VarParam: &function.Parameter{
 		Name:             "numbers",
+		Description:      "One or more numbers.",
 		Type:             cty.Number,
 		AllowDynamicType: true,
 	},
@@ -363,10 +369,12 @@ var IntFunc = function.New(&function.Spec{
 // CeilFunc is a function that returns the closest whole number greater
 // than or equal to the given value.
 var CeilFunc = function.New(&function.Spec{
+	Description: "ceil returns the closest whole number that is greater than or equal to the given value, which may be a fraction.",
 	Params: []function.Parameter{
 		{
-			Name: "num",
-			Type: cty.Number,
+			Name:        "num",
+			Description: "The value to round.",
+			Type:        cty.Number,
 		},
 	},
 	Type: function.StaticReturnType(cty.Number),
@@ -392,10 +400,12 @@ var CeilFunc = function.New(&function.Spec{
 // FloorFunc is a function that returns the closest whole number lesser
 // than or equal to the given value.
 var FloorFunc = function.New(&function.Spec{
+	Description: "floor returns the closest whole number that is less than or equal to the given value, which may be a fraction.",
 	Params: []function.Parameter{
 		{
-			Name: "num",
-			Type: cty.Number,
+			Name:        "num",
+			Description: "The value to round.",
+			Type:        cty.Number,
 		},
 	},
 	Type: function.StaticReturnType(cty.Number),
@@ -420,14 +430,17 @@ var FloorFunc = function.New(&function.Spec{
 
 // LogFunc is a function that returns the logarithm of a given number in a given base.
 var LogFunc = function.New(&function.Spec{
+	Description: "log returns the logarithm of a given number in a given base.",
 	Params: []function.Parameter{
 		{
-			Name: "num",
-			Type: cty.Number,
+			Name:        "num",
+			Description: "The input number.",
+			Type:        cty.Number,
 		},
 		{
-			Name: "base",
-			Type: cty.Number,
+			Name:        "base",
+			Description: "The logarithmic base to use.",
+			Type:        cty.Number,
 		},
 	},
 	Type: function.StaticReturnType(cty.Number),
@@ -448,14 +461,17 @@ var LogFunc = function.New(&function.Spec{
 
 // PowFunc is a function that returns the logarithm of a given number in a given base.
 var PowFunc = function.New(&function.Spec{
+	Description: "pow calculates an exponent, by raising its first argument to the power of the second argument.",
 	Params: []function.Parameter{
 		{
-			Name: "num",
-			Type: cty.Number,
+			Name:        "num",
+			Description: "The base to use.",
+			Type:        cty.Number,
 		},
 		{
-			Name: "power",
-			Type: cty.Number,
+			Name:        "power",
+			Description: "The exponent to use.",
+			Type:        cty.Number,
 		},
 	},
 	Type: function.StaticReturnType(cty.Number),
@@ -477,10 +493,12 @@ var PowFunc = function.New(&function.Spec{
 // SignumFunc is a function that determines the sign of a number, returning a
 // number between -1 and 1 to represent the sign..
 var SignumFunc = function.New(&function.Spec{
+	Description: "signum determines the sign of a number, returning a number between -1 and 1 to represent the sign.",
 	Params: []function.Parameter{
 		{
-			Name: "num",
-			Type: cty.Number,
+			Name:        "num",
+			Description: "The input number.",
+			Type:        cty.Number,
 		},
 	},
 	Type: function.StaticReturnType(cty.Number),
@@ -502,14 +520,17 @@ var SignumFunc = function.New(&function.Spec{
 
 // ParseIntFunc is a function that parses a string argument and returns an integer of the specified base.
 var ParseIntFunc = function.New(&function.Spec{
+	Description: "parseint parses the given string as a representation of an integer in the specified base and returns the resulting number.",
 	Params: []function.Parameter{
 		{
-			Name: "number",
-			Type: cty.DynamicPseudoType,
+			Name:        "number",
+			Description: "The input to parse.",
+			Type:        cty.DynamicPseudoType,
 		},
 		{
-			Name: "base",
-			Type: cty.Number,
+			Name:        "base",
+			Description: "The base for parsing; it must be between 2 and 62 inclusive.",
+			Type:        cty.Number,
 		},
 	},
 
