@@ -29,15 +29,18 @@ var SetHasElementFunc = function.New(&function.Spec{
 })
 
 var SetUnionFunc = function.New(&function.Spec{
+	Description: "The setunion function takes multiple sets and produces a single set containing the elements from all of the given sets.",
 	Params: []function.Parameter{
 		{
 			Name:             "first_set",
+			Description:      "The first set of elements.",
 			Type:             cty.Set(cty.DynamicPseudoType),
 			AllowDynamicType: true,
 		},
 	},
 	VarParam: &function.Parameter{
 		Name:             "other_sets",
+		Description:      "Other sets for comparison.",
 		Type:             cty.Set(cty.DynamicPseudoType),
 		AllowDynamicType: true,
 	},
@@ -48,15 +51,18 @@ var SetUnionFunc = function.New(&function.Spec{
 })
 
 var SetIntersectionFunc = function.New(&function.Spec{
+	Description: "The setintersection function takes multiple sets and produces a single set containing only the elements that all of the given sets have in common.",
 	Params: []function.Parameter{
 		{
 			Name:             "first_set",
+			Description:      "The first set of elements.",
 			Type:             cty.Set(cty.DynamicPseudoType),
 			AllowDynamicType: true,
 		},
 	},
 	VarParam: &function.Parameter{
 		Name:             "other_sets",
+		Description:      "Other sets for comparison.",
 		Type:             cty.Set(cty.DynamicPseudoType),
 		AllowDynamicType: true,
 	},
@@ -67,14 +73,17 @@ var SetIntersectionFunc = function.New(&function.Spec{
 })
 
 var SetSubtractFunc = function.New(&function.Spec{
+	Description: "The setsubtract function returns a new set containing the elements from the first set that are not present in the second set.",
 	Params: []function.Parameter{
 		{
 			Name:             "a",
+			Description:      "The first set of elements.",
 			Type:             cty.Set(cty.DynamicPseudoType),
 			AllowDynamicType: true,
 		},
 		{
 			Name:             "b",
+			Description:      "The second set of elements.",
 			Type:             cty.Set(cty.DynamicPseudoType),
 			AllowDynamicType: true,
 		},
