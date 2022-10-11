@@ -127,15 +127,18 @@ var LengthFunc = function.New(&function.Spec{
 })
 
 var ElementFunc = function.New(&function.Spec{
+	Description: "element retrieves a single element from a list.",
 	Params: []function.Parameter{
 		{
 			Name:        "list",
+			Description: "The input list.",
 			Type:        cty.DynamicPseudoType,
 			AllowMarked: true,
 		},
 		{
-			Name: "index",
-			Type: cty.Number,
+			Name:        "index",
+			Description: "Index to get; it must be a non-negative integer.",
+			Type:        cty.Number,
 		},
 	},
 	Type: func(args []cty.Value) (cty.Type, error) {
@@ -206,9 +209,11 @@ var ElementFunc = function.New(&function.Spec{
 // CoalesceListFunc is a function that takes any number of list arguments
 // and returns the first one that isn't empty.
 var CoalesceListFunc = function.New(&function.Spec{
-	Params: []function.Parameter{},
+	Description: "coalescelist takes any number of list arguments and returns the first one that isn't empty.",
+	Params:      []function.Parameter{},
 	VarParam: &function.Parameter{
 		Name:             "vals",
+		Description:      "Any number of lists.",
 		Type:             cty.DynamicPseudoType,
 		AllowUnknown:     true,
 		AllowDynamicType: true,
@@ -270,10 +275,12 @@ var CoalesceListFunc = function.New(&function.Spec{
 // CompactFunc is a function that takes a list of strings and returns a new list
 // with any empty string elements removed.
 var CompactFunc = function.New(&function.Spec{
+	Description: "compact takes a list of strings and returns a new list with any empty string elements removed.",
 	Params: []function.Parameter{
 		{
-			Name: "list",
-			Type: cty.List(cty.String),
+			Name:        "list",
+			Description: "The list of strings.",
+			Type:        cty.List(cty.String),
 		},
 	},
 	Type: function.StaticReturnType(cty.List(cty.String)),
@@ -306,14 +313,17 @@ var CompactFunc = function.New(&function.Spec{
 // ContainsFunc is a function that determines whether a given list or
 // set contains a given single value as one of its elements.
 var ContainsFunc = function.New(&function.Spec{
+	Description: "contains determines whether a given list or set contains a given single value as one of its elements.",
 	Params: []function.Parameter{
 		{
-			Name: "list",
-			Type: cty.DynamicPseudoType,
+			Name:        "list",
+			Description: "A list to search in.",
+			Type:        cty.DynamicPseudoType,
 		},
 		{
-			Name: "value",
-			Type: cty.DynamicPseudoType,
+			Name:        "value",
+			Description: "The value to search for.",
+			Type:        cty.DynamicPseudoType,
 		},
 	},
 	Type: function.StaticReturnType(cty.Bool),
@@ -364,10 +374,12 @@ var ContainsFunc = function.New(&function.Spec{
 // DistinctFunc is a function that takes a list and returns a new list
 // with any duplicate elements removed.
 var DistinctFunc = function.New(&function.Spec{
+	Description: "distinct takes a list and returns a new list with any duplicate elements removed.",
 	Params: []function.Parameter{
 		{
-			Name: "list",
-			Type: cty.List(cty.DynamicPseudoType),
+			Name:        "list",
+			Description: "The input list.",
+			Type:        cty.List(cty.DynamicPseudoType),
 		},
 	},
 	Type: func(args []cty.Value) (cty.Type, error) {
@@ -399,14 +411,17 @@ var DistinctFunc = function.New(&function.Spec{
 // ChunklistFunc is a function that splits a single list into fixed-size chunks,
 // returning a list of lists.
 var ChunklistFunc = function.New(&function.Spec{
+	Description: "chunklist splits a single list into fixed-size chunks, returning a list of lists.",
 	Params: []function.Parameter{
 		{
 			Name:        "list",
+			Description: "The input list.",
 			Type:        cty.List(cty.DynamicPseudoType),
 			AllowMarked: true,
 		},
 		{
 			Name:        "size",
+			Description: "The chunk length.",
 			Type:        cty.Number,
 			AllowMarked: true,
 		},
@@ -471,9 +486,11 @@ var ChunklistFunc = function.New(&function.Spec{
 // FlattenFunc is a function that takes a list and replaces any elements
 // that are lists with a flattened sequence of the list contents.
 var FlattenFunc = function.New(&function.Spec{
+	Description: "flatten takes a list and replaces any elements that are lists with a flattened sequence of the list contents.",
 	Params: []function.Parameter{
 		{
 			Name:        "list",
+			Description: "The input list.",
 			Type:        cty.DynamicPseudoType,
 			AllowMarked: true,
 		},
@@ -567,9 +584,11 @@ func flattener(flattenList cty.Value) ([]cty.Value, []cty.ValueMarks, bool) {
 
 // KeysFunc is a function that takes a map and returns a sorted list of the map keys.
 var KeysFunc = function.New(&function.Spec{
+	Description: "keys takes a map and returns a list containing the keys from that map.",
 	Params: []function.Parameter{
 		{
 			Name:         "inputMap",
+			Description:  "The input map.",
 			Type:         cty.DynamicPseudoType,
 			AllowUnknown: true,
 			AllowMarked:  true,
@@ -734,9 +753,11 @@ var LookupFunc = function.New(&function.Spec{
 // If more than one given map or object defines the same key then the one that
 // is later in the argument sequence takes precedence.
 var MergeFunc = function.New(&function.Spec{
-	Params: []function.Parameter{},
+	Description: "merge takes an arbitrary number of maps or objects, and returns a single map or object that contains a merged set of elements from all arguments.",
+	Params:      []function.Parameter{},
 	VarParam: &function.Parameter{
 		Name:             "maps",
+		Description:      "Two or more maps or objects.",
 		Type:             cty.DynamicPseudoType,
 		AllowDynamicType: true,
 		AllowNull:        true,
@@ -850,9 +871,11 @@ var MergeFunc = function.New(&function.Spec{
 // ReverseListFunc takes a sequence and produces a new sequence of the same length
 // with all of the same elements as the given sequence but in reverse order.
 var ReverseListFunc = function.New(&function.Spec{
+	Description: "reverse takes a sequence and produces a new sequence of the same length with all of the same elements as the given sequence but in reverse order.",
 	Params: []function.Parameter{
 		{
 			Name:        "list",
+			Description: "The input sequence.",
 			Type:        cty.DynamicPseudoType,
 			AllowMarked: true,
 		},
@@ -898,9 +921,11 @@ var ReverseListFunc = function.New(&function.Spec{
 // preserving the ordering of all of the input lists. Otherwise the result is a
 // set of tuples.
 var SetProductFunc = function.New(&function.Spec{
-	Params: []function.Parameter{},
+	Description: "The setproduct function finds all of the possible combinations of elements from all of the given sets by computing the Cartesian product.",
+	Params:      []function.Parameter{},
 	VarParam: &function.Parameter{
 		Name:        "sets",
+		Description: "Two or more sets as input.",
 		Type:        cty.DynamicPseudoType,
 		AllowMarked: true,
 	},
@@ -1038,19 +1063,23 @@ var SetProductFunc = function.New(&function.Spec{
 // SliceFunc is a function that extracts some consecutive elements
 // from within a list.
 var SliceFunc = function.New(&function.Spec{
+	Description: "slice extracts some consecutive elements from within a list.",
 	Params: []function.Parameter{
 		{
 			Name:        "list",
+			Description: "The input list.",
 			Type:        cty.DynamicPseudoType,
 			AllowMarked: true,
 		},
 		{
-			Name: "start_index",
-			Type: cty.Number,
+			Name:        "start_index",
+			Description: "The inclusive start index.",
+			Type:        cty.Number,
 		},
 		{
-			Name: "end_index",
-			Type: cty.Number,
+			Name:        "end_index",
+			Description: "The exclusive end index.",
+			Type:        cty.Number,
 		},
 	},
 	Type: func(args []cty.Value) (cty.Type, error) {
@@ -1159,9 +1188,11 @@ func sliceIndexes(args []cty.Value) (int, int, bool, error) {
 // ValuesFunc is a function that returns a list of the map values,
 // in the order of the sorted keys.
 var ValuesFunc = function.New(&function.Spec{
+	Description: "values takes a map and returns a list containing the values of the elements in that map.",
 	Params: []function.Parameter{
 		{
 			Name:        "values",
+			Description: "The input map.",
 			Type:        cty.DynamicPseudoType,
 			AllowMarked: true,
 		},
@@ -1226,14 +1257,17 @@ var ValuesFunc = function.New(&function.Spec{
 // ZipmapFunc is a function that constructs a map from a list of keys
 // and a corresponding list of values.
 var ZipmapFunc = function.New(&function.Spec{
+	Description: "zipmap constructs a map from a list of keys and a corresponding list of values.",
 	Params: []function.Parameter{
 		{
 			Name:        "keys",
+			Description: "The list of string keys.",
 			Type:        cty.List(cty.String),
 			AllowMarked: true,
 		},
 		{
 			Name:        "values",
+			Description: "The list of values.",
 			Type:        cty.DynamicPseudoType,
 			AllowMarked: true,
 		},
