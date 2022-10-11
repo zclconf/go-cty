@@ -18,16 +18,19 @@ import (
 //go:generate gofmt -w format_fsm.go
 
 var FormatFunc = function.New(&function.Spec{
+	Description: "The format function produces a string by formatting a number of other values according to a specification string.",
 	Params: []function.Parameter{
 		{
-			Name: "format",
-			Type: cty.String,
+			Name:        "format",
+			Description: "A string that includes formatting sequences.",
+			Type:        cty.String,
 		},
 	},
 	VarParam: &function.Parameter{
-		Name:      "args",
-		Type:      cty.DynamicPseudoType,
-		AllowNull: true,
+		Name:        "args",
+		Description: "Arguments to the format string.",
+		Type:        cty.DynamicPseudoType,
+		AllowNull:   true,
 	},
 	Type: function.StaticReturnType(cty.String),
 	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
@@ -45,14 +48,17 @@ var FormatFunc = function.New(&function.Spec{
 })
 
 var FormatListFunc = function.New(&function.Spec{
+	Description: "formatlist produces a list of strings by formatting a number of other values according to a specification string.",
 	Params: []function.Parameter{
 		{
-			Name: "format",
-			Type: cty.String,
+			Name:        "format",
+			Description: "A string that includes formatting sequences.",
+			Type:        cty.String,
 		},
 	},
 	VarParam: &function.Parameter{
 		Name:         "args",
+		Description:  "Arguments to the format string. Can be a mixture of list and non-list arguments.",
 		Type:         cty.DynamicPseudoType,
 		AllowNull:    true,
 		AllowUnknown: true,
@@ -186,32 +192,32 @@ var FormatListFunc = function.New(&function.Spec{
 //
 // It supports the following "verbs":
 //
-//     %%      Literal percent sign, consuming no value
-//     %v      A default formatting of the value based on type, as described below.
-//     %#v     JSON serialization of the value
-//     %t      Converts to boolean and then produces "true" or "false"
-//     %b      Converts to number, requires integer, produces binary representation
-//     %d      Converts to number, requires integer, produces decimal representation
-//     %o      Converts to number, requires integer, produces octal representation
-//     %x      Converts to number, requires integer, produces hexadecimal representation
-//             with lowercase letters
-//     %X      Like %x but with uppercase letters
-//     %e      Converts to number, produces scientific notation like -1.234456e+78
-//     %E      Like %e but with an uppercase "E" representing the exponent
-//     %f      Converts to number, produces decimal representation with fractional
-//             part but no exponent, like 123.456
-//     %g      %e for large exponents or %f otherwise
-//     %G      %E for large exponents or %f otherwise
-//     %s      Converts to string and produces the string's characters
-//     %q      Converts to string and produces JSON-quoted string representation,
-//             like %v.
+//	%%      Literal percent sign, consuming no value
+//	%v      A default formatting of the value based on type, as described below.
+//	%#v     JSON serialization of the value
+//	%t      Converts to boolean and then produces "true" or "false"
+//	%b      Converts to number, requires integer, produces binary representation
+//	%d      Converts to number, requires integer, produces decimal representation
+//	%o      Converts to number, requires integer, produces octal representation
+//	%x      Converts to number, requires integer, produces hexadecimal representation
+//	        with lowercase letters
+//	%X      Like %x but with uppercase letters
+//	%e      Converts to number, produces scientific notation like -1.234456e+78
+//	%E      Like %e but with an uppercase "E" representing the exponent
+//	%f      Converts to number, produces decimal representation with fractional
+//	        part but no exponent, like 123.456
+//	%g      %e for large exponents or %f otherwise
+//	%G      %E for large exponents or %f otherwise
+//	%s      Converts to string and produces the string's characters
+//	%q      Converts to string and produces JSON-quoted string representation,
+//	        like %v.
 //
 // The default format selections made by %v are:
 //
-//     string  %s
-//     number  %g
-//     bool    %t
-//     other   %#v
+//	string  %s
+//	number  %g
+//	bool    %t
+//	other   %#v
 //
 // Null values produce the literal keyword "null" for %v and %#v, and produce
 // an error otherwise.
@@ -223,10 +229,10 @@ var FormatListFunc = function.New(&function.Spec{
 // is used. A period with no following number is invalid.
 // For examples:
 //
-//     %f     default width, default precision
-//     %9f    width 9, default precision
-//     %.2f   default width, precision 2
-//     %9.2f  width 9, precision 2
+//	%f     default width, default precision
+//	%9f    width 9, default precision
+//	%.2f   default width, precision 2
+//	%9.2f  width 9, precision 2
 //
 // Width and precision are measured in unicode characters (grapheme clusters).
 //
@@ -243,10 +249,10 @@ var FormatListFunc = function.New(&function.Spec{
 // The following additional symbols can be used immediately after the percent
 // introducer as flags:
 //
-//           (a space) leave a space where the sign would be if number is positive
-//     +     Include a sign for a number even if it is positive (numeric only)
-//     -     Pad with spaces on the left rather than the right
-//     0     Pad with zeros rather than spaces.
+//	      (a space) leave a space where the sign would be if number is positive
+//	+     Include a sign for a number even if it is positive (numeric only)
+//	-     Pad with spaces on the left rather than the right
+//	0     Pad with zeros rather than spaces.
 //
 // Flag characters are ignored for verbs that do not support them.
 //
