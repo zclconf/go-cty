@@ -11,10 +11,12 @@ import (
 )
 
 var CSVDecodeFunc = function.New(&function.Spec{
+	Description: "csvdecode decodes a string containing CSV-formatted data and produces a list of maps representing that data.",
 	Params: []function.Parameter{
 		{
-			Name: "str",
-			Type: cty.String,
+			Name:        "str",
+			Description: "A string containing CSV-formatted data.",
+			Type:        cty.String,
 		},
 	},
 	Type: func(args []cty.Value) (cty.Type, error) {
