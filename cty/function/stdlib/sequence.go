@@ -9,9 +9,11 @@ import (
 )
 
 var ConcatFunc = function.New(&function.Spec{
-	Params: []function.Parameter{},
+	Description: "concat takes two or more lists and combines them into a single list.",
+	Params:      []function.Parameter{},
 	VarParam: &function.Parameter{
 		Name:        "seqs",
+		Description: "Variable list of lists to merge.",
 		Type:        cty.DynamicPseudoType,
 		AllowMarked: true,
 	},
@@ -137,9 +139,11 @@ var ConcatFunc = function.New(&function.Spec{
 })
 
 var RangeFunc = function.New(&function.Spec{
+	Description: "range generates a list of numbers using a start value, a limit value, and a step value.",
 	VarParam: &function.Parameter{
-		Name: "params",
-		Type: cty.Number,
+		Name:        "params",
+		Description: "range accepts start, end and step. While start and step are optional.",
+		Type:        cty.Number,
 	},
 	Type: function.StaticReturnType(cty.List(cty.Number)),
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
