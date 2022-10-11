@@ -7,9 +7,11 @@ import (
 )
 
 var JSONEncodeFunc = function.New(&function.Spec{
+	Description: "jsonencode encodes a given value to a string using JSON syntax.",
 	Params: []function.Parameter{
 		{
 			Name:             "val",
+			Description:      "The value being encoded.",
 			Type:             cty.DynamicPseudoType,
 			AllowDynamicType: true,
 			AllowNull:        true,
@@ -39,10 +41,12 @@ var JSONEncodeFunc = function.New(&function.Spec{
 })
 
 var JSONDecodeFunc = function.New(&function.Spec{
+	Description: "jsondecode interprets a given string as JSON, returning a representation of the result of decoding that string.",
 	Params: []function.Parameter{
 		{
-			Name: "str",
-			Type: cty.String,
+			Name:        "str",
+			Description: "The JSON string being decoded.",
+			Type:        cty.String,
 		},
 	},
 	Type: func(args []cty.Value) (cty.Type, error) {
