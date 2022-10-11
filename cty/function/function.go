@@ -14,6 +14,9 @@ type Function struct {
 // Spec is the specification of a function, used to instantiate
 // a new Function.
 type Spec struct {
+	// Description is an optional description for the function specification.
+	Description string
+
 	// Params is a description of the positional parameters for the function.
 	// The standard checking logic rejects any calls that do not provide
 	// arguments conforming to this definition, freeing the function
@@ -343,4 +346,9 @@ func (f Function) VarParam() *Parameter {
 
 	ret := *f.spec.VarParam
 	return &ret
+}
+
+// Description returns a human-readable description of the function.
+func (f Function) Description() string {
+	return f.spec.Description
 }
