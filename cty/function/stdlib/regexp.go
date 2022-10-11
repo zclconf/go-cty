@@ -10,14 +10,17 @@ import (
 )
 
 var RegexFunc = function.New(&function.Spec{
+	Description: "regex applies a regular expression to a string and returns the matching substrings.",
 	Params: []function.Parameter{
 		{
-			Name: "pattern",
-			Type: cty.String,
+			Name:        "pattern",
+			Description: "Pattern is a string containing a mixture of literal characters and special matching operators.",
+			Type:        cty.String,
 		},
 		{
-			Name: "string",
-			Type: cty.String,
+			Name:        "string",
+			Description: "The input string.",
+			Type:        cty.String,
 		},
 	},
 	Type: func(args []cty.Value) (cty.Type, error) {
@@ -54,14 +57,17 @@ var RegexFunc = function.New(&function.Spec{
 })
 
 var RegexAllFunc = function.New(&function.Spec{
+	Description: "regexall applies a regular expression to a string and returns a list of all matches.",
 	Params: []function.Parameter{
 		{
-			Name: "pattern",
-			Type: cty.String,
+			Name:        "pattern",
+			Description: "Pattern is a string containing a mixture of literal characters and special matching operators.",
+			Type:        cty.String,
 		},
 		{
-			Name: "string",
-			Type: cty.String,
+			Name:        "string",
+			Description: "The input string.",
+			Type:        cty.String,
 		},
 	},
 	Type: func(args []cty.Value) (cty.Type, error) {
