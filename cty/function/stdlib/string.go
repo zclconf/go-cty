@@ -14,9 +14,11 @@ import (
 )
 
 var UpperFunc = function.New(&function.Spec{
+	Description: "upper converts all cased letters in the given string to uppercase.",
 	Params: []function.Parameter{
 		{
 			Name:             "str",
+			Description:      "The input string.",
 			Type:             cty.String,
 			AllowDynamicType: true,
 		},
@@ -30,9 +32,11 @@ var UpperFunc = function.New(&function.Spec{
 })
 
 var LowerFunc = function.New(&function.Spec{
+	Description: "lower converts all cased letters in the given string to lowercase.",
 	Params: []function.Parameter{
 		{
 			Name:             "str",
+			Description:      "The input string.",
 			Type:             cty.String,
 			AllowDynamicType: true,
 		},
@@ -46,9 +50,11 @@ var LowerFunc = function.New(&function.Spec{
 })
 
 var ReverseFunc = function.New(&function.Spec{
+	Description: "strrev reverses the characters in a string.",
 	Params: []function.Parameter{
 		{
 			Name:             "str",
+			Description:      "The input string.",
 			Type:             cty.String,
 			AllowDynamicType: true,
 		},
@@ -97,19 +103,23 @@ var StrlenFunc = function.New(&function.Spec{
 })
 
 var SubstrFunc = function.New(&function.Spec{
+	Description: "substr extracts a substring from a given string by offset and (maximum) length.",
 	Params: []function.Parameter{
 		{
 			Name:             "str",
+			Description:      "The input string.",
 			Type:             cty.String,
 			AllowDynamicType: true,
 		},
 		{
 			Name:             "offset",
+			Description:      "The start offset.",
 			Type:             cty.Number,
 			AllowDynamicType: true,
 		},
 		{
 			Name:             "length",
+			Description:      "The maximum length.",
 			Type:             cty.Number,
 			AllowDynamicType: true,
 		},
@@ -197,15 +207,18 @@ var SubstrFunc = function.New(&function.Spec{
 })
 
 var JoinFunc = function.New(&function.Spec{
+	Description: "join produces a string by concatenating together all elements of a given list of strings with the given delimiter.",
 	Params: []function.Parameter{
 		{
-			Name: "separator",
-			Type: cty.String,
+			Name:        "separator",
+			Description: "Delimiter for joining.",
+			Type:        cty.String,
 		},
 	},
 	VarParam: &function.Parameter{
-		Name: "lists",
-		Type: cty.List(cty.String),
+		Name:        "lists",
+		Description: "A list of elements to join.",
+		Type:        cty.List(cty.String),
 	},
 	Type: function.StaticReturnType(cty.String),
 	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
@@ -244,10 +257,12 @@ var JoinFunc = function.New(&function.Spec{
 })
 
 var SortFunc = function.New(&function.Spec{
+	Description: "sort takes a list of strings and returns a new list with those strings sorted lexicographically.",
 	Params: []function.Parameter{
 		{
-			Name: "list",
-			Type: cty.List(cty.String),
+			Name:        "list",
+			Description: "The input list.",
+			Type:        cty.List(cty.String),
 		},
 	},
 	Type: function.StaticReturnType(cty.List(cty.String)),
@@ -282,14 +297,17 @@ var SortFunc = function.New(&function.Spec{
 })
 
 var SplitFunc = function.New(&function.Spec{
+	Description: "split produces a list by dividing a given string at all occurrences of a given separator.",
 	Params: []function.Parameter{
 		{
-			Name: "separator",
-			Type: cty.String,
+			Name:        "separator",
+			Description: "The separator for splitting.",
+			Type:        cty.String,
 		},
 		{
-			Name: "str",
-			Type: cty.String,
+			Name:        "str",
+			Description: "The input string.",
+			Type:        cty.String,
 		},
 	},
 	Type: function.StaticReturnType(cty.List(cty.String)),
@@ -311,10 +329,12 @@ var SplitFunc = function.New(&function.Spec{
 // ChompFunc is a function that removes newline characters at the end of a
 // string.
 var ChompFunc = function.New(&function.Spec{
+	Description: "chomp removes newline characters at the end of a string.",
 	Params: []function.Parameter{
 		{
-			Name: "str",
-			Type: cty.String,
+			Name:        "str",
+			Description: "The input string.",
+			Type:        cty.String,
 		},
 	},
 	Type: function.StaticReturnType(cty.String),
@@ -327,14 +347,17 @@ var ChompFunc = function.New(&function.Spec{
 // IndentFunc is a function that adds a given number of spaces to the
 // beginnings of all but the first line in a given multi-line string.
 var IndentFunc = function.New(&function.Spec{
+	Description: "indent adds a given number of spaces to the beginnings of all but the first line in a given multi-line string.",
 	Params: []function.Parameter{
 		{
-			Name: "spaces",
-			Type: cty.Number,
+			Name:        "spaces",
+			Description: "Number of spaces to add.",
+			Type:        cty.Number,
 		},
 		{
-			Name: "str",
-			Type: cty.String,
+			Name:        "str",
+			Description: "A multiline string to indent.",
+			Type:        cty.String,
 		},
 	},
 	Type: function.StaticReturnType(cty.String),
@@ -352,10 +375,12 @@ var IndentFunc = function.New(&function.Spec{
 // TitleFunc is a function that converts the first letter of each word in the
 // given string to uppercase.
 var TitleFunc = function.New(&function.Spec{
+	Description: "title converts the first letter of each word in the given string to uppercase.",
 	Params: []function.Parameter{
 		{
-			Name: "str",
-			Type: cty.String,
+			Name:        "str",
+			Description: "The input string.",
+			Type:        cty.String,
 		},
 	},
 	Type: function.StaticReturnType(cty.String),
@@ -367,10 +392,12 @@ var TitleFunc = function.New(&function.Spec{
 // TrimSpaceFunc is a function that removes any space characters from the start
 // and end of the given string.
 var TrimSpaceFunc = function.New(&function.Spec{
+	Description: "trimspace removes any space characters from the start and end of the given string.",
 	Params: []function.Parameter{
 		{
-			Name: "str",
-			Type: cty.String,
+			Name:        "str",
+			Description: "The string that will be trimmed.",
+			Type:        cty.String,
 		},
 	},
 	Type: function.StaticReturnType(cty.String),
@@ -382,14 +409,17 @@ var TrimSpaceFunc = function.New(&function.Spec{
 // TrimFunc is a function that removes the specified characters from the start
 // and end of the given string.
 var TrimFunc = function.New(&function.Spec{
+	Description: "trim removes the specified set of characters from the start and end of the given string.",
 	Params: []function.Parameter{
 		{
-			Name: "str",
-			Type: cty.String,
+			Name:        "str",
+			Description: "The string that will be trimmed.",
+			Type:        cty.String,
 		},
 		{
-			Name: "cutset",
-			Type: cty.String,
+			Name:        "cutset",
+			Description: "Every occurrence of a character in the cutset is removed.",
+			Type:        cty.String,
 		},
 	},
 	Type: function.StaticReturnType(cty.String),
@@ -403,14 +433,17 @@ var TrimFunc = function.New(&function.Spec{
 // TrimPrefixFunc is a function that removes the specified characters from the
 // start the given string.
 var TrimPrefixFunc = function.New(&function.Spec{
+	Description: "trimprefix removes the specified prefix from the start of the given string.",
 	Params: []function.Parameter{
 		{
-			Name: "str",
-			Type: cty.String,
+			Name:        "str",
+			Description: "The string that will be trimmed.",
+			Type:        cty.String,
 		},
 		{
-			Name: "prefix",
-			Type: cty.String,
+			Name:        "prefix",
+			Description: "The prefix that will be removed.",
+			Type:        cty.String,
 		},
 	},
 	Type: function.StaticReturnType(cty.String),
@@ -424,14 +457,17 @@ var TrimPrefixFunc = function.New(&function.Spec{
 // TrimSuffixFunc is a function that removes the specified characters from the
 // end of the given string.
 var TrimSuffixFunc = function.New(&function.Spec{
+	Description: "trimsuffix removes the specified suffix from the end of the given string.",
 	Params: []function.Parameter{
 		{
-			Name: "str",
-			Type: cty.String,
+			Name:        "str",
+			Description: "The string that will be trimmed.",
+			Type:        cty.String,
 		},
 		{
-			Name: "suffix",
-			Type: cty.String,
+			Name:        "suffix",
+			Description: "The suffix that will be removed.",
+			Type:        cty.String,
 		},
 	},
 	Type: function.StaticReturnType(cty.String),
