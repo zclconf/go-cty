@@ -994,6 +994,79 @@ func TestConvert(t *testing.T) {
 			}),
 		},
 		{
+			Value: cty.MapVal(map[string]cty.Value{
+				"a": cty.StringVal("boop"),
+				// It's okay to use a map of string to convert to this
+				// target type as long as the source map does not include
+				// any of the optional attributes that cannot be assigned
+				// from a string.
+			}),
+			Type: cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+				"a": cty.String,
+				"b": cty.String,
+				"c": cty.Object(map[string]cty.Type{
+					"d": cty.String,
+				}),
+			}, []string{"b", "c"}),
+			Want: cty.ObjectVal(map[string]cty.Value{
+				"a": cty.StringVal("boop"),
+				"b": cty.NullVal(cty.String),
+				"c": cty.NullVal(cty.Object(map[string]cty.Type{
+					"d": cty.String,
+				})),
+			}),
+		},
+		{
+			Value: cty.MapVal(map[string]cty.Value{
+				"a": cty.StringVal("boop"),
+			}),
+			Type: cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+				"a": cty.String,
+				"b": cty.String,
+				"c": cty.Object(map[string]cty.Type{
+					"d": cty.DynamicPseudoType,
+				}),
+			}, []string{"b", "c"}),
+			Want: cty.ObjectVal(map[string]cty.Value{
+				"a": cty.StringVal("boop"),
+				"b": cty.NullVal(cty.String),
+				"c": cty.NullVal(cty.Object(map[string]cty.Type{
+					"d": cty.DynamicPseudoType,
+				})),
+			}),
+		},
+		{
+			Value: cty.MapVal(map[string]cty.Value{
+				"a": cty.StringVal("boop"),
+			}),
+			Type: cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+				"a": cty.String,
+				"b": cty.String,
+				"c": cty.DynamicPseudoType,
+			}, []string{"b", "c"}),
+			Want: cty.ObjectVal(map[string]cty.Value{
+				"a": cty.StringVal("boop"),
+				"b": cty.NullVal(cty.String),
+				"c": cty.NullVal(cty.DynamicPseudoType),
+			}),
+		},
+		{
+			Value: cty.MapVal(map[string]cty.Value{
+				"a": cty.StringVal("boop"),
+				// This case is invalid, because an element of a map of
+				// string cannot be assigned to an object-typed attribute.
+				"c": cty.StringVal("foobar"),
+			}),
+			Type: cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+				"a": cty.String,
+				"b": cty.String,
+				"c": cty.Object(map[string]cty.Type{
+					"d": cty.String,
+				}),
+			}, []string{"b", "c"}),
+			WantError: `map element type is incompatible with attribute "c": object required`,
+		},
+		{
 			Value: cty.ListVal([]cty.Value{
 				cty.ObjectVal(map[string]cty.Value{
 					"xs": cty.ListVal([]cty.Value{

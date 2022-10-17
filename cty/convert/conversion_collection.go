@@ -448,13 +448,28 @@ func conversionMapToObject(mapType cty.Type, objType cty.Type, unsafe bool) conv
 
 		elemConvs[name] = getConversion(mapEty, objectAty, unsafe)
 		if elemConvs[name] == nil {
-			// If any of our element conversions are impossible, then the our
-			// whole conversion is impossible.
+			// This means that this conversion is impossible. Typically, we
+			// would give up at this point and declare the whole conversion
+			// impossible. But, if this attribute is optional then maybe we will
+			// be able to do this conversion anyway provided the actual concrete
+			// map doesn't have this value set.
+			//
+			// We only do this in "unsafe" mode, because we cannot guarantee
+			// that the returned conversion will actually succeed once applied.
+			if objType.AttributeOptional(name) && unsafe {
+				// This attribute is optional, so let's leave this conversion in
+				// as a nil, and we can error later if we actually have to
+				// convert this.
+				continue
+			}
+
+			// Otherwise, give up. This conversion is impossible as we have a
+			// required attribute that doesn't match the map's inner type.
 			return nil
 		}
 	}
 
-	// If we fall out here then a conversion is possible, using the
+	// If we fall out here then a conversion may be possible, using the
 	// element conversions in elemConvs
 	return func(val cty.Value, path cty.Path) (cty.Value, error) {
 		elems := make(map[string]cty.Value, len(elemConvs))
@@ -474,12 +489,39 @@ func conversionMapToObject(mapType cty.Type, objType cty.Type, unsafe bool) conv
 				Key: name,
 			}
 
-			conv := elemConvs[name.AsString()]
-			if conv != nil {
+			// There are 3 cases here:
+			//   1. This attribute is not in elemConvs
+			//   2. This attribute is in elemConvs and is not nil
+			//   3. This attribute is in elemConvs and is nil.
+
+			// In case 1, we do not enter any of the branches below. This case
+			// means the attribute type is the same between the map and the
+			// object, and we don't need to do any conversion.
+
+			if conv, ok := elemConvs[name.AsString()]; conv != nil {
+				// This is case 2. The attribute type is different between the
+				// map and the object, and we know how to convert between them.
+				// So, we reset val to be the converted value and carry on.
 				val, err = conv(val, elemPath)
 				if err != nil {
 					return cty.NilVal, err
 				}
+			} else if ok {
+				// This is case 3 and it is an error. The attribute types are
+				// different between the map and the object, but we cannot
+				// convert between them.
+				//
+				// Now typically, this would be picked earlier on when we were
+				// building elemConvs. However, in the case of optional
+				// attributes there was a chance we could still convert the
+				// overall object even if this particular attribute was not
+				// convertable. This is because it could have not been set in
+				// the map, and we could skip over it here and set a null value.
+				//
+				// Since we reached this branch, we know that map did actually
+				// contain a non-convertable optional attribute. This means we
+				// error.
+				return cty.NilVal, path.NewErrorf("map element type is incompatible with attribute %q: %s", name.AsString(), MismatchMessage(val.Type(), objType.AttributeType(name.AsString())))
 			}
 
 			elems[name.AsString()] = val
