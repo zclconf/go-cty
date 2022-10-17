@@ -1,4 +1,4 @@
-# 1.11.1 (Unreleased)
+# 1.11.1 (October 17, 2022)
 
 * `convert`: Fix for error when converting empty sets and lists with nested optional attributes by explicitly removing optional attribute information from collections.
 
