@@ -2,6 +2,7 @@ package stdlib
 
 import (
 	"fmt"
+	"math"
 	"testing"
 
 	"github.com/zclconf/go-cty/cty"
@@ -285,13 +286,13 @@ func TestChunklist(t *testing.T) {
 			cty.ListValEmpty(cty.String),
 			cty.PositiveInfinity,
 			cty.NilVal,
-			`invalid size: value must be a whole number, between -9223372036854775808 and 9223372036854775807`,
+			fmt.Sprintf(`invalid size: value must be a whole number, between %d and %d`, math.MinInt, math.MaxInt),
 		},
 		{
 			cty.ListValEmpty(cty.String),
 			cty.NumberFloatVal(1.5),
 			cty.NilVal,
-			`invalid size: value must be a whole number, between -9223372036854775808 and 9223372036854775807`,
+			fmt.Sprintf(`invalid size: value must be a whole number, between %d and %d`, math.MinInt, math.MaxInt),
 		},
 	}
 
