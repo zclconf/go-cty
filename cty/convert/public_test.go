@@ -1067,6 +1067,103 @@ func TestConvert(t *testing.T) {
 			WantError: `map element type is incompatible with attribute "c": object required`,
 		},
 		{
+			Value: cty.TupleVal([]cty.Value{
+				cty.ObjectVal(map[string]cty.Value{
+					"d": cty.NumberVal(big.NewFloat(10)),
+					"c": cty.ObjectVal(map[string]cty.Value{
+						"a": cty.StringVal("foo"),
+						"b": cty.BoolVal(true),
+					}),
+				}),
+				cty.ObjectVal(map[string]cty.Value{
+					"d": cty.NumberVal(big.NewFloat(5)),
+					"c": cty.NullVal(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+						"a": cty.String,
+						"b": cty.Bool,
+					}, []string{"b"})),
+				}),
+			}),
+			Type: cty.Set(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+				"c": cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+					"a": cty.String,
+					"b": cty.Bool,
+				}, []string{"b"}),
+				"d": cty.Number,
+			}, []string{"c"})),
+			Want: cty.SetVal([]cty.Value{
+				cty.ObjectVal(map[string]cty.Value{
+					"d": cty.NumberVal(big.NewFloat(10)),
+					"c": cty.ObjectVal(map[string]cty.Value{
+						"a": cty.StringVal("foo"),
+						"b": cty.BoolVal(true),
+					}),
+				}),
+				cty.ObjectVal(map[string]cty.Value{
+					"d": cty.NumberVal(big.NewFloat(5)),
+					"c": cty.NullVal(cty.Object(map[string]cty.Type{
+						"a": cty.String,
+						"b": cty.Bool,
+					})),
+				}),
+			}),
+		},
+		{
+			Value: cty.TupleVal([]cty.Value{
+				cty.ObjectVal(map[string]cty.Value{
+					"d": cty.NumberVal(big.NewFloat(10)),
+					"c": cty.ObjectVal(map[string]cty.Value{
+						"a": cty.StringVal("foo"),
+						"b": cty.BoolVal(true),
+					}),
+				}),
+				cty.ObjectVal(map[string]cty.Value{
+					"d": cty.NumberVal(big.NewFloat(5)),
+				}),
+			}),
+			Type: cty.Set(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+				"c": cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+					"a": cty.String,
+					"b": cty.Bool,
+				}, []string{"b"}),
+				"d": cty.Number,
+			}, []string{"c"})),
+			Want: cty.SetVal([]cty.Value{
+				cty.ObjectVal(map[string]cty.Value{
+					"d": cty.NumberVal(big.NewFloat(10)),
+					"c": cty.ObjectVal(map[string]cty.Value{
+						"a": cty.StringVal("foo"),
+						"b": cty.BoolVal(true),
+					}),
+				}),
+				cty.ObjectVal(map[string]cty.Value{
+					"d": cty.NumberVal(big.NewFloat(5)),
+					"c": cty.NullVal(cty.Object(map[string]cty.Type{
+						"a": cty.String,
+						"b": cty.Bool,
+					})),
+				}),
+			}),
+		},
+		{
+			Value: cty.MapVal(map[string]cty.Value{
+				"a": cty.StringVal("boop"),
+			}),
+			Type: cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+				"a": cty.String,
+				"b": cty.String,
+				"c": cty.Object(map[string]cty.Type{
+					"d": cty.String,
+				}),
+			}, []string{"b", "c"}),
+			Want: cty.ObjectVal(map[string]cty.Value{
+				"a": cty.StringVal("boop"),
+				"b": cty.NullVal(cty.String),
+				"c": cty.NullVal(cty.Object(map[string]cty.Type{
+					"d": cty.String,
+				})),
+			}),
+		},
+		{
 			Value: cty.ListVal([]cty.Value{
 				cty.ObjectVal(map[string]cty.Value{
 					"xs": cty.ListVal([]cty.Value{
