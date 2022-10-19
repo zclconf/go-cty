@@ -1268,6 +1268,148 @@ func TestConvert(t *testing.T) {
 				})},
 			),
 		},
+		// We should strip optional attributes out of null values in sets, maps,
+		// lists and tuples.
+		{
+			Value: cty.ListVal([]cty.Value{
+				cty.NullVal(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+					"a": cty.String,
+				}, []string{"a"})),
+			}),
+			Type: cty.Set(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+				"a": cty.String,
+			}, []string{"a"})),
+			Want: cty.SetVal([]cty.Value{
+				cty.NullVal(cty.Object(map[string]cty.Type{
+					"a": cty.String,
+				})),
+			}),
+		},
+		{
+			Value: cty.TupleVal([]cty.Value{
+				cty.NullVal(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+					"a": cty.String,
+				}, []string{"a"})),
+			}),
+			Type: cty.Set(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+				"a": cty.String,
+			}, []string{"a"})),
+			Want: cty.SetVal([]cty.Value{
+				cty.NullVal(cty.Object(map[string]cty.Type{
+					"a": cty.String,
+				})),
+			}),
+		},
+		{
+			Value: cty.SetVal([]cty.Value{
+				cty.NullVal(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+					"a": cty.String,
+				}, []string{"a"})),
+			}),
+			Type: cty.List(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+				"a": cty.String,
+			}, []string{"a"})),
+			Want: cty.ListVal([]cty.Value{
+				cty.NullVal(cty.Object(map[string]cty.Type{
+					"a": cty.String,
+				})),
+			}),
+		},
+		{
+			Value: cty.TupleVal([]cty.Value{
+				cty.NullVal(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+					"a": cty.String,
+				}, []string{"a"})),
+			}),
+			Type: cty.List(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+				"a": cty.String,
+			}, []string{"a"})),
+			Want: cty.ListVal([]cty.Value{
+				cty.NullVal(cty.Object(map[string]cty.Type{
+					"a": cty.String,
+				})),
+			}),
+		},
+		{
+			Value: cty.ObjectVal(map[string]cty.Value{
+				"object": cty.NullVal(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+					"a": cty.String,
+				}, []string{"a"})),
+			}),
+			Type: cty.Map(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+				"a": cty.String,
+			}, []string{"a"})),
+			Want: cty.MapVal(map[string]cty.Value{
+				"object": cty.NullVal(cty.Object(map[string]cty.Type{
+					"a": cty.String,
+				})),
+			}),
+		},
+		{
+			Value: cty.MapVal(map[string]cty.Value{
+				"object": cty.NullVal(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+					"a": cty.String,
+				}, []string{"a"})),
+			}),
+			Type: cty.Object(map[string]cty.Type{
+				"object": cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+					"a": cty.String,
+				}, []string{"a"}),
+			}),
+			Want: cty.ObjectVal(map[string]cty.Value{
+				"object": cty.NullVal(cty.Object(map[string]cty.Type{
+					"a": cty.String,
+				})),
+			}),
+		},
+		{
+			Value: cty.MapVal(map[string]cty.Value{
+				"object": cty.NullVal(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+					"a": cty.Number,
+				}, []string{"a"})),
+			}),
+			Type: cty.Map(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+				"a": cty.String,
+			}, []string{"a"})),
+			Want: cty.MapVal(map[string]cty.Value{
+				"object": cty.NullVal(cty.Object(map[string]cty.Type{
+					"a": cty.String,
+				})),
+			}),
+		},
+		{
+			Value: cty.TupleVal([]cty.Value{
+				cty.NullVal(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+					"a": cty.Number,
+				}, []string{"a"})),
+			}),
+			Type: cty.Tuple([]cty.Type{
+				cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+					"a": cty.String,
+				}, []string{"a"}),
+			}),
+			Want: cty.TupleVal([]cty.Value{
+				cty.NullVal(cty.Object(map[string]cty.Type{
+					"a": cty.String,
+				})),
+			}),
+		},
+		// We should strip optional attributes out of types even if they match.
+		{
+			Value: cty.MapVal(map[string]cty.Value{
+				"object": cty.NullVal(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+					"a": cty.String,
+				}, []string{"a"})),
+			}),
+			Type: cty.Map(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+				"a": cty.String,
+			}, []string{"a"})),
+			Want: cty.MapVal(map[string]cty.Value{
+				"object": cty.NullVal(cty.Object(map[string]cty.Type{
+					"a": cty.String,
+				})),
+			}),
+		},
 	}
 
 	for _, test := range tests {
