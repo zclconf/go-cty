@@ -39,6 +39,11 @@ func conversionCollectionToList(ety cty.Type, conv conversion) conversion {
 					return cty.NilVal, err
 				}
 			}
+
+			if val.IsNull() {
+				val = cty.NullVal(val.Type().WithoutOptionalAttributesDeep())
+			}
+
 			elems = append(elems, val)
 
 			i++
@@ -88,6 +93,11 @@ func conversionCollectionToSet(ety cty.Type, conv conversion) conversion {
 					return cty.NilVal, err
 				}
 			}
+
+			if val.IsNull() {
+				val = cty.NullVal(val.Type().WithoutOptionalAttributesDeep())
+			}
+
 			elems = append(elems, val)
 
 			i++
@@ -242,6 +252,11 @@ func conversionTupleToSet(tupleType cty.Type, setEty cty.Type, unsafe bool) conv
 					return cty.NilVal, err
 				}
 			}
+
+			if val.IsNull() {
+				val = cty.NullVal(val.Type().WithoutOptionalAttributesDeep())
+			}
+
 			elems = append(elems, val)
 
 			i++
