@@ -1,6 +1,8 @@
 # 1.11.2 (Unreleased)
 
-* `convert`: When running in "unsafe mode" (which allows additional conversions that can potentially fail with certain input values), we'll now allow converting from a map type to an object type with optional attributes as long as all of the _present_ map elements are compatible with their corresponding optional attributes. It's still a dynamic error to convert a map whose element type is incompatible with any of the attributes that _do_ have corresponding keys in the given map. ([#139](https://github.com/zclconf/go-cty/pull/139))
+* `convert`: When running in "unsafe mode" (which allows additional conversions that can potentially fail with certain input values), we'll now allow converting from a map type to an object type with optional attributes as long as all of the _present_ map elements are compatible with their corresponding optional attributes.
+
+    It's still a dynamic error to convert a map whose element type is incompatible with any of the attributes that _do_ have corresponding keys in the given map. ([#139](https://github.com/zclconf/go-cty/pull/139))
 
 # 1.11.1 (October 17, 2022)
 
