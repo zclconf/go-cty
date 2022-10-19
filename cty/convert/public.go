@@ -48,7 +48,12 @@ func Convert(in cty.Value, want cty.Type) (cty.Value, error) {
 	if conv == nil {
 		return cty.NilVal, errors.New(MismatchMessage(in.Type(), want))
 	}
-	return conv(in)
+
+	value, err := conv(in)
+	if err != nil {
+		return cty.NilVal, err
+	}
+	return value.WithoutOptionalAttributesDeep(), nil
 }
 
 // Unify attempts to find the most general type that can be converted from

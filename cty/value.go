@@ -140,3 +140,18 @@ func (val Value) HasWhollyKnownType() bool {
 
 	return true
 }
+
+// WithoutOptionalAttributesDeep creates a new Value that contains the same
+// concrete value as the original, but with optional attributes from the
+// embedded type removed.
+//
+// Note, this function isn't particularly safe. It should only be used when the
+// caller is sure that all optional attributes have been replaced with null,
+// empty, or default values otherwise you may find future functions fail in
+// unpredictable ways because nested Object types may no longer match.
+func (val Value) WithoutOptionalAttributesDeep() Value {
+	return Value{
+		ty: val.ty.WithoutOptionalAttributesDeep(),
+		v:  val,
+	}
+}
