@@ -1179,6 +1179,23 @@ func TestConvert(t *testing.T) {
 		{
 			Value: cty.MapVal(map[string]cty.Value{
 				"object": cty.NullVal(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+					"a": cty.String,
+				}, []string{"a"})),
+			}),
+			Type: cty.Object(map[string]cty.Type{
+				"object": cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+					"a": cty.String,
+				}, []string{"a"}),
+			}),
+			Want: cty.ObjectVal(map[string]cty.Value{
+				"object": cty.NullVal(cty.Object(map[string]cty.Type{
+					"a": cty.String,
+				})),
+			}),
+		},
+		{
+			Value: cty.MapVal(map[string]cty.Value{
+				"object": cty.NullVal(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
 					"a": cty.Number,
 				}, []string{"a"})),
 			}),

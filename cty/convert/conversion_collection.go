@@ -497,6 +497,10 @@ func conversionMapToObject(mapType cty.Type, objType cty.Type, unsafe bool) conv
 				}
 			}
 
+			if val.IsNull() {
+				val = cty.NullVal(val.Type().WithoutOptionalAttributesDeep())
+			}
+
 			elems[name.AsString()] = val
 		}
 
