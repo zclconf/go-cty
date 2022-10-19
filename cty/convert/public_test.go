@@ -3,6 +3,7 @@ package convert
 import (
 	"fmt"
 	"math/big"
+	"strings"
 	"testing"
 
 	"github.com/zclconf/go-cty/cty"
@@ -13,7 +14,7 @@ func TestConvert(t *testing.T) {
 		Value     cty.Value
 		Type      cty.Type
 		Want      cty.Value
-		WantError bool
+		WantError string
 	}{
 		{
 			Value: cty.StringVal("hello"),
@@ -33,7 +34,7 @@ func TestConvert(t *testing.T) {
 		{
 			Value:     cty.StringVal("hello"),
 			Type:      cty.Number,
-			WantError: true,
+			WantError: `a number is required`,
 		},
 		{
 			Value: cty.StringVal("true"),
@@ -58,7 +59,7 @@ func TestConvert(t *testing.T) {
 		{
 			Value:     cty.StringVal("hello"),
 			Type:      cty.Bool,
-			WantError: true,
+			WantError: `a bool is required`,
 		},
 		{
 			Value: cty.NumberIntVal(4),
@@ -142,7 +143,7 @@ func TestConvert(t *testing.T) {
 				}),
 			}),
 			Type:      cty.List(cty.DynamicPseudoType),
-			WantError: true, // there is no type that both tuple elements can unify to for conversion to list
+			WantError: `all list elements must have the same type`,
 		},
 		{
 			Value: cty.SetVal([]cty.Value{
@@ -361,7 +362,7 @@ func TestConvert(t *testing.T) {
 				"bool": cty.True,
 			}),
 			Type:      cty.Map(cty.DynamicPseudoType),
-			WantError: true, // no common base type to unify to
+			WantError: `all map elements must have the same type`,
 		},
 		{
 			Value: cty.MapVal(map[string]cty.Value{
@@ -397,7 +398,7 @@ func TestConvert(t *testing.T) {
 				"greeting": cty.List(cty.String),
 				"name":     cty.String,
 			}),
-			WantError: true, // "greeting" cannot be converted
+			WantError: `object required`, // FIXME: should be something like "attribute greeting: must be a list"
 		},
 		{
 			Value: cty.MapVal(map[string]cty.Value{
@@ -419,7 +420,7 @@ func TestConvert(t *testing.T) {
 				"name":     cty.String,
 				"greeting": cty.String,
 			}),
-			WantError: true, // map has no element for required attribute "greeting"
+			WantError: `map has no element for required attribute "greeting"`,
 		},
 		{
 			Value: cty.MapVal(map[string]cty.Value{
@@ -511,7 +512,7 @@ func TestConvert(t *testing.T) {
 			Type: cty.Object(map[string]cty.Type{
 				"foo": cty.String,
 			}),
-			WantError: true, // given value must have superset object type
+			WantError: `attribute "foo" is required`,
 		},
 		{
 			Value: cty.ObjectVal(map[string]cty.Value{
@@ -521,7 +522,7 @@ func TestConvert(t *testing.T) {
 				"foo": cty.String,
 				"baz": cty.String,
 			}),
-			WantError: true, // given value must have superset object type
+			WantError: `attributes "baz" and "foo" are required`,
 		},
 		{
 			Value: cty.EmptyObjectVal,
@@ -530,7 +531,7 @@ func TestConvert(t *testing.T) {
 				"bar": cty.String,
 				"baz": cty.String,
 			}),
-			WantError: true, // given value must have superset object type
+			WantError: `attributes "bar", "baz", and "foo" are required`,
 		},
 		{
 			Value: cty.ObjectVal(map[string]cty.Value{
@@ -574,7 +575,7 @@ func TestConvert(t *testing.T) {
 				},
 				[]string{"foo"},
 			),
-			WantError: true, // Attribute "bar" is required
+			WantError: `attribute "bar" is required`,
 		},
 		{
 			Value: cty.NullVal(cty.DynamicPseudoType),
@@ -622,7 +623,7 @@ func TestConvert(t *testing.T) {
 			Type: cty.Object(map[string]cty.Type{
 				"foo": cty.Number,
 			}),
-			WantError: true, // recursive conversion from bool to number is impossible
+			WantError: `attribute "foo": number required`,
 		},
 		{
 			Value: cty.ObjectVal(map[string]cty.Value{
@@ -631,7 +632,7 @@ func TestConvert(t *testing.T) {
 			Type: cty.Object(map[string]cty.Type{
 				"foo": cty.Number,
 			}),
-			WantError: true, // recursive conversion from bool to number is impossible
+			WantError: `attribute "foo": number required`,
 		},
 		{
 			Value: cty.NullVal(cty.String),
@@ -670,14 +671,14 @@ func TestConvert(t *testing.T) {
 				cty.True,
 			}),
 			Type:      cty.EmptyTuple,
-			WantError: true,
+			WantError: `tuple required`, // FIXME: this error is not descriptive enough
 		},
 		{
 			Value: cty.EmptyTupleVal,
 			Type: cty.Tuple([]cty.Type{
 				cty.String,
 			}),
-			WantError: true,
+			WantError: `tuple required`, // FIXME: this error is not descriptive enough
 		},
 		{
 			Value: cty.EmptyTupleVal,
@@ -769,8 +770,14 @@ func TestConvert(t *testing.T) {
 					}),
 				}),
 			}),
-			Type:      cty.Map(cty.Map(cty.Object(map[string]cty.Type{"x": cty.Map(cty.DynamicPseudoType)}))),
-			WantError: true,
+			Type: cty.Map(
+				cty.Map(
+					cty.Object(map[string]cty.Type{
+						"x": cty.Map(cty.DynamicPseudoType),
+					}),
+				),
+			),
+			WantError: `element "b": element "x": attribute "x" is required`,
 		},
 		// reduction of https://github.com/hashicorp/terraform/issues/23431
 		{
@@ -900,7 +907,6 @@ func TestConvert(t *testing.T) {
 					"b": cty.StringVal("2"),
 				}),
 			}),
-			WantError: false,
 		},
 		// https://github.com/hashicorp/terraform/issues/24377:
 		{
@@ -910,7 +916,7 @@ func TestConvert(t *testing.T) {
 				cty.NullVal(cty.DynamicPseudoType),
 			}),
 			Type:      cty.Set(cty.DynamicPseudoType),
-			WantError: true,
+			WantError: `all set elements must have the same type`,
 		},
 		{
 			Value: cty.TupleVal([]cty.Value{
@@ -919,7 +925,7 @@ func TestConvert(t *testing.T) {
 				cty.NullVal(cty.DynamicPseudoType),
 			}),
 			Type:      cty.List(cty.DynamicPseudoType),
-			WantError: true,
+			WantError: `all list elements must have the same type`,
 		},
 		{
 			Value: cty.TupleVal([]cty.Value{
@@ -927,7 +933,7 @@ func TestConvert(t *testing.T) {
 				cty.StringVal("b"),
 			}),
 			Type:      cty.Set(cty.DynamicPseudoType),
-			WantError: true,
+			WantError: `all set elements must have the same type`,
 		},
 		{
 			Value: cty.TupleVal([]cty.Value{
@@ -935,7 +941,7 @@ func TestConvert(t *testing.T) {
 				cty.StringVal("b"),
 			}),
 			Type:      cty.List(cty.DynamicPseudoType),
-			WantError: true,
+			WantError: `all list elements must have the same type`,
 		},
 		{
 			Value: cty.TupleVal([]cty.Value{
@@ -949,7 +955,6 @@ func TestConvert(t *testing.T) {
 				cty.StringVal("9"),
 				cty.NullVal(cty.DynamicPseudoType),
 			}),
-			WantError: false,
 		},
 		{
 			Value: cty.TupleVal([]cty.Value{
@@ -963,7 +968,6 @@ func TestConvert(t *testing.T) {
 				cty.StringVal("9"),
 				cty.NullVal(cty.DynamicPseudoType),
 			}),
-			WantError: false,
 		},
 		{
 			Value: cty.TupleVal([]cty.Value{
@@ -975,7 +979,6 @@ func TestConvert(t *testing.T) {
 			Want: cty.SetVal([]cty.Value{
 				cty.NullVal(cty.DynamicPseudoType),
 			}),
-			WantError: false,
 		},
 		{
 			Value: cty.TupleVal([]cty.Value{
@@ -989,7 +992,6 @@ func TestConvert(t *testing.T) {
 				cty.NullVal(cty.DynamicPseudoType),
 				cty.NullVal(cty.DynamicPseudoType),
 			}),
-			WantError: false,
 		},
 		{
 			Value: cty.ListVal([]cty.Value{
@@ -1025,7 +1027,6 @@ func TestConvert(t *testing.T) {
 					})),
 				})},
 			),
-			WantError: false,
 		},
 		{
 			Value: cty.SetVal([]cty.Value{
@@ -1061,7 +1062,6 @@ func TestConvert(t *testing.T) {
 					})),
 				})},
 			),
-			WantError: false,
 		},
 		{
 			Value: cty.MapVal(map[string]cty.Value{
@@ -1097,7 +1097,6 @@ func TestConvert(t *testing.T) {
 					})),
 				})},
 			),
-			WantError: false,
 		},
 	}
 
@@ -1106,9 +1105,13 @@ func TestConvert(t *testing.T) {
 			got, err := Convert(test.Value, test.Type)
 
 			switch {
-			case test.WantError:
+			case test.WantError != "":
 				if err == nil {
 					t.Errorf("conversion succeeded with %#v; want error", got)
+				} else {
+					if got, want := errorStrForTesting(err), test.WantError; got != want {
+						t.Errorf("wrong error\ngot:  %s\nwant: %s", got, want)
+					}
 				}
 			default:
 				if err != nil {
@@ -1125,4 +1128,34 @@ func TestConvert(t *testing.T) {
 			}
 		})
 	}
+}
+
+func errorStrForTesting(err error) string {
+	switch err := err.(type) {
+	case cty.PathError:
+		if pathStr := pathStrForTesting(err.Path); pathStr != "" {
+			return pathStr + ": " + err.Error()
+		}
+		return err.Error()
+	default:
+		return err.Error()
+	}
+}
+
+func pathStrForTesting(path cty.Path) string {
+	if len(path) == 0 {
+		return ""
+	}
+	var buf strings.Builder
+	for _, step := range path {
+		switch step := step.(type) {
+		case cty.GetAttrStep:
+			fmt.Fprintf(&buf, ".%s", step.Name)
+		case cty.IndexStep:
+			fmt.Fprintf(&buf, "[%#v]", step.Key)
+		default:
+			fmt.Fprintf(&buf, "<INVALID: %#v>", step)
+		}
+	}
+	return buf.String()
 }
