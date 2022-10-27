@@ -1,4 +1,4 @@
-# 1.12.0 (Unreleased)
+# 1.12.0 (October 27, 2022)
 
 * `function`: Each function can now have an English-language description summarizing its behavior. This is intended as a default string to use when an application wants to provide code hover tips or similar development aids. However, these descriptions are basic and only available in English, so applications may still prefer to provide their own descriptions and ignore those encoded in this module. ([#137](https://github.com/zclconf/go-cty/pull/137))
 * `convert`: When running in "unsafe mode" (which allows additional conversions that can potentially fail with certain input values), we'll now allow converting from a map type to an object type with optional attributes as long as all of the _present_ map elements are compatible with their corresponding optional attributes.
