@@ -206,6 +206,290 @@ func TestReturnTypeForValues(t *testing.T) {
 	}
 }
 
+func TestFunctionWithNewDescriptions(t *testing.T) {
+	t.Run("no params", func(t *testing.T) {
+		f1 := New(&Spec{
+			Description: "old func",
+			Params:      []Parameter{},
+			Type:        stubType,
+			Impl:        stubImpl,
+		})
+		f2 := f1.WithNewDescriptions(
+			"new func",
+			nil,
+		)
+
+		if got, want := f1.Description(), "old func"; got != want {
+			t.Errorf("wrong original func description\ngot:  %s\nwant: %s", got, want)
+		}
+		if got, want := f2.Description(), "new func"; got != want {
+			t.Errorf("wrong updated func description\ngot:  %s\nwant: %s", got, want)
+		}
+	})
+	t.Run("one pos param", func(t *testing.T) {
+		f1 := New(&Spec{
+			Description: "old func",
+			Params: []Parameter{
+				{
+					Name:        "a",
+					Description: "old a",
+				},
+			},
+			Type: stubType,
+			Impl: stubImpl,
+		})
+		f2 := f1.WithNewDescriptions(
+			"new func",
+			[]string{"new a"},
+		)
+
+		if got, want := f1.Description(), "old func"; got != want {
+			t.Errorf("wrong original func description\ngot:  %s\nwant: %s", got, want)
+		}
+		if got, want := f2.Description(), "new func"; got != want {
+			t.Errorf("wrong updated func description\ngot:  %s\nwant: %s", got, want)
+		}
+
+		if got, want := len(f1.Params()), 1; got != want {
+			t.Fatalf("wrong original param count\ngot:  %d\nwant: %d", got, want)
+		}
+		if got, want := len(f2.Params()), 1; got != want {
+			t.Fatalf("wrong updated param count\ngot:  %d\nwant: %d", got, want)
+		}
+		if got, want := f1.Params()[0].Description, "old a"; got != want {
+			t.Errorf("wrong original param a description\ngot:  %s\nwant: %s", got, want)
+		}
+		if got, want := f2.Params()[0].Description, "new a"; got != want {
+			t.Errorf("wrong updated param a description\ngot:  %s\nwant: %s", got, want)
+		}
+	})
+	t.Run("two pos params", func(t *testing.T) {
+		f1 := New(&Spec{
+			Description: "old func",
+			Params: []Parameter{
+				{
+					Name:        "a",
+					Description: "old a",
+				},
+				{
+					Name:        "b",
+					Description: "old b",
+				},
+			},
+			Type: stubType,
+			Impl: stubImpl,
+		})
+		f2 := f1.WithNewDescriptions(
+			"new func",
+			[]string{"new a", "new b"},
+		)
+
+		if got, want := f1.Description(), "old func"; got != want {
+			t.Errorf("wrong original func description\ngot:  %s\nwant: %s", got, want)
+		}
+		if got, want := f2.Description(), "new func"; got != want {
+			t.Errorf("wrong updated func description\ngot:  %s\nwant: %s", got, want)
+		}
+
+		if got, want := len(f1.Params()), 2; got != want {
+			t.Fatalf("wrong original param count\ngot:  %d\nwant: %d", got, want)
+		}
+		if got, want := len(f2.Params()), 2; got != want {
+			t.Fatalf("wrong updated param count\ngot:  %d\nwant: %d", got, want)
+		}
+		if got, want := f1.Params()[0].Description, "old a"; got != want {
+			t.Errorf("wrong original param a description\ngot:  %s\nwant: %s", got, want)
+		}
+		if got, want := f2.Params()[0].Description, "new a"; got != want {
+			t.Errorf("wrong updated param a description\ngot:  %s\nwant: %s", got, want)
+		}
+		if got, want := f1.Params()[1].Description, "old b"; got != want {
+			t.Errorf("wrong original param b description\ngot:  %s\nwant: %s", got, want)
+		}
+		if got, want := f2.Params()[1].Description, "new b"; got != want {
+			t.Errorf("wrong updated param b description\ngot:  %s\nwant: %s", got, want)
+		}
+	})
+	t.Run("varparam overridden", func(t *testing.T) {
+		f1 := New(&Spec{
+			Description: "old func",
+			Params: []Parameter{
+				{
+					Name:        "a",
+					Description: "old a",
+				},
+			},
+			VarParam: &Parameter{
+				Name:        "b",
+				Description: "old b",
+			},
+			Type: stubType,
+			Impl: stubImpl,
+		})
+		f2 := f1.WithNewDescriptions(
+			"new func",
+			[]string{"new a", "new b"},
+		)
+
+		if got, want := f1.Description(), "old func"; got != want {
+			t.Errorf("wrong original func description\ngot:  %s\nwant: %s", got, want)
+		}
+		if got, want := f2.Description(), "new func"; got != want {
+			t.Errorf("wrong updated func description\ngot:  %s\nwant: %s", got, want)
+		}
+
+		if got, want := len(f1.Params()), 1; got != want {
+			t.Fatalf("wrong original param count\ngot:  %d\nwant: %d", got, want)
+		}
+		if got, want := len(f2.Params()), 1; got != want {
+			t.Fatalf("wrong updated param count\ngot:  %d\nwant: %d", got, want)
+		}
+		if got, want := f1.Params()[0].Description, "old a"; got != want {
+			t.Errorf("wrong original param a description\ngot:  %s\nwant: %s", got, want)
+		}
+		if got, want := f2.Params()[0].Description, "new a"; got != want {
+			t.Errorf("wrong updated param a description\ngot:  %s\nwant: %s", got, want)
+		}
+		if got, want := f1.VarParam().Description, "old b"; got != want {
+			t.Errorf("wrong original param b description\ngot:  %s\nwant: %s", got, want)
+		}
+		if got, want := f2.VarParam().Description, "new b"; got != want {
+			t.Errorf("wrong updated param b description\ngot:  %s\nwant: %s", got, want)
+		}
+	})
+	t.Run("varparam not overridden", func(t *testing.T) {
+		f1 := New(&Spec{
+			Description: "old func",
+			Params: []Parameter{
+				{
+					Name:        "a",
+					Description: "old a",
+				},
+			},
+			VarParam: &Parameter{
+				Name:        "b",
+				Description: "old b",
+			},
+			Type: stubType,
+			Impl: stubImpl,
+		})
+		f2 := f1.WithNewDescriptions(
+			"new func",
+			[]string{"new a"},
+		)
+
+		if got, want := f1.Description(), "old func"; got != want {
+			t.Errorf("wrong original func description\ngot:  %s\nwant: %s", got, want)
+		}
+		if got, want := f2.Description(), "new func"; got != want {
+			t.Errorf("wrong updated func description\ngot:  %s\nwant: %s", got, want)
+		}
+
+		if got, want := len(f1.Params()), 1; got != want {
+			t.Fatalf("wrong original param count\ngot:  %d\nwant: %d", got, want)
+		}
+		if got, want := len(f2.Params()), 1; got != want {
+			t.Fatalf("wrong updated param count\ngot:  %d\nwant: %d", got, want)
+		}
+		if got, want := f1.Params()[0].Description, "old a"; got != want {
+			t.Errorf("wrong original param a description\ngot:  %s\nwant: %s", got, want)
+		}
+		if got, want := f2.Params()[0].Description, "new a"; got != want {
+			t.Errorf("wrong updated param a description\ngot:  %s\nwant: %s", got, want)
+		}
+		if got, want := f1.VarParam().Description, "old b"; got != want {
+			t.Errorf("wrong original param b description\ngot:  %s\nwant: %s", got, want)
+		}
+		if got, want := f2.VarParam().Description, "old b"; got != want {
+			// This is the one case where we allow the caller to leave one of
+			// the param descriptions unchanged, because we want to allow
+			// a function to grow a variadic parameter later without it being
+			// a breaking change for existing callers that might be overriding
+			// descriptions.
+			t.Errorf("wrong updated param b description\ngot:  %s\nwant: %s", got, want)
+		}
+	})
+	t.Run("solo varparam overridden", func(t *testing.T) {
+		f1 := New(&Spec{
+			Description: "old func",
+			VarParam: &Parameter{
+				Name:        "a",
+				Description: "old a",
+			},
+			Type: stubType,
+			Impl: stubImpl,
+		})
+		f2 := f1.WithNewDescriptions(
+			"new func",
+			[]string{"new a"},
+		)
+
+		if got, want := f1.Description(), "old func"; got != want {
+			t.Errorf("wrong original func description\ngot:  %s\nwant: %s", got, want)
+		}
+		if got, want := f2.Description(), "new func"; got != want {
+			t.Errorf("wrong updated func description\ngot:  %s\nwant: %s", got, want)
+		}
+
+		if got, want := len(f1.Params()), 0; got != want {
+			t.Fatalf("wrong original param count\ngot:  %d\nwant: %d", got, want)
+		}
+		if got, want := len(f2.Params()), 0; got != want {
+			t.Fatalf("wrong updated param count\ngot:  %d\nwant: %d", got, want)
+		}
+		if got, want := f1.VarParam().Description, "old a"; got != want {
+			t.Errorf("wrong original param b description\ngot:  %s\nwant: %s", got, want)
+		}
+		if got, want := f2.VarParam().Description, "new a"; got != want {
+			t.Errorf("wrong updated param b description\ngot:  %s\nwant: %s", got, want)
+		}
+	})
+	t.Run("solo varparam not overridden", func(t *testing.T) {
+		f1 := New(&Spec{
+			Description: "old func",
+			VarParam: &Parameter{
+				Name:        "a",
+				Description: "old a",
+			},
+			Type: stubType,
+			Impl: stubImpl,
+		})
+		f2 := f1.WithNewDescriptions(
+			"new func",
+			nil,
+		)
+
+		if got, want := f1.Description(), "old func"; got != want {
+			t.Errorf("wrong original func description\ngot:  %s\nwant: %s", got, want)
+		}
+		if got, want := f2.Description(), "new func"; got != want {
+			t.Errorf("wrong updated func description\ngot:  %s\nwant: %s", got, want)
+		}
+
+		if got, want := len(f1.Params()), 0; got != want {
+			t.Fatalf("wrong original param count\ngot:  %d\nwant: %d", got, want)
+		}
+		if got, want := len(f2.Params()), 0; got != want {
+			t.Fatalf("wrong updated param count\ngot:  %d\nwant: %d", got, want)
+		}
+		if got, want := f1.VarParam().Description, "old a"; got != want {
+			t.Errorf("wrong original param b description\ngot:  %s\nwant: %s", got, want)
+		}
+		if got, want := f2.VarParam().Description, "old a"; got != want {
+			// This is the one case where we allow the caller to leave one of
+			// the param descriptions unchanged, because we want to allow
+			// a function to grow a variadic parameter later without it being
+			// a breaking change for existing callers that might be overriding
+			// descriptions.
+			t.Errorf("wrong updated param b description\ngot:  %s\nwant: %s", got, want)
+		}
+	})
+}
+
+func stubType([]cty.Value) (cty.Type, error) {
+	return cty.NilType, fmt.Errorf("should not be called")
+}
+
 func stubImpl([]cty.Value, cty.Type) (cty.Value, error) {
 	return cty.NilVal, fmt.Errorf("should not be called")
 }
