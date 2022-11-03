@@ -1268,6 +1268,126 @@ func TestConvert(t *testing.T) {
 				})},
 			),
 		},
+		// We should strip optional attributes out of empty sets, maps, lists,
+		// and tuples.
+		{
+			Value: cty.ListValEmpty(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+				"a": cty.String,
+			}, []string{"a"})),
+			Type: cty.Set(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+				"a": cty.String,
+			}, []string{"a"})),
+			Want: cty.SetValEmpty(cty.Object(map[string]cty.Type{
+				"a": cty.String,
+			})),
+		},
+		{
+			Value: cty.EmptyTupleVal,
+			Type: cty.Set(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+				"a": cty.String,
+			}, []string{"a"})),
+			Want: cty.SetValEmpty(cty.Object(map[string]cty.Type{
+				"a": cty.String,
+			})),
+		},
+		{
+			Value: cty.SetValEmpty(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+				"a": cty.String,
+			}, []string{"a"})),
+			Type: cty.List(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+				"a": cty.String,
+			}, []string{"a"})),
+			Want: cty.ListValEmpty(cty.Object(map[string]cty.Type{
+				"a": cty.String,
+			})),
+		},
+		{
+			Value: cty.EmptyTupleVal,
+			Type: cty.List(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+				"a": cty.String,
+			}, []string{"a"})),
+			Want: cty.ListValEmpty(cty.Object(map[string]cty.Type{
+				"a": cty.String,
+			})),
+		},
+		{
+			Value: cty.EmptyObjectVal,
+			Type: cty.Map(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+				"a": cty.String,
+			}, []string{"a"})),
+			Want: cty.MapValEmpty(cty.Object(map[string]cty.Type{
+				"a": cty.String,
+			})),
+		},
+		{
+			Value: cty.MapValEmpty(cty.String),
+			Type: cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+				"a": cty.String,
+			}, []string{"a"}),
+			Want: cty.ObjectVal(map[string]cty.Value{
+				"a": cty.NullVal(cty.String),
+			}),
+		},
+		// We should strip optional attributes out of null sets, maps, lists,
+		// and tuples.
+		{
+			Value: cty.NullVal(cty.List(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+				"a": cty.String,
+			}, []string{"a"}))),
+			Type: cty.Set(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+				"a": cty.String,
+			}, []string{"a"})),
+			Want: cty.NullVal(cty.Set(cty.Object(map[string]cty.Type{
+				"a": cty.String,
+			}))),
+		},
+		{
+			Value: cty.NullVal(cty.EmptyTuple),
+			Type: cty.Set(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+				"a": cty.String,
+			}, []string{"a"})),
+			Want: cty.NullVal(cty.Set(cty.Object(map[string]cty.Type{
+				"a": cty.String,
+			}))),
+		},
+		{
+			Value: cty.NullVal(cty.Set(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+				"a": cty.String,
+			}, []string{"a"}))),
+			Type: cty.List(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+				"a": cty.String,
+			}, []string{"a"})),
+			Want: cty.NullVal(cty.List(cty.Object(map[string]cty.Type{
+				"a": cty.String,
+			}))),
+		},
+		{
+			Value: cty.NullVal(cty.EmptyTuple),
+			Type: cty.List(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+				"a": cty.String,
+			}, []string{"a"})),
+			Want: cty.NullVal(cty.List(cty.Object(map[string]cty.Type{
+				"a": cty.String,
+			}))),
+		},
+		{
+			Value: cty.NullVal(cty.EmptyObject),
+			Type: cty.Map(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+				"a": cty.String,
+			}, []string{"a"})),
+			Want: cty.NullVal(cty.Map(cty.Object(map[string]cty.Type{
+				"a": cty.String,
+			}))),
+		},
+		{
+			Value: cty.NullVal(cty.Map(cty.String)),
+			Type: cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+				"a": cty.String,
+			}, []string{"a"}),
+			Want: cty.NullVal(cty.Object(map[string]cty.Type{
+				"a": cty.String,
+			})),
+		},
 		// We should strip optional attributes out of null values in sets, maps,
 		// lists and tuples.
 		{
