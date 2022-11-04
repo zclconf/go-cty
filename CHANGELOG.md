@@ -1,5 +1,6 @@
 # 1.12.1 (Unreleased)
 
+* `convert`: Will now produce correct type constraints when the input value is an empty collection and the target element type has optional attributes. In this case the conversion process must remove the optional attribute annotations because those are only for type conversion purposes and have no meaning when used in the type constraint for an empty collection. ([#143](https://github.com/zclconf/go-cty/pull/143))
 
 # 1.12.0 (October 27, 2022)
 
