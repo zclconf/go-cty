@@ -1514,6 +1514,91 @@ func TestConvert(t *testing.T) {
 				})),
 			}),
 		},
+		// Collections should prefer concrete types over dynamic types.
+		{
+			Value: cty.ListValEmpty(cty.Number),
+			Type:  cty.List(cty.DynamicPseudoType),
+			Want:  cty.ListValEmpty(cty.Number),
+		},
+		{
+			Value: cty.NullVal(cty.List(cty.Number)),
+			Type:  cty.List(cty.DynamicPseudoType),
+			Want:  cty.NullVal(cty.List(cty.Number)),
+		},
+		{
+			Value: cty.NullVal(cty.List(cty.Number)),
+			Type:  cty.Set(cty.DynamicPseudoType),
+			Want:  cty.NullVal(cty.Set(cty.Number)),
+		},
+		{
+			Value: cty.MapValEmpty(cty.Number),
+			Type:  cty.Map(cty.DynamicPseudoType),
+			Want:  cty.MapValEmpty(cty.Number),
+		},
+		{
+			Value: cty.NullVal(cty.Map(cty.Number)),
+			Type:  cty.Map(cty.DynamicPseudoType),
+			Want:  cty.NullVal(cty.Map(cty.Number)),
+		},
+		{
+			Value: cty.NullVal(cty.Map(cty.Number)),
+			Type: cty.Object(map[string]cty.Type{
+				"a": cty.DynamicPseudoType,
+			}),
+			Want: cty.NullVal(cty.Object(map[string]cty.Type{
+				"a": cty.Number,
+			})),
+		},
+		{
+			Value: cty.SetValEmpty(cty.Number),
+			Type:  cty.Set(cty.DynamicPseudoType),
+			Want:  cty.SetValEmpty(cty.Number),
+		},
+		{
+			Value: cty.NullVal(cty.Set(cty.Number)),
+			Type:  cty.Set(cty.DynamicPseudoType),
+			Want:  cty.NullVal(cty.Set(cty.Number)),
+		},
+		{
+			Value: cty.NullVal(cty.Set(cty.Number)),
+			Type:  cty.List(cty.DynamicPseudoType),
+			Want:  cty.NullVal(cty.List(cty.Number)),
+		},
+		{
+			Value: cty.NullVal(cty.Object(map[string]cty.Type{
+				"a": cty.String,
+			})),
+			Type: cty.Map(cty.DynamicPseudoType),
+			Want: cty.NullVal(cty.Map(cty.String)),
+		},
+		{
+			Value: cty.NullVal(cty.Object(map[string]cty.Type{
+				"a": cty.Object(map[string]cty.Type{
+					"b": cty.String,
+				}),
+			})),
+			Type: cty.Object(map[string]cty.Type{
+				"a": cty.Object(map[string]cty.Type{
+					"b": cty.DynamicPseudoType,
+				}),
+			}),
+			Want: cty.NullVal(cty.Object(map[string]cty.Type{
+				"a": cty.Object(map[string]cty.Type{
+					"b": cty.String,
+				}),
+			})),
+		},
+		{
+			Value: cty.NullVal(cty.Tuple([]cty.Type{
+				cty.String,
+			})),
+			Type: cty.Tuple([]cty.Type{
+				cty.DynamicPseudoType,
+			}),
+			Want: cty.NullVal(cty.Tuple([]cty.Type{
+				cty.String,
+			})),
+		},
 		// We should strip optional attributes out of types even if they match.
 		{
 			Value: cty.MapVal(map[string]cty.Value{
