@@ -91,8 +91,11 @@ func TestUnify(t *testing.T) {
 				cty.Object(map[string]cty.Type{"foo": cty.Bool}),
 				cty.Object(map[string]cty.Type{"bar": cty.Number}),
 			},
-			cty.NilType,
-			nil,
+			cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+				"foo": cty.Bool,
+				"bar": cty.Number,
+			}, []string{"foo", "bar"}),
+			[]bool{true, true},
 		},
 		{
 			[]cty.Type{

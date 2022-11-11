@@ -290,13 +290,17 @@ func unifyObjectTypes(types []cty.Type, unsafe bool, hasDynamic bool) (cty.Type,
 		return unifyAllAsDynamic(types)
 	}
 
-	// There are two different ways we can succeed here:
+	// There are three different ways we can succeed here:
 	// - If all of the given object types have the same set of attribute names
 	//   and the corresponding types are all unifyable, then we construct that
 	//   type.
 	// - If the given object types have different attribute names or their
 	//   corresponding types are not unifyable, we'll instead try to unify
 	//   all of the attribute types together to produce a map type.
+	// - If both of the above fail, we'll attempt to unify into an object with
+	//   optional attributes. In this, only the attributes that are shared need
+	//   to be unified instead of all the attributes so it may succeed where
+	//   the map approach failed.
 	//
 	// Our unification behavior is intentionally stricter than our conversion
 	// behavior for subset object types because user intent is different with
@@ -305,40 +309,51 @@ func unifyObjectTypes(types []cty.Type, unsafe bool, hasDynamic bool) (cty.Type,
 	// empty object type should be an error because unifying to the empty
 	// object type would be suprising and useless.
 
-	firstAttrs := types[0].AttributeTypes()
-	for _, ty := range types[1:] {
-		thisAttrs := ty.AttributeTypes()
-		if len(thisAttrs) != len(firstAttrs) {
-			// If number of attributes is different then there can be no
-			// object type in common.
-			return unifyObjectTypesToMap(types, unsafe)
-		}
-		for name := range thisAttrs {
-			if _, ok := firstAttrs[name]; !ok {
-				// If attribute names don't exactly match then there can be
-				// no object type in common.
-				return unifyObjectTypesToMap(types, unsafe)
+	// Step 1, work out if the types all have matching attributes.
+	attributeTypes := map[string][]cty.Type{}
+	for _, ty := range types {
+		for attr, attrType := range ty.AttributeTypes() {
+			if attrTypes, ok := attributeTypes[attr]; ok {
+				attributeTypes[attr] = append(attrTypes, attrType)
+			} else {
+				attributeTypes[attr] = []cty.Type{attrType}
 			}
 		}
 	}
 
-	// If we get here then we've proven that all of the given object types
-	// have exactly the same set of attribute names, though the types may
-	// differ.
-	retAtys := make(map[string]cty.Type)
-	atysAcross := make([]cty.Type, len(types))
-	for name := range firstAttrs {
-		for i, ty := range types {
-			atysAcross[i] = ty.AttributeType(name)
+	// Step 2, if the types don't have matching attributes then attempt to
+	// unify them into a single map. If we can't unify everything into a map
+	// because the attribute types don't match then keep track of which
+	// attributes are not shared across all types.
+	var optional []string
+	for attr, attrTypes := range attributeTypes {
+		if len(attrTypes) != len(types) {
+			// Then this attribute is not shared across all types.
+			if len(optional) == 0 {
+				// Only attempt this unification once.
+				ty, convs := unifyObjectTypesToMap(types, unsafe)
+				if ty != cty.NilType {
+					return ty, convs
+				}
+			}
+			// If we reach here it means that attempting to unify into a map
+			// didn't work. Instead, we're going to track all the attributes
+			// that are not common and mark them as optional.
+			optional = append(optional, attr)
 		}
-		retAtys[name], _ = unify(atysAcross, unsafe)
+	}
+
+	// If we reach here it means either all the attributes match, or they don't
+	// match and they do not have types in common so the types cannot be unified
+	// into a map.
+	retAtys := map[string]cty.Type{}
+	for name, attrTypes := range attributeTypes {
+		retAtys[name], _ = unify(attrTypes, unsafe)
 		if retAtys[name] == cty.NilType {
-			// Cannot unify this attribute alone, which means that unification
-			// of everything down to a map type can't be possible either.
 			return cty.NilType, nil
 		}
 	}
-	retTy := cty.Object(retAtys)
+	retTy := cty.ObjectWithOptionalAttrs(retAtys, optional)
 
 	conversions := make([]Conversion, len(types))
 	for i, ty := range types {
