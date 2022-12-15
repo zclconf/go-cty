@@ -434,7 +434,7 @@ func TestCompactMap(t *testing.T) {
 			false,
 		},
 		{
-			cty.MapVal(map[string]cty.Value{}),
+			cty.MapValEmpty(cty.String),
 			cty.MapValEmpty(cty.String),
 			false,
 		},

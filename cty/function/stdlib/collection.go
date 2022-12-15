@@ -323,13 +323,17 @@ var CompactMapFunc = function.New(&function.Spec{
 	Type: function.StaticReturnType(cty.Map(cty.String)),
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		mapVal := args[0]
+		if mapVal.LengthInt() == 0 {
+			// Return an empty map if the input map is empty
+			return cty.MapValEmpty(cty.String), nil
+		}
 		if !mapVal.IsWhollyKnown() {
 			// If some of the element values aren't known yet then we
 			// can't yet return a compacted map
 			return cty.UnknownVal(retType), nil
 		}
 
-		var outputMap map[string]cty.Value
+		outputMap := make(map[string]cty.Value)
 
 		for it := mapVal.ElementIterator(); it.Next(); {
 			k, v := it.Element()
