@@ -310,6 +310,43 @@ var CompactFunc = function.New(&function.Spec{
 	},
 })
 
+// CompactMapFunc is a function that takes a map of strings and returns a new map
+// with any key-value pairs where the value is an empty string removed.
+var CompactMapFunc = function.New(&function.Spec{
+	Description: `Removes all key-value pairs from the given map of strings where the value is an empty string.`,
+	Params: []function.Parameter{
+		{
+			Name: "map",
+			Type: cty.Map(cty.String),
+		},
+	},
+	Type: function.StaticReturnType(cty.Map(cty.String)),
+	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
+		mapVal := args[0]
+		if !mapVal.IsWhollyKnown() {
+			// If some of the element values aren't known yet then we
+			// can't yet return a compacted map
+			return cty.UnknownVal(retType), nil
+		}
+
+		var outputMap map[string]cty.Value
+
+		for it := mapVal.ElementIterator(); it.Next(); {
+			k, v := it.Element()
+			if v.IsNull() || v.AsString() == "" {
+				continue
+			}
+			outputMap[k.AsString()] = v
+		}
+
+		if len(outputMap) == 0 {
+			return cty.MapValEmpty(cty.String), nil
+		}
+
+		return cty.MapVal(outputMap), nil
+	},
+})
+
 // ContainsFunc is a function that determines whether a given list or
 // set contains a given single value as one of its elements.
 var ContainsFunc = function.New(&function.Spec{
@@ -1404,6 +1441,12 @@ func CoalesceList(args ...cty.Value) (cty.Value, error) {
 // with any empty string elements removed.
 func Compact(list cty.Value) (cty.Value, error) {
 	return CompactFunc.Call([]cty.Value{list})
+}
+
+// CompactMap takes a list of strings and returns a new list
+// with any empty string elements removed.
+func CompactMap(inputMap cty.Value) (cty.Value, error) {
+	return CompactMapFunc.Call([]cty.Value{inputMap})
 }
 
 // Contains determines whether a given list contains a given single value

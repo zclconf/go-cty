@@ -318,6 +318,149 @@ func TestChunklist(t *testing.T) {
 	}
 }
 
+func TestCompact(t *testing.T) {
+	tests := []struct {
+		List cty.Value
+		Want cty.Value
+		Err  bool
+	}{
+		{
+			cty.ListVal([]cty.Value{
+				cty.StringVal("value1"),
+				cty.StringVal("value2"),
+				cty.StringVal(""),
+				cty.StringVal("value4"),
+			}),
+			cty.ListVal([]cty.Value{
+				cty.StringVal("value1"),
+				cty.StringVal("value2"),
+				cty.StringVal("value4"),
+			}),
+			false,
+		},
+		{
+			cty.ListVal([]cty.Value{
+				cty.StringVal("value1"),
+				cty.StringVal("value2"),
+				cty.NullVal(cty.String),
+				cty.StringVal("value4"),
+			}),
+			cty.ListVal([]cty.Value{
+				cty.StringVal("value1"),
+				cty.StringVal("value2"),
+				cty.StringVal("value4"),
+			}),
+			false,
+		},
+		{
+			cty.ListVal([]cty.Value{
+				cty.UnknownVal(cty.String),
+				cty.StringVal("value2"),
+				cty.StringVal(""),
+				cty.StringVal("value4"),
+			}),
+			cty.UnknownVal(cty.List(cty.String)),
+			false,
+		},
+		{
+			cty.ListValEmpty(cty.String),
+			cty.ListValEmpty(cty.String),
+			false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("Compact(%#v)", test.List), func(t *testing.T) {
+			got, err := Compact(test.List)
+
+			if test.Err {
+				if err == nil {
+					t.Fatal("succeeded; want error")
+				}
+				return
+			} else if err != nil {
+				t.Fatalf("unexpected error: %s", err)
+			}
+
+			if !got.RawEquals(test.Want) {
+				t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, test.Want)
+			}
+		})
+	}
+}
+
+func TestCompactMap(t *testing.T) {
+	tests := []struct {
+		Collection cty.Value
+		Want       cty.Value
+		Err        bool
+	}{
+		{
+			cty.MapVal(map[string]cty.Value{
+				"key1": cty.StringVal("value1"),
+				"key2": cty.StringVal("value2"),
+				"key3": cty.StringVal(""),
+				"key4": cty.StringVal("value4"),
+			}),
+			cty.MapVal(map[string]cty.Value{
+				"key1": cty.StringVal("value1"),
+				"key2": cty.StringVal("value2"),
+				"key4": cty.StringVal("value4"),
+			}),
+			false,
+		},
+		{
+			cty.MapVal(map[string]cty.Value{
+				"key1": cty.StringVal("value1"),
+				"key2": cty.StringVal("value2"),
+				"key3": cty.NullVal(cty.String),
+				"key4": cty.StringVal("value4"),
+			}),
+			cty.MapVal(map[string]cty.Value{
+				"key1": cty.StringVal("value1"),
+				"key2": cty.StringVal("value2"),
+				"key4": cty.StringVal("value4"),
+			}),
+			false,
+		},
+		{
+			cty.MapVal(map[string]cty.Value{
+				"key1": cty.UnknownVal(cty.String),
+				"key2": cty.StringVal("value2"),
+				"key3": cty.StringVal(""),
+				"key4": cty.StringVal("value4"),
+			}),
+			cty.UnknownVal(cty.Map(cty.String)),
+			false,
+		},
+		{
+			cty.MapVal(map[string]cty.Value{}),
+			cty.MapValEmpty(cty.String),
+			false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("CompactMap(%#v)", test.Collection), func(t *testing.T) {
+			got, err := CompactMap(test.Collection)
+
+			if test.Err {
+				if err == nil {
+					t.Fatal("succeeded; want error")
+				}
+				return
+			} else if err != nil {
+				t.Fatalf("unexpected error: %s", err)
+			}
+
+			if !got.RawEquals(test.Want) {
+				t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, test.Want)
+			}
+		})
+
+	}
+}
+
 func TestContains(t *testing.T) {
 	listOfStrings := cty.ListVal([]cty.Value{
 		cty.StringVal("the"),
