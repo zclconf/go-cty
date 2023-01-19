@@ -188,9 +188,7 @@ func TestFormatDate(t *testing.T) {
 		},
 		{
 			cty.StringVal("2017-01-02T26:00:00Z"),
-			// This one generates an odd message due to an apparent quirk in
-			// the Go time parser. Ideally it would use "26" as the errant string.
-			`not a valid RFC3339 timestamp: cannot use ":00:00Z" as hour`,
+			`not a valid RFC3339 timestamp: hour must be between 0 and 23 inclusive`,
 		},
 		{
 			cty.StringVal("2017-13-02T00:00:00Z"),
@@ -212,6 +210,30 @@ func TestFormatDate(t *testing.T) {
 			// producing a confusing error message.
 			`not a valid RFC3339 timestamp: cannot use "-02T00:00:00Z" as year`,
 		},
+		{
+			cty.StringVal(`2000-01-01T1:12:34Z`),
+			`not a valid RFC3339 timestamp: hour must have exactly two digits`,
+		},
+		{
+			cty.StringVal(`2000-01-01T01:1:34Z`),
+			`not a valid RFC3339 timestamp: minute must have exactly two digits`,
+		},
+		{
+			cty.StringVal(`2000-01-01T01:01:1Z`),
+			`not a valid RFC3339 timestamp: cannot use "1Z" as second`,
+		},
+		{
+			cty.StringVal(`2000-01-01T00:00:00,000Z`),
+			`not a valid RFC3339 timestamp: cannot use "," as timestamp segment`,
+		},
+		{
+			cty.StringVal(`2000-01-01T00:00:00+24:00`),
+			`not a valid RFC3339 timestamp: cannot use "+24:00" as UTC offset`,
+		},
+		{
+			cty.StringVal(`2000-01-01T00:00:00+00:60`),
+			`not a valid RFC3339 timestamp: cannot use "+00:60" as UTC offset`,
+		},
 	}
 	for _, test := range parseErrTests {
 		t.Run(fmt.Sprintf("%s parse error", test.Timestamp.AsString()), func(t *testing.T) {
@@ -224,6 +246,64 @@ func TestFormatDate(t *testing.T) {
 			if got, want := err.Error(), test.Err; got != want {
 				t.Fatalf("wrong error\ngot:  %s\nwant: %s", got, want)
 			}
+		})
+	}
+
+	parseSuccessTests := []struct {
+		input       string
+		wantRFC3339 string
+		wantRFC850  string
+	}{
+		{
+			"2022-03-01T00:23:45Z",
+			"2022-03-01T00:23:45Z",
+			"Tuesday, 01-Mar-22 00:23:45 UTC",
+		},
+		{
+			"2022-03-01T00:23:45+00:00",
+			"2022-03-01T00:23:45Z",
+			"Tuesday, 01-Mar-22 00:23:45 UTC",
+		},
+		{
+			"2022-03-01T00:23:45+01:00",
+			"2022-03-01T00:23:45+01:00",
+			"Tuesday, 01-Mar-22 00:23:45 +0100",
+		},
+		{
+			"2022-03-01T00:23:45-01:00",
+			"2022-03-01T00:23:45-01:00",
+			"Tuesday, 01-Mar-22 00:23:45 -0100",
+		},
+		{
+			"1900-01-01T00:00:00Z",
+			"1900-01-01T00:00:00Z",
+			"Monday, 01-Jan-00 00:00:00 UTC",
+		},
+	}
+	const rfc3339Format = "YYYY-MM-DD'T'hh:mm:ssZ"
+	const rfc850Format = "EEEE, DD-MMM-YY hh:mm:ss ZZZ"
+	for _, test := range parseSuccessTests {
+		t.Run(fmt.Sprintf("%s parse success", test.input), func(t *testing.T) {
+			t.Run("RFC3339", func(t *testing.T) {
+				got, err := FormatDate(cty.StringVal(rfc3339Format), cty.StringVal(test.input))
+				if err != nil {
+					t.Fatalf("unexpected error: %s", err)
+				}
+
+				if got.AsString() != test.wantRFC3339 {
+					t.Fatalf("wrong result\ngot:  %s\nwant: %s", got.AsString(), test.wantRFC3339)
+				}
+			})
+			t.Run("RFC850", func(t *testing.T) {
+				got, err := FormatDate(cty.StringVal(rfc850Format), cty.StringVal(test.input))
+				if err != nil {
+					t.Fatalf("unexpected error: %s", err)
+				}
+
+				if got.AsString() != test.wantRFC850 {
+					t.Fatalf("wrong result\ngot:  %s\nwant: %s", got.AsString(), test.wantRFC850)
+				}
+			})
 		})
 	}
 }
