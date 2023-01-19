@@ -1,5 +1,8 @@
-# 1.12.2 (Unreleased)
+# 1.13.0 (Unreleased)
 
+* `function/stdlib`: The `FormatDate` and `TimeAdd` functions in previous releases were accidentally more liberal than intended in their interpretation of timestamp strings documented as requiring RFC3339. ([#152](https://github.com/zclconf/go-cty/pull/152))
+
+    Those functions are now corrected to use a stricter RFC3339 parser, meaning that they will now reject some inputs that were previously accepted but were not valid per the RFC3339 syntax rules. The documentation for these functions already specified that RFC3339 syntax was required and so this is a fix to a defect rather than a breaking change, but calling applications which embed these functions may wish to pass on an upgrade note about this behavior difference in their own releaase notes after upgrading.
 
 # 1.12.1 (November 8, 2022)
 
