@@ -276,7 +276,7 @@ func (val Value) Equals(other Value) Value {
 		// in one are also in the other.
 		for it := s1.Iterator(); it.Next(); {
 			rv := it.Value()
-			if rv == unknown { // "unknown" is the internal representation of unknown-ness
+			if _, unknown := rv.(*unknownType); unknown { // "*unknownType" is the internal representation of unknown-ness
 				return UnknownVal(Bool)
 			}
 			if !s2.Has(rv) {
@@ -285,7 +285,7 @@ func (val Value) Equals(other Value) Value {
 		}
 		for it := s2.Iterator(); it.Next(); {
 			rv := it.Value()
-			if rv == unknown { // "unknown" is the internal representation of unknown-ness
+			if _, unknown := rv.(*unknownType); unknown { // "*unknownType" is the internal representation of unknown-ness
 				return UnknownVal(Bool)
 			}
 			if !s1.Has(rv) {
