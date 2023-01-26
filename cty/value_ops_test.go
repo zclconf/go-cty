@@ -1595,6 +1595,67 @@ func TestValueRawEquals(t *testing.T) {
 			}),
 			false,
 		},
+		{
+			UnknownVal(Bool).Refine().NotNull().NewValue(),
+			UnknownVal(Bool),
+			false,
+		},
+		{
+			UnknownVal(Bool),
+			UnknownVal(Bool).Refine().NotNull().NewValue(),
+			false,
+		},
+		{
+			UnknownVal(Number).Refine().NumberRangeInclusive(Zero, NumberIntVal(1)).NewValue(),
+			UnknownVal(Number).Refine().NumberRangeInclusive(Zero, NumberIntVal(2)).NewValue(),
+			false,
+		},
+		{
+			UnknownVal(Number).Refine().NumberRangeInclusive(Zero, NumberIntVal(1)).NewValue(),
+			UnknownVal(Number).Refine().NumberRangeInclusive(Zero, NumberIntVal(1)).NewValue(),
+			true,
+		},
+		{
+			UnknownVal(String),
+			UnknownVal(String).Refine().StringPrefix("foo").NewValue(),
+			false,
+		},
+		{
+			UnknownVal(String).Refine().StringPrefix("foo").NewValue(),
+			UnknownVal(String).Refine().StringPrefix("foo").NewValue(),
+			true,
+		},
+		{
+			UnknownVal(String).Refine().NotNull().StringPrefix("foo").NewValue(),
+			UnknownVal(String).Refine().StringPrefix("foo").NewValue(),
+			false,
+		},
+		{
+			UnknownVal(String).Refine().StringPrefix("foo").NewValue(),
+			UnknownVal(String).Refine().StringPrefix("bar").NewValue(),
+			false,
+		},
+		{
+			UnknownVal(String).Refine().Null().NewValue(),
+			NullVal(String),
+			true, // The refinement expression collapses into a simple null
+		},
+		{
+			UnknownVal(Number).Refine().NumberRangeInclusive(Zero, Zero).NewValue(),
+			Zero,
+			false, // Refinement can't collapse to zero because it might be null
+		},
+		{
+			UnknownVal(Number).Refine().NotNull().NumberRangeInclusive(Zero, Zero).NewValue(),
+			Zero,
+			true, // Refinement collapses to zero because it's not null and the two bounds are equal
+		},
+		{
+			UnknownVal(List(String)).Refine().NotNull().CollectionLengthUpperBound(Zero, true).NewValue(),
+			ListValEmpty(String),
+			true, // Colection length lower bound is always at least zero so this refinement collapses to an empty list
+		},
+
 		// Marks
 		{
 			StringVal("a").Mark(1),
@@ -1617,7 +1678,7 @@ func TestValueRawEquals(t *testing.T) {
 		t.Run(fmt.Sprintf("%#v.RawEquals(%#v)", test.LHS, test.RHS), func(t *testing.T) {
 			got := test.LHS.RawEquals(test.RHS)
 			if !got == test.Expected {
-				t.Fatalf("wrong Equals result\ngot:  %#v\nwant: %#v", got, test.Expected)
+				t.Fatalf("wrong RawEquals result\ngot:  %#v\nwant: %#v", got, test.Expected)
 			}
 		})
 	}
@@ -3298,6 +3359,26 @@ func TestValueGoString(t *testing.T) {
 		{
 			UnknownVal(Tuple([]Type{String, Bool})),
 			`cty.UnknownVal(cty.Tuple([]cty.Type{cty.String, cty.Bool}))`,
+		},
+		{
+			UnknownVal(String).Refine().NotNull().NewValue(),
+			`cty.UnknownVal(cty.String).Refine().NotNull().NewValue()`,
+		},
+		{
+			UnknownVal(String).Refine().NotNull().StringPrefix("a").NewValue(),
+			`cty.UnknownVal(cty.String).Refine().NotNull().StringPrefix("a").NewValue()`,
+		},
+		{
+			UnknownVal(Bool).Refine().NotNull().NewValue(),
+			`cty.UnknownVal(cty.Bool).Refine().NotNull().NewValue()`,
+		},
+		{
+			UnknownVal(Number).Refine().NumberRangeInclusive(Zero, UnknownVal(Number)).NewValue(),
+			`cty.UnknownVal(cty.Number).Refine().NumberLowerBound(cty.NumberIntVal(0), true).NewValue()`,
+		},
+		{
+			UnknownVal(Number).Refine().NumberRangeInclusive(Zero, NumberIntVal(1)).NewValue(),
+			`cty.UnknownVal(cty.Number).Refine().NumberLowerBound(cty.NumberIntVal(0), true).NumberUpperBound(cty.NumberIntVal(1), true).NewValue()`,
 		},
 
 		{

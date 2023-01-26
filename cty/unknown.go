@@ -3,6 +3,10 @@ package cty
 // unknownType is the placeholder type used for the sigil value representing
 // "Unknown", to make it unambigiously distinct from any other possible value.
 type unknownType struct {
+	// refinement is an optional object which, if present, describes some
+	// additional constraints we know about the range of real values this
+	// unknown value could be a placeholder for.
+	refinement unknownValRefinement
 }
 
 // totallyUnknown is the representation a a value we know nothing about at

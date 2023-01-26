@@ -33,7 +33,12 @@ func (val Value) GoString() string {
 		return "cty.DynamicVal"
 	}
 	if !val.IsKnown() {
-		return fmt.Sprintf("cty.UnknownVal(%#v)", val.ty)
+		rfn := val.v.(*unknownType).refinement
+		var suffix string
+		if rfn != nil {
+			suffix = ".Refine()" + rfn.GoString() + ".NewValue()"
+		}
+		return fmt.Sprintf("cty.UnknownVal(%#v)%s", val.ty, suffix)
 	}
 
 	// By the time we reach here we've dealt with all of the exceptions around
@@ -393,7 +398,17 @@ func (val Value) RawEquals(other Value) bool {
 	other = other.unmarkForce()
 
 	if (!val.IsKnown()) && (!other.IsKnown()) {
-		return true
+		// If either unknown value has refinements then they must match.
+		valRfn := val.v.(*unknownType).refinement
+		otherRfn := other.v.(*unknownType).refinement
+		switch {
+		case (valRfn == nil) != (otherRfn == nil):
+			return false
+		case valRfn != nil:
+			return valRfn.rawEqual(otherRfn)
+		default:
+			return true
+		}
 	}
 	if (val.IsKnown() && !other.IsKnown()) || (other.IsKnown() && !val.IsKnown()) {
 		return false
