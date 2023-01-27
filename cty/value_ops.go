@@ -36,7 +36,12 @@ func (val Value) GoString() string {
 		rfn := val.v.(*unknownType).refinement
 		var suffix string
 		if rfn != nil {
-			suffix = ".Refine()" + rfn.GoString() + ".NewValue()"
+			calls := rfn.GoString()
+			if calls == ".NotNull()" {
+				suffix = ".RefineNotNull()"
+			} else {
+				suffix = ".Refine()" + rfn.GoString() + ".NewValue()"
+			}
 		}
 		return fmt.Sprintf("cty.UnknownVal(%#v)%s", val.ty, suffix)
 	}
@@ -574,7 +579,7 @@ func (val Value) Add(other Value) Value {
 
 	if shortCircuit := mustTypeCheck(Number, Number, val, other); shortCircuit != nil {
 		shortCircuit = forceShortCircuitType(shortCircuit, Number)
-		return *shortCircuit
+		return (*shortCircuit).RefineNotNull()
 	}
 
 	ret := new(big.Float)
@@ -593,7 +598,7 @@ func (val Value) Subtract(other Value) Value {
 
 	if shortCircuit := mustTypeCheck(Number, Number, val, other); shortCircuit != nil {
 		shortCircuit = forceShortCircuitType(shortCircuit, Number)
-		return *shortCircuit
+		return (*shortCircuit).RefineNotNull()
 	}
 
 	return val.Add(other.Negate())
@@ -609,7 +614,7 @@ func (val Value) Negate() Value {
 
 	if shortCircuit := mustTypeCheck(Number, Number, val); shortCircuit != nil {
 		shortCircuit = forceShortCircuitType(shortCircuit, Number)
-		return *shortCircuit
+		return (*shortCircuit).RefineNotNull()
 	}
 
 	ret := new(big.Float).Neg(val.v.(*big.Float))
@@ -627,7 +632,7 @@ func (val Value) Multiply(other Value) Value {
 
 	if shortCircuit := mustTypeCheck(Number, Number, val, other); shortCircuit != nil {
 		shortCircuit = forceShortCircuitType(shortCircuit, Number)
-		return *shortCircuit
+		return (*shortCircuit).RefineNotNull()
 	}
 
 	// find the larger precision of the arguments
@@ -672,7 +677,7 @@ func (val Value) Divide(other Value) Value {
 
 	if shortCircuit := mustTypeCheck(Number, Number, val, other); shortCircuit != nil {
 		shortCircuit = forceShortCircuitType(shortCircuit, Number)
-		return *shortCircuit
+		return (*shortCircuit).RefineNotNull()
 	}
 
 	ret := new(big.Float)
@@ -704,7 +709,7 @@ func (val Value) Modulo(other Value) Value {
 
 	if shortCircuit := mustTypeCheck(Number, Number, val, other); shortCircuit != nil {
 		shortCircuit = forceShortCircuitType(shortCircuit, Number)
-		return *shortCircuit
+		return (*shortCircuit).RefineNotNull()
 	}
 
 	// We cheat a bit here with infinities, just abusing the Multiply operation
@@ -742,7 +747,7 @@ func (val Value) Absolute() Value {
 
 	if shortCircuit := mustTypeCheck(Number, Number, val); shortCircuit != nil {
 		shortCircuit = forceShortCircuitType(shortCircuit, Number)
-		return *shortCircuit
+		return (*shortCircuit).Refine().NotNull().NumberRangeInclusive(Zero, UnknownVal(Number)).NewValue()
 	}
 
 	ret := (&big.Float{}).Abs(val.v.(*big.Float))

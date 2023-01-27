@@ -70,6 +70,13 @@ func (v Value) Refine() *RefinementBuilder {
 	return &RefinementBuilder{v, wip}
 }
 
+// RefineNotNull is a shorthand for Value.Refine().NotNull().NewValue(), because
+// declaring that a unknown value isn't null is by far the most common use of
+// refinements.
+func (v Value) RefineNotNull() Value {
+	return v.Refine().NotNull().NewValue()
+}
+
 // RefinementBuilder is a supporting type for the [Value.Refine] method,
 // using the builder pattern to apply zero or more constraints before
 // constructing a new value with all of those constraints applied.
