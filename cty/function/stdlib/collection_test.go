@@ -947,7 +947,9 @@ func TestLength(t *testing.T) {
 		},
 		{
 			cty.SetVal([]cty.Value{cty.True, cty.UnknownVal(cty.Bool)}),
-			cty.UnknownVal(cty.Number), // Don't know if the unknown in the input represents cty.True or cty.False
+			// Don't know if the unknown in the input represents cty.True or cty.False,
+			// so it may or may not coalesce with the one known value.
+			cty.UnknownVal(cty.Number).Refine().NotNull().NumberRangeInclusive(cty.NumberIntVal(1), cty.NumberIntVal(2)).NewValue(),
 		},
 		{
 			cty.SetVal([]cty.Value{cty.UnknownVal(cty.Bool)}),
@@ -971,11 +973,18 @@ func TestLength(t *testing.T) {
 		},
 		{
 			cty.UnknownVal(cty.List(cty.Bool)),
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).Refine().NotNull().NumberRangeInclusive(cty.Zero, cty.UnknownVal(cty.Number)).NewValue(),
 		},
 		{
 			cty.DynamicVal,
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).Refine().NotNull().NumberRangeInclusive(cty.Zero, cty.UnknownVal(cty.Number)).NewValue(),
+		},
+		{
+			// TODO: This one should really preserve the length bounds as the
+			// numeric bounds of its result, but cty.Value.Length isn't yet
+			// able to do that.
+			cty.UnknownVal(cty.List(cty.Bool)).Refine().CollectionLengthUpperBound(cty.NumberIntVal(2), true).NewValue(),
+			cty.UnknownVal(cty.Number).Refine().NotNull().NumberRangeInclusive(cty.Zero, cty.UnknownVal(cty.Number)).NewValue(),
 		},
 		{ // Marked collections return a marked length
 			cty.ListVal([]cty.Value{

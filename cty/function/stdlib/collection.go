@@ -114,6 +114,7 @@ var LengthFunc = function.New(&function.Spec{
 			Name:             "collection",
 			Type:             cty.DynamicPseudoType,
 			AllowDynamicType: true,
+			AllowUnknown:     true,
 			AllowMarked:      true,
 		},
 	},

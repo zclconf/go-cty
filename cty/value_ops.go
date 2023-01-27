@@ -1038,7 +1038,9 @@ func (val Value) Length() Value {
 	}
 
 	if !val.IsKnown() {
-		return UnknownVal(Number)
+		// TODO: If the unknown value has been refined with explicit length
+		// bounds then we should use those as the refined range of this result.
+		return UnknownVal(Number).Refine().NotNull().NumberRangeInclusive(Zero, UnknownVal(Number)).NewValue()
 	}
 	if val.Type().IsSetType() {
 		// The Length rules are a little different for sets because if any
@@ -1056,8 +1058,10 @@ func (val Value) Length() Value {
 			// unknown value cannot represent more than one known value.
 			return NumberIntVal(storeLength)
 		}
-		// Otherwise, we cannot predict the length.
-		return UnknownVal(Number)
+		// Otherwise, we cannot predict the length exactly but we can at
+		// least constrain both bounds of its range, because value coalescing
+		// can only ever reduce the number of elements in the set.
+		return UnknownVal(Number).Refine().NotNull().NumberRangeInclusive(NumberIntVal(1), NumberIntVal(storeLength)).NewValue()
 	}
 
 	return NumberIntVal(int64(val.LengthInt()))
