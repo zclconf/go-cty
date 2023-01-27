@@ -2419,17 +2419,17 @@ func TestValueHasIndex(t *testing.T) {
 		{
 			ListVal([]Value{StringVal("hello")}),
 			UnknownVal(Number),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			ListVal([]Value{StringVal("hello")}),
 			DynamicVal,
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			UnknownVal(List(String)),
 			NumberIntVal(0),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			UnknownVal(List(String)),
@@ -2469,17 +2469,17 @@ func TestValueHasIndex(t *testing.T) {
 		{
 			MapVal(map[string]Value{"greeting": StringVal("hello")}),
 			UnknownVal(String),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			MapVal(map[string]Value{"greeting": StringVal("hello")}),
 			DynamicVal,
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			UnknownVal(Map(String)),
 			StringVal("hello"),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			UnknownVal(Map(String)),
@@ -2524,7 +2524,7 @@ func TestValueHasIndex(t *testing.T) {
 		{
 			TupleVal([]Value{StringVal("hello")}),
 			UnknownVal(Number),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			UnknownVal(Tuple([]Type{String})),
@@ -2534,17 +2534,17 @@ func TestValueHasIndex(t *testing.T) {
 		{
 			TupleVal([]Value{StringVal("hello")}),
 			DynamicVal,
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			DynamicVal,
 			StringVal("hello"),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			DynamicVal,
 			NumberIntVal(0),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			ListVal([]Value{StringVal("hello")}).Mark(1),
@@ -2753,11 +2753,11 @@ func TestValueNot(t *testing.T) {
 		},
 		{
 			UnknownVal(Bool),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			DynamicVal,
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			True.Mark(1),
@@ -2804,32 +2804,32 @@ func TestValueAnd(t *testing.T) {
 		{
 			UnknownVal(Bool),
 			UnknownVal(Bool),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			True,
 			UnknownVal(Bool),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			UnknownVal(Bool),
 			True,
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			DynamicVal,
 			DynamicVal,
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			True,
 			DynamicVal,
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			DynamicVal,
 			True,
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			True.Mark(1),
@@ -2887,32 +2887,32 @@ func TestValueOr(t *testing.T) {
 		{
 			UnknownVal(Bool),
 			UnknownVal(Bool),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			True,
 			UnknownVal(Bool),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			UnknownVal(Bool),
 			True,
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			DynamicVal,
 			DynamicVal,
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			True,
 			DynamicVal,
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			DynamicVal,
 			True,
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			True.Mark(1),
@@ -2990,32 +2990,32 @@ func TestLessThan(t *testing.T) {
 		{
 			UnknownVal(Number),
 			UnknownVal(Number),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			NumberIntVal(1),
 			UnknownVal(Number),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			UnknownVal(Number),
 			NumberIntVal(1),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			DynamicVal,
 			DynamicVal,
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			NumberIntVal(1),
 			DynamicVal,
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			DynamicVal,
 			NumberIntVal(1),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			NumberIntVal(0).Mark(1),
@@ -3093,32 +3093,32 @@ func TestGreaterThan(t *testing.T) {
 		{
 			UnknownVal(Number),
 			UnknownVal(Number),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			NumberIntVal(1),
 			UnknownVal(Number),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			UnknownVal(Number),
 			NumberIntVal(1),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			DynamicVal,
 			DynamicVal,
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			NumberIntVal(1),
 			DynamicVal,
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			DynamicVal,
 			NumberIntVal(1),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			NumberIntVal(1).Mark(1),
@@ -3196,32 +3196,32 @@ func TestLessThanOrEqualTo(t *testing.T) {
 		{
 			UnknownVal(Number),
 			UnknownVal(Number),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			NumberIntVal(1),
 			UnknownVal(Number),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			UnknownVal(Number),
 			NumberIntVal(1),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			DynamicVal,
 			DynamicVal,
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			NumberIntVal(1),
 			DynamicVal,
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			DynamicVal,
 			NumberIntVal(1),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			NumberIntVal(0).Mark(1),
@@ -3299,32 +3299,32 @@ func TestGreaterThanOrEqualTo(t *testing.T) {
 		{
 			UnknownVal(Number),
 			UnknownVal(Number),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			NumberIntVal(1),
 			UnknownVal(Number),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			UnknownVal(Number),
 			NumberIntVal(1),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			DynamicVal,
 			DynamicVal,
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			NumberIntVal(1),
 			DynamicVal,
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			DynamicVal,
 			NumberIntVal(1),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			NumberIntVal(0).Mark(1),

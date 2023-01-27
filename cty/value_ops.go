@@ -920,23 +920,23 @@ func (val Value) HasIndex(key Value) Value {
 	}
 
 	if val.ty == DynamicPseudoType {
-		return UnknownVal(Bool)
+		return UnknownVal(Bool).RefineNotNull()
 	}
 
 	switch {
 	case val.Type().IsListType():
 		if key.Type() == DynamicPseudoType {
-			return UnknownVal(Bool)
+			return UnknownVal(Bool).RefineNotNull()
 		}
 
 		if key.Type() != Number {
 			return False
 		}
 		if !key.IsKnown() {
-			return UnknownVal(Bool)
+			return UnknownVal(Bool).RefineNotNull()
 		}
 		if !val.IsKnown() {
-			return UnknownVal(Bool)
+			return UnknownVal(Bool).RefineNotNull()
 		}
 
 		index, accuracy := key.v.(*big.Float).Int64()
@@ -947,17 +947,17 @@ func (val Value) HasIndex(key Value) Value {
 		return BoolVal(int(index) < len(val.v.([]interface{})) && index >= 0)
 	case val.Type().IsMapType():
 		if key.Type() == DynamicPseudoType {
-			return UnknownVal(Bool)
+			return UnknownVal(Bool).RefineNotNull()
 		}
 
 		if key.Type() != String {
 			return False
 		}
 		if !key.IsKnown() {
-			return UnknownVal(Bool)
+			return UnknownVal(Bool).RefineNotNull()
 		}
 		if !val.IsKnown() {
-			return UnknownVal(Bool)
+			return UnknownVal(Bool).RefineNotNull()
 		}
 
 		keyStr := key.v.(string)
@@ -966,14 +966,14 @@ func (val Value) HasIndex(key Value) Value {
 		return BoolVal(exists)
 	case val.Type().IsTupleType():
 		if key.Type() == DynamicPseudoType {
-			return UnknownVal(Bool)
+			return UnknownVal(Bool).RefineNotNull()
 		}
 
 		if key.Type() != Number {
 			return False
 		}
 		if !key.IsKnown() {
-			return UnknownVal(Bool)
+			return UnknownVal(Bool).RefineNotNull()
 		}
 
 		index, accuracy := key.v.(*big.Float).Int64()
@@ -1008,10 +1008,10 @@ func (val Value) HasElement(elem Value) Value {
 		panic("not a set type")
 	}
 	if !val.IsKnown() || !elem.IsKnown() {
-		return UnknownVal(Bool)
+		return UnknownVal(Bool).RefineNotNull()
 	}
 	if val.IsNull() {
-		panic("can't call HasElement on a nil value")
+		panic("can't call HasElement on a null value")
 	}
 	if !ty.ElementType().Equals(elem.Type()) {
 		return False
@@ -1202,7 +1202,7 @@ func (val Value) Not() Value {
 
 	if shortCircuit := mustTypeCheck(Bool, Bool, val); shortCircuit != nil {
 		shortCircuit = forceShortCircuitType(shortCircuit, Bool)
-		return *shortCircuit
+		return (*shortCircuit).RefineNotNull()
 	}
 
 	return BoolVal(!val.v.(bool))
@@ -1219,7 +1219,7 @@ func (val Value) And(other Value) Value {
 
 	if shortCircuit := mustTypeCheck(Bool, Bool, val, other); shortCircuit != nil {
 		shortCircuit = forceShortCircuitType(shortCircuit, Bool)
-		return *shortCircuit
+		return (*shortCircuit).RefineNotNull()
 	}
 
 	return BoolVal(val.v.(bool) && other.v.(bool))
@@ -1236,7 +1236,7 @@ func (val Value) Or(other Value) Value {
 
 	if shortCircuit := mustTypeCheck(Bool, Bool, val, other); shortCircuit != nil {
 		shortCircuit = forceShortCircuitType(shortCircuit, Bool)
-		return *shortCircuit
+		return (*shortCircuit).RefineNotNull()
 	}
 
 	return BoolVal(val.v.(bool) || other.v.(bool))
@@ -1253,7 +1253,7 @@ func (val Value) LessThan(other Value) Value {
 
 	if shortCircuit := mustTypeCheck(Number, Bool, val, other); shortCircuit != nil {
 		shortCircuit = forceShortCircuitType(shortCircuit, Bool)
-		return *shortCircuit
+		return (*shortCircuit).RefineNotNull()
 	}
 
 	return BoolVal(val.v.(*big.Float).Cmp(other.v.(*big.Float)) < 0)
@@ -1270,7 +1270,7 @@ func (val Value) GreaterThan(other Value) Value {
 
 	if shortCircuit := mustTypeCheck(Number, Bool, val, other); shortCircuit != nil {
 		shortCircuit = forceShortCircuitType(shortCircuit, Bool)
-		return *shortCircuit
+		return (*shortCircuit).RefineNotNull()
 	}
 
 	return BoolVal(val.v.(*big.Float).Cmp(other.v.(*big.Float)) > 0)
