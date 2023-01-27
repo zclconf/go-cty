@@ -11,6 +11,8 @@ func TestValueEquals(t *testing.T) {
 	capsuleB := CapsuleVal(capsuleTestType1, &capsuleTestType1Native{"capsuleB"})
 	capsuleC := CapsuleVal(capsuleTestType2, &capsuleTestType2Native{"capsuleC"})
 
+	unknownResult := UnknownVal(Bool).Refine().NotNull().NewValue()
+
 	tests := []struct {
 		LHS      Value
 		RHS      Value
@@ -250,47 +252,47 @@ func TestValueEquals(t *testing.T) {
 		{
 			TupleVal([]Value{UnknownVal(Number)}),
 			TupleVal([]Value{NumberIntVal(1)}),
-			UnknownVal(Bool),
+			unknownResult,
 		},
 		{
 			TupleVal([]Value{UnknownVal(Number)}),
 			TupleVal([]Value{UnknownVal(Number)}),
-			UnknownVal(Bool),
+			unknownResult,
 		},
 		{
 			TupleVal([]Value{NumberIntVal(1)}),
 			TupleVal([]Value{UnknownVal(Number)}),
-			UnknownVal(Bool),
+			unknownResult,
 		},
 		{
 			TupleVal([]Value{NumberIntVal(1)}),
 			TupleVal([]Value{DynamicVal}),
-			UnknownVal(Bool),
+			unknownResult,
 		},
 		{
 			TupleVal([]Value{DynamicVal}),
 			TupleVal([]Value{NumberIntVal(1)}),
-			UnknownVal(Bool),
+			unknownResult,
 		},
 		{
 			TupleVal([]Value{NumberIntVal(1)}),
 			UnknownVal(Tuple([]Type{Number})),
-			UnknownVal(Bool),
+			unknownResult,
 		},
 		{
 			UnknownVal(Tuple([]Type{Number})),
 			TupleVal([]Value{NumberIntVal(1)}),
-			UnknownVal(Bool),
+			unknownResult,
 		},
 		{
 			DynamicVal,
 			TupleVal([]Value{NumberIntVal(1)}),
-			UnknownVal(Bool),
+			unknownResult,
 		},
 		{
 			TupleVal([]Value{NumberIntVal(1)}),
 			DynamicVal,
-			UnknownVal(Bool),
+			unknownResult,
 		},
 
 		// Lists
@@ -532,7 +534,7 @@ func TestValueEquals(t *testing.T) {
 			SetVal([]Value{
 				UnknownVal(Number),
 			}),
-			UnknownVal(Bool),
+			unknownResult,
 		},
 		{
 			SetVal([]Value{
@@ -542,7 +544,7 @@ func TestValueEquals(t *testing.T) {
 				NumberIntVal(1),
 				UnknownVal(Number),
 			}),
-			UnknownVal(Bool),
+			unknownResult,
 		},
 		{
 			SetVal([]Value{
@@ -552,7 +554,7 @@ func TestValueEquals(t *testing.T) {
 			SetVal([]Value{
 				NumberIntVal(1),
 			}),
-			UnknownVal(Bool),
+			unknownResult,
 		},
 
 		// Capsules
@@ -574,7 +576,7 @@ func TestValueEquals(t *testing.T) {
 		{
 			capsuleA,
 			UnknownVal(capsuleTestType1), // same type
-			UnknownVal(Bool),
+			unknownResult,
 		},
 		{
 			capsuleA,
@@ -586,22 +588,22 @@ func TestValueEquals(t *testing.T) {
 		{
 			NumberIntVal(2),
 			UnknownVal(Number),
-			UnknownVal(Bool),
+			unknownResult,
 		},
 		{
 			NumberIntVal(1),
 			DynamicVal,
-			UnknownVal(Bool),
+			unknownResult,
 		},
 		{
 			DynamicVal,
 			BoolVal(true),
-			UnknownVal(Bool),
+			unknownResult,
 		},
 		{
 			DynamicVal,
 			DynamicVal,
-			UnknownVal(Bool),
+			unknownResult,
 		},
 		{
 			ListVal([]Value{
@@ -612,7 +614,7 @@ func TestValueEquals(t *testing.T) {
 				StringVal("hi"),
 				DynamicVal,
 			}),
-			UnknownVal(Bool),
+			unknownResult,
 		},
 		{
 			ListVal([]Value{
@@ -623,7 +625,7 @@ func TestValueEquals(t *testing.T) {
 				StringVal("hi"),
 				UnknownVal(String),
 			}),
-			UnknownVal(Bool),
+			unknownResult,
 		},
 		{
 			MapVal(map[string]Value{
@@ -634,7 +636,7 @@ func TestValueEquals(t *testing.T) {
 				"static":  StringVal("hi"),
 				"dynamic": DynamicVal,
 			}),
-			UnknownVal(Bool),
+			unknownResult,
 		},
 		{
 			MapVal(map[string]Value{
@@ -645,7 +647,7 @@ func TestValueEquals(t *testing.T) {
 				"static":  StringVal("hi"),
 				"dynamic": UnknownVal(String),
 			}),
-			UnknownVal(Bool),
+			unknownResult,
 		},
 		{
 			NullVal(String),
@@ -660,7 +662,7 @@ func TestValueEquals(t *testing.T) {
 		{
 			UnknownVal(String),
 			UnknownVal(Number),
-			UnknownVal(Bool),
+			unknownResult,
 		},
 		{
 			StringVal(""),
@@ -675,7 +677,7 @@ func TestValueEquals(t *testing.T) {
 		{
 			StringVal(""),
 			UnknownVal(String),
-			UnknownVal(Bool),
+			unknownResult,
 		},
 		{
 			NullVal(DynamicPseudoType),
@@ -685,17 +687,17 @@ func TestValueEquals(t *testing.T) {
 		{
 			NullVal(String),
 			UnknownVal(Number),
-			UnknownVal(Bool), // because second operand might eventually be null
+			unknownResult, // because second operand might eventually be null
 		},
 		{
 			UnknownVal(String),
 			NullVal(Number),
-			UnknownVal(Bool), // because first operand might eventually be null
+			unknownResult, // because first operand might eventually be null
 		},
 		{
 			UnknownVal(String),
 			UnknownVal(Number),
-			UnknownVal(Bool), // because both operands might eventually be null
+			unknownResult, // because both operands might eventually be null
 		},
 		{
 			StringVal("hello"),
@@ -759,7 +761,7 @@ func TestValueEquals(t *testing.T) {
 			ObjectVal(map[string]Value{
 				"a": DynamicVal,
 			}),
-			UnknownVal(Bool),
+			unknownResult,
 		},
 		{
 			ObjectVal(map[string]Value{
@@ -779,7 +781,27 @@ func TestValueEquals(t *testing.T) {
 			ObjectVal(map[string]Value{
 				"a": UnknownVal(List(List(DynamicPseudoType))),
 			}),
-			UnknownVal(Bool),
+			unknownResult,
+		},
+		{
+			NullVal(String),
+			UnknownVal(String).Refine().NotNull().NewValue(),
+			False,
+		},
+		{
+			UnknownVal(String).Refine().NotNull().NewValue(),
+			NullVal(String),
+			False,
+		},
+		{
+			UnknownVal(String).Refine().Null().NewValue(),
+			NullVal(String),
+			True, // NOTE: The refinement should collapse to NullVal(String)
+		},
+		{
+			NullVal(String),
+			UnknownVal(String).Refine().Null().NewValue(),
+			True, // NOTE: The refinement should collapse to NullVal(String)
 		},
 
 		// Marks
@@ -814,7 +836,7 @@ func TestValueEquals(t *testing.T) {
 		t.Run(fmt.Sprintf("%#v.Equals(%#v)", test.LHS, test.RHS), func(t *testing.T) {
 			got := test.LHS.Equals(test.RHS)
 			if !got.RawEquals(test.Expected) {
-				t.Fatalf("wrong Equals result\ngot:  %#v\nwant: %#v", got, test.Expected)
+				t.Fatalf("wrong Equals result\nLHS:  %#v\nRHS:  %#v\ngot:  %#v\nwant: %#v", test.LHS, test.RHS, got, test.Expected)
 			}
 		})
 	}

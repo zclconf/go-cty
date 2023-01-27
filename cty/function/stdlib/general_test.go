@@ -36,22 +36,22 @@ func TestEqual(t *testing.T) {
 		{
 			cty.NumberIntVal(1),
 			cty.UnknownVal(cty.Number),
-			cty.UnknownVal(cty.Bool),
+			cty.UnknownVal(cty.Bool).Refine().NotNull().NewValue(),
 		},
 		{
 			cty.UnknownVal(cty.Number),
 			cty.UnknownVal(cty.Number),
-			cty.UnknownVal(cty.Bool),
+			cty.UnknownVal(cty.Bool).Refine().NotNull().NewValue(),
 		},
 		{
 			cty.NumberIntVal(1),
 			cty.DynamicVal,
-			cty.UnknownVal(cty.Bool),
+			cty.UnknownVal(cty.Bool).Refine().NotNull().NewValue(),
 		},
 		{
 			cty.DynamicVal,
 			cty.DynamicVal,
-			cty.UnknownVal(cty.Bool),
+			cty.UnknownVal(cty.Bool).Refine().NotNull().NewValue(),
 		},
 	}
 

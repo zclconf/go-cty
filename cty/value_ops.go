@@ -130,13 +130,24 @@ func (val Value) Equals(other Value) Value {
 		return val.Equals(other).WithMarks(valMarks, otherMarks)
 	}
 
-	// Start by handling Unknown values before considering types.
-	// This needs to be done since Null values are always equal regardless of
-	// type.
+	// Some easy cases with comparisons to null.
+	switch {
+	case val.IsNull() && definitelyNotNull(other):
+		return False
+	case other.IsNull() && definitelyNotNull(val):
+		return False
+	}
+
+	// We need to deal with unknown values before anything else with nulls
+	// because any unknown value that hasn't yet been refined as non-null
+	// could become null, and nulls of any types are equal to one another.
+	unknownResult := func() Value {
+		return UnknownVal(Bool).Refine().NotNull().NewValue()
+	}
 	switch {
 	case !val.IsKnown() && !other.IsKnown():
 		// both unknown
-		return UnknownVal(Bool)
+		return unknownResult()
 	case val.IsKnown() && !other.IsKnown():
 		switch {
 		case val.IsNull(), other.ty.HasDynamicTypes():
@@ -144,13 +155,13 @@ func (val Value) Equals(other Value) Value {
 			// nulls of any type are equal.
 			// An unknown with a dynamic type compares as unknown, which we need
 			// to check before the type comparison below.
-			return UnknownVal(Bool)
+			return unknownResult()
 		case !val.ty.Equals(other.ty):
 			// There is no null comparison or dynamic types, so unequal types
 			// will never be equal.
 			return False
 		default:
-			return UnknownVal(Bool)
+			return unknownResult()
 		}
 	case other.IsKnown() && !val.IsKnown():
 		switch {
@@ -159,13 +170,13 @@ func (val Value) Equals(other Value) Value {
 			// nulls of any type are equal.
 			// An unknown with a dynamic type compares as unknown, which we need
 			// to check before the type comparison below.
-			return UnknownVal(Bool)
+			return unknownResult()
 		case !other.ty.Equals(val.ty):
 			// There's no null comparison or dynamic types, so unequal types
 			// will never be equal.
 			return False
 		default:
-			return UnknownVal(Bool)
+			return unknownResult()
 		}
 	}
 
@@ -187,7 +198,7 @@ func (val Value) Equals(other Value) Value {
 			return BoolVal(false)
 		}
 
-		return UnknownVal(Bool)
+		return unknownResult()
 	}
 
 	if !val.ty.Equals(other.ty) {
@@ -221,7 +232,7 @@ func (val Value) Equals(other Value) Value {
 			}
 			eq := lhs.Equals(rhs)
 			if !eq.IsKnown() {
-				return UnknownVal(Bool)
+				return unknownResult()
 			}
 			if eq.False() {
 				result = false
@@ -242,7 +253,7 @@ func (val Value) Equals(other Value) Value {
 			}
 			eq := lhs.Equals(rhs)
 			if !eq.IsKnown() {
-				return UnknownVal(Bool)
+				return unknownResult()
 			}
 			if eq.False() {
 				result = false
@@ -264,7 +275,7 @@ func (val Value) Equals(other Value) Value {
 				}
 				eq := lhs.Equals(rhs)
 				if !eq.IsKnown() {
-					return UnknownVal(Bool)
+					return unknownResult()
 				}
 				if eq.False() {
 					result = false
@@ -282,7 +293,7 @@ func (val Value) Equals(other Value) Value {
 		for it := s1.Iterator(); it.Next(); {
 			rv := it.Value()
 			if _, unknown := rv.(*unknownType); unknown { // "*unknownType" is the internal representation of unknown-ness
-				return UnknownVal(Bool)
+				return unknownResult()
 			}
 			if !s2.Has(rv) {
 				equal = false
@@ -291,7 +302,7 @@ func (val Value) Equals(other Value) Value {
 		for it := s2.Iterator(); it.Next(); {
 			rv := it.Value()
 			if _, unknown := rv.(*unknownType); unknown { // "*unknownType" is the internal representation of unknown-ness
-				return UnknownVal(Bool)
+				return unknownResult()
 			}
 			if !s1.Has(rv) {
 				equal = false
@@ -318,7 +329,7 @@ func (val Value) Equals(other Value) Value {
 				}
 				eq := lhs.Equals(rhs)
 				if !eq.IsKnown() {
-					return UnknownVal(Bool)
+					return unknownResult()
 				}
 				if eq.False() {
 					result = false

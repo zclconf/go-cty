@@ -102,6 +102,15 @@ func (r ValueRange) CouldBeNull() bool {
 	return r.raw.null() != tristateFalse
 }
 
+// DefinitelyNotNull returns true if there are no null values in the range.
+func (r ValueRange) DefinitelyNotNull() bool {
+	if r.raw == nil {
+		// A totally-unconstrained unknown value could be null
+		return false
+	}
+	return r.raw.null() == tristateFalse
+}
+
 // NumberLowerBound returns information about the lower bound of the range of
 // a number value, or panics if the value is definitely not a number.
 //
@@ -217,4 +226,17 @@ func (r ValueRange) LengthUpperBound() (min Value, inclusive bool) {
 		return rfn.maxLen, rfn.maxInc
 	}
 	return UnknownVal(Number), false
+}
+
+// definitelyNotNull is a convenient helper for the common situation of checking
+// whether a value could possibly be null.
+//
+// Returns true if the given value is either a known value that isn't null
+// or an unknown value that has been refined to exclude null values from its
+// range.
+func definitelyNotNull(v Value) bool {
+	if v.IsKnown() {
+		return !v.IsNull()
+	}
+	return v.Range().DefinitelyNotNull()
 }
