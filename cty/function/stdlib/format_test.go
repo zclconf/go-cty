@@ -99,7 +99,7 @@ func TestFormat(t *testing.T) {
 			[]cty.Value{cty.TupleVal([]cty.Value{
 				cty.UnknownVal(cty.String),
 			})},
-			cty.UnknownVal(cty.String),
+			cty.UnknownVal(cty.String).RefineNotNull(),
 			``,
 		},
 		{
@@ -445,7 +445,7 @@ func TestFormat(t *testing.T) {
 		{
 			cty.UnknownVal(cty.String),
 			[]cty.Value{cty.True},
-			cty.UnknownVal(cty.String),
+			cty.UnknownVal(cty.String).RefineNotNull(),
 			``,
 		},
 		{
@@ -457,13 +457,13 @@ func TestFormat(t *testing.T) {
 		{
 			cty.StringVal("Hello, %s!"),
 			[]cty.Value{cty.UnknownVal(cty.String)},
-			cty.UnknownVal(cty.String),
+			cty.UnknownVal(cty.String).RefineNotNull(),
 			``,
 		},
 		{
 			cty.StringVal("Hello, %[2]s!"),
 			[]cty.Value{cty.UnknownVal(cty.String), cty.StringVal("Ermintrude")},
-			cty.UnknownVal(cty.String),
+			cty.UnknownVal(cty.String).RefineNotNull(),
 			``,
 		},
 
@@ -752,7 +752,7 @@ func TestFormatList(t *testing.T) {
 			[]cty.Value{
 				cty.True,
 			},
-			cty.UnknownVal(cty.List(cty.String)),
+			cty.UnknownVal(cty.List(cty.String)).RefineNotNull(),
 			``,
 		},
 		15: {
@@ -761,7 +761,7 @@ func TestFormatList(t *testing.T) {
 				cty.UnknownVal(cty.String),
 			},
 			cty.ListVal([]cty.Value{
-				cty.UnknownVal(cty.String),
+				cty.UnknownVal(cty.String).RefineNotNull(),
 			}),
 			``,
 		},
@@ -780,7 +780,7 @@ func TestFormatList(t *testing.T) {
 			[]cty.Value{
 				cty.UnknownVal(cty.List(cty.String)),
 			},
-			cty.UnknownVal(cty.List(cty.String)),
+			cty.UnknownVal(cty.List(cty.String)).RefineNotNull(),
 			``,
 		},
 		18: {
@@ -794,7 +794,7 @@ func TestFormatList(t *testing.T) {
 			},
 			cty.ListVal([]cty.Value{
 				cty.StringVal(`["hello"]`),
-				cty.UnknownVal(cty.String),
+				cty.UnknownVal(cty.String).RefineNotNull(),
 				cty.StringVal(`["world"]`),
 			}),
 			``,
@@ -804,7 +804,7 @@ func TestFormatList(t *testing.T) {
 			[]cty.Value{
 				cty.UnknownVal(cty.Tuple([]cty.Type{cty.String})),
 			},
-			cty.UnknownVal(cty.List(cty.String)),
+			cty.UnknownVal(cty.List(cty.String)).RefineNotNull(),
 			``,
 		},
 		20: {
@@ -813,7 +813,7 @@ func TestFormatList(t *testing.T) {
 				cty.UnknownVal(cty.Tuple([]cty.Type{cty.String})),
 				cty.UnknownVal(cty.Tuple([]cty.Type{cty.String, cty.String})),
 			},
-			cty.UnknownVal(cty.List(cty.String)),
+			cty.UnknownVal(cty.List(cty.String)).RefineNotNull(),
 			`argument 2 has length 2, which is inconsistent with argument 1 of length 1`,
 		},
 		21: {
@@ -822,7 +822,7 @@ func TestFormatList(t *testing.T) {
 				cty.ListVal([]cty.Value{cty.StringVal("hi")}),
 				cty.UnknownVal(cty.Tuple([]cty.Type{cty.String, cty.String})),
 			},
-			cty.UnknownVal(cty.List(cty.String)),
+			cty.UnknownVal(cty.List(cty.String)).RefineNotNull(),
 			`argument 2 has length 2, which is inconsistent with argument 1 of length 1`,
 		},
 		22: {
@@ -833,7 +833,7 @@ func TestFormatList(t *testing.T) {
 					cty.UnknownVal(cty.String),
 				}),
 			},
-			cty.UnknownVal(cty.List(cty.String)),
+			cty.UnknownVal(cty.List(cty.String)).RefineNotNull(),
 			``,
 		},
 		23: {

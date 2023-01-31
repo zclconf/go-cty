@@ -43,14 +43,14 @@ func TestRegex(t *testing.T) {
 			cty.UnknownVal(cty.Tuple([]cty.Type{
 				cty.String,
 				cty.String,
-			})),
+			})).RefineNotNull(),
 		},
 		{
 			cty.StringVal("(?P<num>[0-9]*)"),
 			cty.UnknownVal(cty.String),
 			cty.UnknownVal(cty.Object(map[string]cty.Type{
 				"num": cty.String,
-			})),
+			})).RefineNotNull(),
 		},
 		{
 			cty.UnknownVal(cty.String),
@@ -134,19 +134,19 @@ func TestRegexAll(t *testing.T) {
 			cty.UnknownVal(cty.List(cty.Tuple([]cty.Type{
 				cty.String,
 				cty.String,
-			}))),
+			}))).RefineNotNull(),
 		},
 		{
 			cty.StringVal("(?P<num>[0-9]*)"),
 			cty.UnknownVal(cty.String),
 			cty.UnknownVal(cty.List(cty.Object(map[string]cty.Type{
 				"num": cty.String,
-			}))),
+			}))).RefineNotNull(),
 		},
 		{
 			cty.UnknownVal(cty.String),
 			cty.StringVal("135abc456def"),
-			cty.UnknownVal(cty.List(cty.DynamicPseudoType)),
+			cty.UnknownVal(cty.List(cty.DynamicPseudoType)).RefineNotNull(),
 		},
 	}
 

@@ -20,7 +20,8 @@ var AbsoluteFunc = function.New(&function.Spec{
 			AllowMarked:      true,
 		},
 	},
-	Type: function.StaticReturnType(cty.Number),
+	Type:         function.StaticReturnType(cty.Number),
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
 		return args[0].Absolute(), nil
 	},
@@ -40,7 +41,8 @@ var AddFunc = function.New(&function.Spec{
 			AllowDynamicType: true,
 		},
 	},
-	Type: function.StaticReturnType(cty.Number),
+	Type:         function.StaticReturnType(cty.Number),
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		// big.Float.Add can panic if the input values are opposing infinities,
 		// so we must catch that here in order to remain within
@@ -74,7 +76,8 @@ var SubtractFunc = function.New(&function.Spec{
 			AllowDynamicType: true,
 		},
 	},
-	Type: function.StaticReturnType(cty.Number),
+	Type:         function.StaticReturnType(cty.Number),
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		// big.Float.Sub can panic if the input values are infinities,
 		// so we must catch that here in order to remain within
@@ -108,7 +111,8 @@ var MultiplyFunc = function.New(&function.Spec{
 			AllowDynamicType: true,
 		},
 	},
-	Type: function.StaticReturnType(cty.Number),
+	Type:         function.StaticReturnType(cty.Number),
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		// big.Float.Mul can panic if the input values are both zero or both
 		// infinity, so we must catch that here in order to remain within
@@ -143,7 +147,8 @@ var DivideFunc = function.New(&function.Spec{
 			AllowDynamicType: true,
 		},
 	},
-	Type: function.StaticReturnType(cty.Number),
+	Type:         function.StaticReturnType(cty.Number),
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		// big.Float.Quo can panic if the input values are both zero or both
 		// infinity, so we must catch that here in order to remain within
@@ -178,7 +183,8 @@ var ModuloFunc = function.New(&function.Spec{
 			AllowDynamicType: true,
 		},
 	},
-	Type: function.StaticReturnType(cty.Number),
+	Type:         function.StaticReturnType(cty.Number),
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		// big.Float.Mul can panic if the input values are both zero or both
 		// infinity, so we must catch that here in order to remain within
@@ -215,7 +221,8 @@ var GreaterThanFunc = function.New(&function.Spec{
 			AllowMarked:      true,
 		},
 	},
-	Type: function.StaticReturnType(cty.Bool),
+	Type:         function.StaticReturnType(cty.Bool),
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		return args[0].GreaterThan(args[1]), nil
 	},
@@ -237,7 +244,8 @@ var GreaterThanOrEqualToFunc = function.New(&function.Spec{
 			AllowMarked:      true,
 		},
 	},
-	Type: function.StaticReturnType(cty.Bool),
+	Type:         function.StaticReturnType(cty.Bool),
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		return args[0].GreaterThanOrEqualTo(args[1]), nil
 	},
@@ -259,7 +267,8 @@ var LessThanFunc = function.New(&function.Spec{
 			AllowMarked:      true,
 		},
 	},
-	Type: function.StaticReturnType(cty.Bool),
+	Type:         function.StaticReturnType(cty.Bool),
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		return args[0].LessThan(args[1]), nil
 	},
@@ -281,7 +290,8 @@ var LessThanOrEqualToFunc = function.New(&function.Spec{
 			AllowMarked:      true,
 		},
 	},
-	Type: function.StaticReturnType(cty.Bool),
+	Type:         function.StaticReturnType(cty.Bool),
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		return args[0].LessThanOrEqualTo(args[1]), nil
 	},
@@ -297,7 +307,8 @@ var NegateFunc = function.New(&function.Spec{
 			AllowMarked:      true,
 		},
 	},
-	Type: function.StaticReturnType(cty.Number),
+	Type:         function.StaticReturnType(cty.Number),
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
 		return args[0].Negate(), nil
 	},
@@ -311,7 +322,8 @@ var MinFunc = function.New(&function.Spec{
 		Type:             cty.Number,
 		AllowDynamicType: true,
 	},
-	Type: function.StaticReturnType(cty.Number),
+	Type:         function.StaticReturnType(cty.Number),
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
 		if len(args) == 0 {
 			return cty.NilVal, fmt.Errorf("must pass at least one number")
@@ -336,7 +348,8 @@ var MaxFunc = function.New(&function.Spec{
 		Type:             cty.Number,
 		AllowDynamicType: true,
 	},
-	Type: function.StaticReturnType(cty.Number),
+	Type:         function.StaticReturnType(cty.Number),
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
 		if len(args) == 0 {
 			return cty.NilVal, fmt.Errorf("must pass at least one number")
@@ -362,7 +375,8 @@ var IntFunc = function.New(&function.Spec{
 			AllowDynamicType: true,
 		},
 	},
-	Type: function.StaticReturnType(cty.Number),
+	Type:         function.StaticReturnType(cty.Number),
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
 		bf := args[0].AsBigFloat()
 		if bf.IsInt() {
@@ -384,7 +398,8 @@ var CeilFunc = function.New(&function.Spec{
 			Type: cty.Number,
 		},
 	},
-	Type: function.StaticReturnType(cty.Number),
+	Type:         function.StaticReturnType(cty.Number),
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		f := args[0].AsBigFloat()
 
@@ -414,7 +429,8 @@ var FloorFunc = function.New(&function.Spec{
 			Type: cty.Number,
 		},
 	},
-	Type: function.StaticReturnType(cty.Number),
+	Type:         function.StaticReturnType(cty.Number),
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		f := args[0].AsBigFloat()
 
@@ -447,7 +463,8 @@ var LogFunc = function.New(&function.Spec{
 			Type: cty.Number,
 		},
 	},
-	Type: function.StaticReturnType(cty.Number),
+	Type:         function.StaticReturnType(cty.Number),
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		var num float64
 		if err := gocty.FromCtyValue(args[0], &num); err != nil {
@@ -476,7 +493,8 @@ var PowFunc = function.New(&function.Spec{
 			Type: cty.Number,
 		},
 	},
-	Type: function.StaticReturnType(cty.Number),
+	Type:         function.StaticReturnType(cty.Number),
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		var num float64
 		if err := gocty.FromCtyValue(args[0], &num); err != nil {
@@ -502,7 +520,8 @@ var SignumFunc = function.New(&function.Spec{
 			Type: cty.Number,
 		},
 	},
-	Type: function.StaticReturnType(cty.Number),
+	Type:         function.StaticReturnType(cty.Number),
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		var num int
 		if err := gocty.FromCtyValue(args[0], &num); err != nil {
@@ -539,6 +558,7 @@ var ParseIntFunc = function.New(&function.Spec{
 		}
 		return cty.Number, nil
 	},
+	RefineResult: refineNonNull,
 
 	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
 		var numstr string

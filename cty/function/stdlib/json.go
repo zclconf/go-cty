@@ -16,7 +16,8 @@ var JSONEncodeFunc = function.New(&function.Spec{
 			AllowNull:        true,
 		},
 	},
-	Type: function.StaticReturnType(cty.String),
+	Type:         function.StaticReturnType(cty.String),
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
 		val := args[0]
 		if !val.IsWhollyKnown() {

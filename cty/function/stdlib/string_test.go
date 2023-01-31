@@ -49,11 +49,11 @@ func TestUpper(t *testing.T) {
 		},
 		{
 			cty.UnknownVal(cty.String),
-			cty.UnknownVal(cty.String),
+			cty.UnknownVal(cty.String).RefineNotNull(),
 		},
 		{
 			cty.DynamicVal,
-			cty.UnknownVal(cty.String),
+			cty.UnknownVal(cty.String).RefineNotNull(),
 		},
 		{
 			cty.StringVal("hello").Mark(1),
@@ -103,11 +103,11 @@ func TestLower(t *testing.T) {
 		},
 		{
 			cty.UnknownVal(cty.String),
-			cty.UnknownVal(cty.String),
+			cty.UnknownVal(cty.String).RefineNotNull(),
 		},
 		{
 			cty.DynamicVal,
-			cty.UnknownVal(cty.String),
+			cty.UnknownVal(cty.String).RefineNotNull(),
 		},
 	}
 
@@ -174,11 +174,11 @@ func TestReverse(t *testing.T) {
 		},
 		{
 			cty.UnknownVal(cty.String),
-			cty.UnknownVal(cty.String),
+			cty.UnknownVal(cty.String).RefineNotNull(),
 		},
 		{
 			cty.DynamicVal,
-			cty.UnknownVal(cty.String),
+			cty.UnknownVal(cty.String).RefineNotNull(),
 		},
 	}
 
@@ -245,11 +245,11 @@ func TestStrlen(t *testing.T) {
 		},
 		{
 			cty.UnknownVal(cty.String),
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).RefineNotNull(),
 		},
 		{
 			cty.DynamicVal,
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).RefineNotNull(),
 		},
 	}
 

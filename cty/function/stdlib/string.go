@@ -22,7 +22,8 @@ var UpperFunc = function.New(&function.Spec{
 			AllowDynamicType: true,
 		},
 	},
-	Type: function.StaticReturnType(cty.String),
+	Type:         function.StaticReturnType(cty.String),
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
 		in := args[0].AsString()
 		out := strings.ToUpper(in)
@@ -39,7 +40,8 @@ var LowerFunc = function.New(&function.Spec{
 			AllowDynamicType: true,
 		},
 	},
-	Type: function.StaticReturnType(cty.String),
+	Type:         function.StaticReturnType(cty.String),
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
 		in := args[0].AsString()
 		out := strings.ToLower(in)
@@ -56,7 +58,8 @@ var ReverseFunc = function.New(&function.Spec{
 			AllowDynamicType: true,
 		},
 	},
-	Type: function.StaticReturnType(cty.String),
+	Type:         function.StaticReturnType(cty.String),
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
 		in := []byte(args[0].AsString())
 		out := make([]byte, len(in))
@@ -84,7 +87,8 @@ var StrlenFunc = function.New(&function.Spec{
 			AllowDynamicType: true,
 		},
 	},
-	Type: function.StaticReturnType(cty.Number),
+	Type:         function.StaticReturnType(cty.Number),
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
 		in := args[0].AsString()
 		l := 0
@@ -122,7 +126,8 @@ var SubstrFunc = function.New(&function.Spec{
 			AllowDynamicType: true,
 		},
 	},
-	Type: function.StaticReturnType(cty.String),
+	Type:         function.StaticReturnType(cty.String),
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
 		in := []byte(args[0].AsString())
 		var offset, length int
@@ -218,7 +223,8 @@ var JoinFunc = function.New(&function.Spec{
 		Description: "One or more lists of strings to join.",
 		Type:        cty.List(cty.String),
 	},
-	Type: function.StaticReturnType(cty.String),
+	Type:         function.StaticReturnType(cty.String),
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
 		sep := args[0].AsString()
 		listVals := args[1:]
@@ -262,7 +268,8 @@ var SortFunc = function.New(&function.Spec{
 			Type: cty.List(cty.String),
 		},
 	},
-	Type: function.StaticReturnType(cty.List(cty.String)),
+	Type:         function.StaticReturnType(cty.List(cty.String)),
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
 		listVal := args[0]
 
@@ -307,7 +314,8 @@ var SplitFunc = function.New(&function.Spec{
 			Type:        cty.String,
 		},
 	},
-	Type: function.StaticReturnType(cty.List(cty.String)),
+	Type:         function.StaticReturnType(cty.List(cty.String)),
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
 		sep := args[0].AsString()
 		str := args[1].AsString()
@@ -333,7 +341,8 @@ var ChompFunc = function.New(&function.Spec{
 			Type: cty.String,
 		},
 	},
-	Type: function.StaticReturnType(cty.String),
+	Type:         function.StaticReturnType(cty.String),
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		newlines := regexp.MustCompile(`(?:\r\n?|\n)*\z`)
 		return cty.StringVal(newlines.ReplaceAllString(args[0].AsString(), "")), nil
@@ -356,7 +365,8 @@ var IndentFunc = function.New(&function.Spec{
 			Type:        cty.String,
 		},
 	},
-	Type: function.StaticReturnType(cty.String),
+	Type:         function.StaticReturnType(cty.String),
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		var spaces int
 		if err := gocty.FromCtyValue(args[0], &spaces); err != nil {
@@ -378,7 +388,8 @@ var TitleFunc = function.New(&function.Spec{
 			Type: cty.String,
 		},
 	},
-	Type: function.StaticReturnType(cty.String),
+	Type:         function.StaticReturnType(cty.String),
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		return cty.StringVal(strings.Title(args[0].AsString())), nil
 	},
@@ -394,7 +405,8 @@ var TrimSpaceFunc = function.New(&function.Spec{
 			Type: cty.String,
 		},
 	},
-	Type: function.StaticReturnType(cty.String),
+	Type:         function.StaticReturnType(cty.String),
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		return cty.StringVal(strings.TrimSpace(args[0].AsString())), nil
 	},
@@ -416,7 +428,8 @@ var TrimFunc = function.New(&function.Spec{
 			Type:        cty.String,
 		},
 	},
-	Type: function.StaticReturnType(cty.String),
+	Type:         function.StaticReturnType(cty.String),
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
 		str := args[0].AsString()
 		cutset := args[1].AsString()
@@ -443,7 +456,8 @@ var TrimPrefixFunc = function.New(&function.Spec{
 			Type:        cty.String,
 		},
 	},
-	Type: function.StaticReturnType(cty.String),
+	Type:         function.StaticReturnType(cty.String),
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
 		str := args[0].AsString()
 		prefix := args[1].AsString()
@@ -467,7 +481,8 @@ var TrimSuffixFunc = function.New(&function.Spec{
 			Type:        cty.String,
 		},
 	},
-	Type: function.StaticReturnType(cty.String),
+	Type:         function.StaticReturnType(cty.String),
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
 		str := args[0].AsString()
 		cutset := args[1].AsString()

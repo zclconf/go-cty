@@ -32,6 +32,7 @@ var HasIndexFunc = function.New(&function.Spec{
 		}
 		return cty.Bool, nil
 	},
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		return args[0].HasIndex(args[1]), nil
 	},
@@ -125,6 +126,7 @@ var LengthFunc = function.New(&function.Spec{
 		}
 		return cty.Number, nil
 	},
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		return args[0].Length(), nil
 	},
@@ -252,6 +254,7 @@ var CoalesceListFunc = function.New(&function.Spec{
 
 		return last, nil
 	},
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		for _, arg := range args {
 			if !arg.IsKnown() {
@@ -284,7 +287,8 @@ var CompactFunc = function.New(&function.Spec{
 			Type: cty.List(cty.String),
 		},
 	},
-	Type: function.StaticReturnType(cty.List(cty.String)),
+	Type:         function.StaticReturnType(cty.List(cty.String)),
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		listVal := args[0]
 		if !listVal.IsWhollyKnown() {
@@ -325,7 +329,8 @@ var ContainsFunc = function.New(&function.Spec{
 			Type: cty.DynamicPseudoType,
 		},
 	},
-	Type: function.StaticReturnType(cty.Bool),
+	Type:         function.StaticReturnType(cty.Bool),
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
 		arg := args[0]
 		ty := arg.Type()
@@ -383,6 +388,7 @@ var DistinctFunc = function.New(&function.Spec{
 	Type: func(args []cty.Value) (cty.Type, error) {
 		return args[0].Type(), nil
 	},
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		listVal := args[0]
 
@@ -427,6 +433,7 @@ var ChunklistFunc = function.New(&function.Spec{
 	Type: func(args []cty.Value) (cty.Type, error) {
 		return cty.List(args[0].Type()), nil
 	},
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		listVal := args[0]
 		sizeVal := args[1]
@@ -514,6 +521,7 @@ var FlattenFunc = function.New(&function.Spec{
 		}
 		return cty.Tuple(tys), nil
 	},
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		inputList := args[0]
 
@@ -612,6 +620,7 @@ var KeysFunc = function.New(&function.Spec{
 			return cty.DynamicPseudoType, function.NewArgErrorf(0, "must have map or object type")
 		}
 	},
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
 		// We must unmark the value before we can use ElementIterator on it, and
 		// then re-apply the same marks (possibly none) when we return. Since we
@@ -833,6 +842,7 @@ var MergeFunc = function.New(&function.Spec{
 
 		return cty.Object(attrs), nil
 	},
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		outputMap := make(map[string]cty.Value)
 		var markses []cty.ValueMarks // remember any marked maps/objects we find
@@ -892,6 +902,7 @@ var ReverseListFunc = function.New(&function.Spec{
 			return cty.NilType, function.NewArgErrorf(0, "can only reverse list or tuple values, not %s", argTy.FriendlyName())
 		}
 	},
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		in, marks := args[0].Unmark()
 		inVals := in.AsValueSlice()
@@ -965,6 +976,7 @@ var SetProductFunc = function.New(&function.Spec{
 		}
 		return cty.Set(cty.Tuple(elemTys)), nil
 	},
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		ety := retType.ElementType()
 		var retMarks cty.ValueMarks
@@ -1102,6 +1114,7 @@ var SliceFunc = function.New(&function.Spec{
 		}
 		return cty.Tuple(argTy.TupleElementTypes()[startIndex:endIndex]), nil
 	},
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		inputList, marks := args[0].Unmark()
 
@@ -1216,6 +1229,7 @@ var ValuesFunc = function.New(&function.Spec{
 		}
 		return cty.NilType, errors.New("values() requires a map as the first argument")
 	},
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		mapVar := args[0]
 
@@ -1304,6 +1318,7 @@ var ZipmapFunc = function.New(&function.Spec{
 			return cty.NilType, errors.New("values argument must be a list or tuple value")
 		}
 	},
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		keys := args[0]
 		values := args[1]

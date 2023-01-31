@@ -36,22 +36,22 @@ func TestEqual(t *testing.T) {
 		{
 			cty.NumberIntVal(1),
 			cty.UnknownVal(cty.Number),
-			cty.UnknownVal(cty.Bool).Refine().NotNull().NewValue(),
+			cty.UnknownVal(cty.Bool).RefineNotNull(),
 		},
 		{
 			cty.UnknownVal(cty.Number),
 			cty.UnknownVal(cty.Number),
-			cty.UnknownVal(cty.Bool).Refine().NotNull().NewValue(),
+			cty.UnknownVal(cty.Bool).RefineNotNull(),
 		},
 		{
 			cty.NumberIntVal(1),
 			cty.DynamicVal,
-			cty.UnknownVal(cty.Bool).Refine().NotNull().NewValue(),
+			cty.UnknownVal(cty.Bool).RefineNotNull(),
 		},
 		{
 			cty.DynamicVal,
 			cty.DynamicVal,
-			cty.UnknownVal(cty.Bool).Refine().NotNull().NewValue(),
+			cty.UnknownVal(cty.Bool).RefineNotNull(),
 		},
 	}
 
@@ -97,15 +97,15 @@ func TestCoalesce(t *testing.T) {
 		},
 		{
 			[]cty.Value{cty.UnknownVal(cty.Bool), cty.True},
-			cty.UnknownVal(cty.Bool),
+			cty.UnknownVal(cty.Bool).RefineNotNull(),
 		},
 		{
 			[]cty.Value{cty.UnknownVal(cty.Bool), cty.StringVal("hello")},
-			cty.UnknownVal(cty.String),
+			cty.UnknownVal(cty.String).RefineNotNull(),
 		},
 		{
 			[]cty.Value{cty.DynamicVal, cty.True},
-			cty.UnknownVal(cty.Bool),
+			cty.UnknownVal(cty.Bool).RefineNotNull(),
 		},
 		{
 			[]cty.Value{cty.DynamicVal},

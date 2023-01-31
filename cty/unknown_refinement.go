@@ -40,6 +40,8 @@ func (v Value) Refine() *RefinementBuilder {
 	ty := v.Type()
 	var wip unknownValRefinement
 	switch {
+	case ty == DynamicPseudoType && !v.IsKnown():
+		panic("cannot refine an unknown value of an unknown type")
 	case ty == String:
 		wip = &refinementString{}
 	case ty == Number:
@@ -54,13 +56,22 @@ func (v Value) Refine() *RefinementBuilder {
 	case ty == Bool || ty.IsObjectType() || ty.IsTupleType() || ty.IsCapsuleType():
 		// For other known types we'll just track nullability
 		wip = &refinementNullable{}
+	case ty == DynamicPseudoType && v.IsNull():
+		// It's okay in principle to refine a null value of unknown type,
+		// although all we can refine about it is that it's definitely null and
+		// so this is pretty pointless and only supported to avoid callers
+		// always needing to treat this situation as a special case to avoid
+		// panic.
+		wip = &refinementNullable{
+			isNull: tristateTrue,
+		}
 	default:
 		// we leave "wip" as nil for all other types, representing that
 		// they don't support refinements at all and so any call on the
 		// RefinementBuilder should fail.
 
 		// NOTE: We intentionally don't allow any refinements for
-		// cty.DynamicPseudoType here, even though it could be nice in principle
+		// cty.DynamicVal here, even though it could be nice in principle
 		// to at least track non-nullness for those, because it's historically
 		// been valid to directly compare values with cty.DynamicVal using
 		// the Go "==" operator and recording a refinement for an untyped
@@ -68,6 +79,38 @@ func (v Value) Refine() *RefinementBuilder {
 	}
 
 	return &RefinementBuilder{v, wip}
+}
+
+// RefineWith is a variant of Refine which uses callback functions instead of
+// the builder pattern.
+//
+// The result is equivalent to passing the return value of [Value.Refine] to the
+// first callback, and then continue passing the builder through any other
+// callbacks in turn, and then calling [RefinementBuilder.NewValue] on the
+// final result.
+//
+// The builder pattern approach of [Value.Refine] is more convenient for inline
+// annotation of refinements when constructing a value, but this alternative
+// approach may be more convenient when applying pre-defined collections of
+// refinements, or when refinements are defined separately from the values
+// they will apply to.
+//
+// Each refiner callback should return the same pointer that it was given,
+// typically after having mutated it using the [RefinementBuilder] methods.
+// It's invalid to return a different builder.
+func (v Value) RefineWith(refiners ...func(*RefinementBuilder) *RefinementBuilder) Value {
+	if len(refiners) == 0 {
+		return v
+	}
+	origBuilder := v.Refine()
+	builder := origBuilder
+	for _, refiner := range refiners {
+		builder = refiner(builder)
+		if builder != origBuilder {
+			panic("refiner callback returned a different builder")
+		}
+	}
+	return builder.NewValue()
 }
 
 // RefineNotNull is a shorthand for Value.Refine().NotNull().NewValue(), because
@@ -478,7 +521,7 @@ func (b *RefinementBuilder) NewValue() Value {
 	return Value{
 		ty: b.orig.ty,
 		v:  &unknownType{refinement: b.wip},
-	}
+	}.WithSameMarks(b.orig)
 }
 
 // unknownValRefinment is an interface pretending to be a sum type representing

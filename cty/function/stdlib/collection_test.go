@@ -57,22 +57,22 @@ func TestHasIndex(t *testing.T) {
 		{
 			cty.ListValEmpty(cty.Number),
 			cty.UnknownVal(cty.Number),
-			cty.UnknownVal(cty.Bool),
+			cty.UnknownVal(cty.Bool).RefineNotNull(),
 		},
 		{
 			cty.UnknownVal(cty.List(cty.Bool)),
 			cty.UnknownVal(cty.Number),
-			cty.UnknownVal(cty.Bool),
+			cty.UnknownVal(cty.Bool).RefineNotNull(),
 		},
 		{
 			cty.ListValEmpty(cty.Number),
 			cty.DynamicVal,
-			cty.UnknownVal(cty.Bool),
+			cty.UnknownVal(cty.Bool).RefineNotNull(),
 		},
 		{
 			cty.DynamicVal,
 			cty.DynamicVal,
-			cty.UnknownVal(cty.Bool),
+			cty.UnknownVal(cty.Bool).RefineNotNull(),
 		},
 	}
 
@@ -107,7 +107,7 @@ func TestChunklist(t *testing.T) {
 		{
 			cty.UnknownVal(cty.List(cty.String)),
 			cty.NumberIntVal(2),
-			cty.UnknownVal(cty.List(cty.List(cty.String))),
+			cty.UnknownVal(cty.List(cty.List(cty.String))).RefineNotNull(),
 			``,
 		},
 		{
@@ -359,7 +359,7 @@ func TestContains(t *testing.T) {
 		{
 			listWithUnknown,
 			cty.StringVal("orange"),
-			cty.UnknownVal(cty.Bool),
+			cty.UnknownVal(cty.Bool).RefineNotNull(),
 			false,
 		},
 		{
@@ -404,7 +404,7 @@ func TestContains(t *testing.T) {
 				cty.StringVal("fox"),
 			}),
 			cty.StringVal("quick"),
-			cty.UnknownVal(cty.Bool),
+			cty.UnknownVal(cty.Bool).RefineNotNull(),
 			false,
 		},
 		{ // set val
@@ -424,7 +424,7 @@ func TestContains(t *testing.T) {
 				cty.StringVal("fox"),
 			}),
 			cty.StringVal("quick"),
-			cty.UnknownVal(cty.Bool),
+			cty.UnknownVal(cty.Bool).RefineNotNull(),
 			false,
 		},
 		{ // nested unknown
@@ -436,7 +436,7 @@ func TestContains(t *testing.T) {
 			cty.ObjectVal(map[string]cty.Value{
 				"a": cty.StringVal("b"),
 			}),
-			cty.UnknownVal(cty.Bool),
+			cty.UnknownVal(cty.Bool).RefineNotNull(),
 			false,
 		},
 		{ // tuple val
@@ -557,7 +557,7 @@ func TestMerge(t *testing.T) {
 					"c": cty.StringVal("d"),
 				}),
 			},
-			cty.UnknownVal(cty.Map(cty.String)),
+			cty.UnknownVal(cty.Map(cty.String)).RefineNotNull(),
 			false,
 		},
 		{ // handle dynamic unknown
@@ -1398,7 +1398,7 @@ func TestValues(t *testing.T) {
 		},
 		{
 			cty.UnknownVal(cty.Map(cty.String)),
-			cty.UnknownVal(cty.List(cty.String)),
+			cty.UnknownVal(cty.List(cty.String)).RefineNotNull(),
 			``,
 		},
 		{
@@ -1443,12 +1443,12 @@ func TestValues(t *testing.T) {
 		},
 		{
 			cty.UnknownVal(cty.EmptyObject),
-			cty.UnknownVal(cty.EmptyTuple),
+			cty.UnknownVal(cty.EmptyTuple).RefineNotNull(),
 			``,
 		},
 		{
 			cty.UnknownVal(cty.Object(map[string]cty.Type{"a": cty.String})),
-			cty.UnknownVal(cty.Tuple([]cty.Type{cty.String})),
+			cty.UnknownVal(cty.Tuple([]cty.Type{cty.String})).RefineNotNull(),
 			``,
 		},
 		{ // The object itself is not marked, just an inner attribute value.
@@ -1524,19 +1524,19 @@ func TestZipMap(t *testing.T) {
 		{
 			cty.UnknownVal(cty.List(cty.String)),
 			cty.UnknownVal(cty.List(cty.String)),
-			cty.UnknownVal(cty.Map(cty.String)),
+			cty.UnknownVal(cty.Map(cty.String)).RefineNotNull(),
 			``,
 		},
 		{
 			cty.UnknownVal(cty.List(cty.String)),
 			cty.ListValEmpty(cty.String),
-			cty.UnknownVal(cty.Map(cty.String)),
+			cty.UnknownVal(cty.Map(cty.String)).RefineNotNull(),
 			``,
 		},
 		{
 			cty.ListValEmpty(cty.String),
 			cty.UnknownVal(cty.List(cty.String)),
-			cty.UnknownVal(cty.Map(cty.String)),
+			cty.UnknownVal(cty.Map(cty.String)).RefineNotNull(),
 			``,
 		},
 		{
@@ -1635,7 +1635,7 @@ func TestZipMap(t *testing.T) {
 		{
 			cty.ListValEmpty(cty.String),
 			cty.UnknownVal(cty.EmptyTuple),
-			cty.UnknownVal(cty.EmptyObject),
+			cty.UnknownVal(cty.EmptyObject).RefineNotNull(),
 			``,
 		},
 		{
@@ -2498,7 +2498,7 @@ func TestSetproduct(t *testing.T) {
 				cty.SetVal([]cty.Value{cty.StringVal("x"), cty.UnknownVal(cty.String)}).Mark("a"),
 				cty.SetVal([]cty.Value{cty.True, cty.False}).Mark("b"),
 			},
-			cty.UnknownVal(cty.Set(cty.Tuple([]cty.Type{cty.String, cty.Bool}))).WithMarks(cty.NewValueMarks("a", "b")),
+			cty.UnknownVal(cty.Set(cty.Tuple([]cty.Type{cty.String, cty.Bool}))).RefineNotNull().WithMarks(cty.NewValueMarks("a", "b")),
 			``,
 		},
 	}
@@ -2548,7 +2548,7 @@ func TestReverseList(t *testing.T) {
 		},
 		{
 			cty.UnknownVal(cty.List(cty.String)),
-			cty.UnknownVal(cty.List(cty.String)),
+			cty.UnknownVal(cty.List(cty.String)).RefineNotNull(),
 			``,
 		},
 		{ // marks on list elements
