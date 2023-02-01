@@ -2,7 +2,7 @@ package cty
 
 import (
 	"fmt"
-	"math/big"
+	"math"
 	"strings"
 )
 
@@ -50,8 +50,8 @@ func (v Value) Refine() *RefinementBuilder {
 		wip = &refinementCollection{
 			// A collection can never have a negative length, so we'll
 			// start with that already constrained.
-			minLen: Zero,
-			minInc: true,
+			minLen: 0,
+			maxLen: math.MaxInt,
 		}
 	case ty == Bool || ty.IsObjectType() || ty.IsTupleType() || ty.IsCapsuleType():
 		// For other known types we'll just track nullability
@@ -199,10 +199,7 @@ func (b *RefinementBuilder) NumberRangeInclusive(min, max Value) *RefinementBuil
 // CollectionLengthLowerBound constrains the lower bound of the length of a
 // collection value, or panics if this builder is not refining a collection
 // value.
-//
-// The lower bound must be a known, non-null number or this function will
-// panic.
-func (b *RefinementBuilder) CollectionLengthLowerBound(min Value, inclusive bool) *RefinementBuilder {
+func (b *RefinementBuilder) CollectionLengthLowerBound(min int) *RefinementBuilder {
 	b.assertRefineable()
 
 	wip, ok := b.wip.(*refinementCollection)
@@ -210,34 +207,19 @@ func (b *RefinementBuilder) CollectionLengthLowerBound(min Value, inclusive bool
 		panic(fmt.Sprintf("cannot refine collection length bounds for a %#v value", b.orig.Type()))
 	}
 
-	if min.IsNull() {
-		panic("collection length bound is null")
-	}
-	if !min.IsKnown() {
-		panic("collection length bound is unknown")
-	}
-
+	minVal := NumberIntVal(int64(min))
 	if b.orig.IsKnown() {
 		realLen := b.orig.Length()
-		if gt := min.GreaterThan(realLen); gt.IsKnown() && gt.True() {
-			panic(fmt.Sprintf("refining collection of length %#v with minimum bound %#v", realLen, min))
+		if gt := minVal.GreaterThan(realLen); gt.IsKnown() && gt.True() {
+			panic(fmt.Sprintf("refining collection of length %#v with lower bound %#v", realLen, min))
 		}
 	}
 
-	if wip.minLen != NilVal {
-		var ok bool
-		if wip.minInc {
-			ok = min.GreaterThanOrEqualTo(wip.minLen).True()
-		} else {
-			ok = min.GreaterThan(wip.minLen).True()
-		}
-		if !ok {
-			panic("refined collection length lower bound is inconsistent with existing lower bound")
-		}
+	if wip.minLen > min {
+		panic(fmt.Sprintf("refined collection length lower bound %d is inconsistent with existing lower bound %d", min, wip.minLen))
 	}
 
 	wip.minLen = min
-	wip.minInc = inclusive
 	wip.assertConsistentLengthBounds()
 
 	return b
@@ -249,7 +231,7 @@ func (b *RefinementBuilder) CollectionLengthLowerBound(min Value, inclusive bool
 //
 // The upper bound must be a known, non-null number or this function will
 // panic.
-func (b *RefinementBuilder) CollectionLengthUpperBound(max Value, inclusive bool) *RefinementBuilder {
+func (b *RefinementBuilder) CollectionLengthUpperBound(max int) *RefinementBuilder {
 	b.assertRefineable()
 
 	wip, ok := b.wip.(*refinementCollection)
@@ -257,34 +239,19 @@ func (b *RefinementBuilder) CollectionLengthUpperBound(max Value, inclusive bool
 		panic(fmt.Sprintf("cannot refine collection length bounds for a %#v value", b.orig.Type()))
 	}
 
-	if max.IsNull() {
-		panic("collection length bound is null")
-	}
-	if !max.IsKnown() {
-		panic("collection length bound is unknown")
-	}
-
 	if b.orig.IsKnown() {
+		maxVal := NumberIntVal(int64(max))
 		realLen := b.orig.Length()
-		if gt := max.LessThan(realLen); gt.IsKnown() && gt.True() {
-			panic(fmt.Sprintf("refining collection of length %#v with maximum bound %#v", realLen, max))
+		if lt := maxVal.LessThan(realLen); lt.IsKnown() && lt.True() {
+			panic(fmt.Sprintf("refining collection of length %#v with upper bound %#v", realLen, max))
 		}
 	}
 
-	if wip.maxLen != NilVal {
-		var ok bool
-		if wip.maxInc {
-			ok = max.LessThanOrEqualTo(wip.minLen).True()
-		} else {
-			ok = max.LessThan(wip.minLen).True()
-		}
-		if !ok {
-			panic("refined collection length upper bound is inconsistent with existing upper bound")
-		}
+	if wip.maxLen < max {
+		panic(fmt.Sprintf("refined collection length upper bound %d is inconsistent with existing upper bound %d", max, wip.maxLen))
 	}
 
 	wip.maxLen = max
-	wip.maxInc = inclusive
 	wip.assertConsistentLengthBounds()
 
 	return b
@@ -474,45 +441,38 @@ func (b *RefinementBuilder) NewValue() Value {
 				}
 			}
 		} else if rfn, ok := b.wip.(*refinementCollection); ok {
-			// If both length bounds are inclusive and equal then we know our
-			// length is the same number as the bounds.
-			if rfn.maxInc && rfn.minInc {
-				if rfn.minLen != NilVal && rfn.maxLen != NilVal {
-					eq := rfn.minLen.Equals(rfn.maxLen)
-					if eq.IsKnown() && eq.True() {
-						knownLen := rfn.minLen
-						ty := b.orig.Type()
-						if knownLen == Zero {
-							// If we know the length is zero then we can construct
-							// a known value of any collection kind.
-							switch {
-							case ty.IsListType():
-								return ListValEmpty(ty.ElementType())
-							case ty.IsSetType():
-								return SetValEmpty(ty.ElementType())
-							case ty.IsMapType():
-								return MapValEmpty(ty.ElementType())
-							}
-						} else if ty.IsListType() {
-							// If we know the length of the list then we can
-							// create a known list with unknown elements instead
-							// of a wholly-unknown list.
-							if knownLen, acc := knownLen.AsBigFloat().Int64(); acc == big.Exact {
-								elems := make([]Value, knownLen)
-								unk := UnknownVal(ty.ElementType())
-								for i := range elems {
-									elems[i] = unk
-								}
-								return ListVal(elems)
-							}
-						} else if ty.IsSetType() && knownLen == NumberIntVal(1) {
-							// If we know we have a one-element set then we
-							// know the one element can't possibly coalesce with
-							// anything else and so we can create a known set with
-							// an unknown element.
-							return SetVal([]Value{UnknownVal(ty.ElementType())})
-						}
+			// If both of the bounds are equal then we know the length is
+			// the same number as the bounds.
+			if rfn.minLen == rfn.maxLen {
+				knownLen := rfn.minLen
+				ty := b.orig.Type()
+				if knownLen == 0 {
+					// If we know the length is zero then we can construct
+					// a known value of any collection kind.
+					switch {
+					case ty.IsListType():
+						return ListValEmpty(ty.ElementType())
+					case ty.IsSetType():
+						return SetValEmpty(ty.ElementType())
+					case ty.IsMapType():
+						return MapValEmpty(ty.ElementType())
 					}
+				} else if ty.IsListType() {
+					// If we know the length of the list then we can
+					// create a known list with unknown elements instead
+					// of a wholly-unknown list.
+					elems := make([]Value, knownLen)
+					unk := UnknownVal(ty.ElementType())
+					for i := range elems {
+						elems[i] = unk
+					}
+					return ListVal(elems)
+				} else if ty.IsSetType() && knownLen == 1 {
+					// If we know we have a one-element set then we
+					// know the one element can't possibly coalesce with
+					// anything else and so we can create a known set with
+					// an unknown element.
+					return SetVal([]Value{UnknownVal(ty.ElementType())})
 				}
 			}
 		}
@@ -617,8 +577,7 @@ func (r *refinementNumber) assertConsistentBounds() {
 
 type refinementCollection struct {
 	refinementNullable
-	minLen, maxLen Value
-	minInc, maxInc bool
+	minLen, maxLen int
 }
 
 func (r *refinementCollection) unknownValRefinementSigil() {}
@@ -636,29 +595,26 @@ func (r *refinementCollection) rawEqual(other unknownValRefinement) bool {
 			return false
 		}
 		return (r.refinementNullable.rawEqual(&other.refinementNullable) &&
-			r.minLen.RawEquals(other.minLen) &&
-			r.maxLen.RawEquals(other.maxLen) &&
-			r.minInc == other.minInc &&
-			r.maxInc == other.maxInc)
+			r.minLen == other.minLen &&
+			r.maxLen == other.maxLen)
 	}
 }
 
 func (r *refinementCollection) GoString() string {
 	var b strings.Builder
 	b.WriteString(r.refinementNullable.GoString())
-	if r.minLen != NilVal && r.minLen != Zero {
-		// (a lower bound of zero is the default)
-		fmt.Fprintf(&b, ".CollectionLengthLowerBound(%#v, %t)", r.minLen, r.minInc)
+	if r.minLen != 0 {
+		fmt.Fprintf(&b, ".CollectionLengthLowerBound(%d)", r.minLen)
 	}
-	if r.maxLen != NilVal {
-		fmt.Fprintf(&b, ".CollectionLengthUpperBound(%#v, %t)", r.maxLen, r.maxInc)
+	if r.maxLen != math.MaxInt {
+		fmt.Fprintf(&b, ".CollectionLengthUpperBound(%d)", r.maxLen)
 	}
 	return b.String()
 }
 
 func (r *refinementCollection) assertConsistentLengthBounds() {
-	if r.minLen != NilVal && r.maxLen != NilVal && r.maxLen.LessThan(r.minLen).True() {
-		panic("collection length upper bound is less than lower bound")
+	if r.maxLen < r.minLen {
+		panic(fmt.Sprintf("collection length upper bound %d is less than lower bound %d", r.maxLen, r.minLen))
 	}
 }
 

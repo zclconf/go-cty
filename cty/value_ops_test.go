@@ -1673,7 +1673,7 @@ func TestValueRawEquals(t *testing.T) {
 			true, // Refinement collapses to zero because it's not null and the two bounds are equal
 		},
 		{
-			UnknownVal(List(String)).Refine().NotNull().CollectionLengthUpperBound(Zero, true).NewValue(),
+			UnknownVal(List(String)).Refine().NotNull().CollectionLengthUpperBound(0).NewValue(),
 			ListValEmpty(String),
 			true, // Colection length lower bound is always at least zero so this refinement collapses to an empty list
 		},

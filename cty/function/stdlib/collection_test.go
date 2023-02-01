@@ -983,7 +983,7 @@ func TestLength(t *testing.T) {
 			// TODO: This one should really preserve the length bounds as the
 			// numeric bounds of its result, but cty.Value.Length isn't yet
 			// able to do that.
-			cty.UnknownVal(cty.List(cty.Bool)).Refine().CollectionLengthUpperBound(cty.NumberIntVal(2), true).NewValue(),
+			cty.UnknownVal(cty.List(cty.Bool)).Refine().CollectionLengthUpperBound(2).NewValue(),
 			cty.UnknownVal(cty.Number).Refine().NotNull().NumberRangeInclusive(cty.Zero, cty.UnknownVal(cty.Number)).NewValue(),
 		},
 		{ // Marked collections return a marked length

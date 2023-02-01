@@ -2,6 +2,7 @@ package cty
 
 import (
 	"fmt"
+	"math"
 )
 
 // Range returns an object that offers partial information about the range
@@ -58,12 +59,19 @@ func (v Value) Range() ValueRange {
 			maxInc: true,
 		}
 	case ty.IsCollectionType():
-		synth = &refinementCollection{
-			minLen: v.Length(),
-			maxLen: v.Length(),
-			minInc: true,
-			maxInc: true,
+		if lenVal := v.Length(); lenVal.IsKnown() {
+			l, _ := lenVal.AsBigFloat().Int64()
+			synth = &refinementCollection{
+				minLen: int(l),
+				maxLen: int(l),
+			}
+		} else {
+			synth = &refinementCollection{
+				minLen: 0,
+				maxLen: math.MaxInt,
+			}
 		}
+
 	default:
 		// If we don't have anything else to say then we can at least
 		// guarantee that the value isn't null.
@@ -188,21 +196,18 @@ func (r ValueRange) StringPrefix() string {
 //
 // If the value is nullable then the result represents the range of the length
 // only if the value turns out not to be null.
-//
-// The resulting value might itself be an unknown number if there is no
-// known lower bound. In that case the "inclusive" flag is meaningless.
-func (r ValueRange) LengthLowerBound() (min Value, inclusive bool) {
+func (r ValueRange) LengthLowerBound() int {
 	if r.ty == DynamicPseudoType {
 		// We don't even know if this is a collection yet.
-		return UnknownVal(Number), false
+		return 0
 	}
 	if !r.ty.IsCollectionType() {
 		panic(fmt.Sprintf("LengthLowerBound for %#v", r.ty))
 	}
-	if rfn, ok := r.raw.(*refinementCollection); ok && rfn.minLen != NilVal {
-		return rfn.minLen, rfn.minInc
+	if rfn, ok := r.raw.(*refinementCollection); ok {
+		return rfn.minLen
 	}
-	return UnknownVal(Number), false
+	return 0
 }
 
 // LengthUpperBound returns information about the upper bound of the length of
@@ -214,18 +219,18 @@ func (r ValueRange) LengthLowerBound() (min Value, inclusive bool) {
 //
 // The resulting value might itself be an unknown number if there is no
 // known upper bound. In that case the "inclusive" flag is meaningless.
-func (r ValueRange) LengthUpperBound() (min Value, inclusive bool) {
+func (r ValueRange) LengthUpperBound() int {
 	if r.ty == DynamicPseudoType {
 		// We don't even know if this is a collection yet.
-		return UnknownVal(Number), false
+		return math.MaxInt
 	}
 	if !r.ty.IsCollectionType() {
 		panic(fmt.Sprintf("LengthUpperBound for %#v", r.ty))
 	}
-	if rfn, ok := r.raw.(*refinementCollection); ok && rfn.maxLen != NilVal {
-		return rfn.maxLen, rfn.maxInc
+	if rfn, ok := r.raw.(*refinementCollection); ok {
+		return rfn.maxLen
 	}
-	return UnknownVal(Number), false
+	return math.MaxInt
 }
 
 // definitelyNotNull is a convenient helper for the common situation of checking
