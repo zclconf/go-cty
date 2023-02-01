@@ -38,6 +38,18 @@ func TestRoundTrip(t *testing.T) {
 			cty.UnknownVal(cty.String),
 			cty.String,
 		},
+		{
+			cty.UnknownVal(cty.String).RefineNotNull(),
+			cty.String,
+		},
+		{
+			cty.UnknownVal(cty.String).Refine().StringPrefix("foo-").NewValue(),
+			cty.String,
+		},
+		{
+			cty.UnknownVal(cty.String).Refine().NotNull().StringPrefix("foo-").NewValue(),
+			cty.String,
+		},
 
 		{
 			cty.True,
@@ -53,6 +65,10 @@ func TestRoundTrip(t *testing.T) {
 		},
 		{
 			cty.UnknownVal(cty.Bool),
+			cty.Bool,
+		},
+		{
+			cty.UnknownVal(cty.Bool).RefineNotNull(),
 			cty.Bool,
 		},
 
@@ -80,6 +96,14 @@ func TestRoundTrip(t *testing.T) {
 			cty.NegativeInfinity,
 			cty.Number,
 		},
+		{
+			cty.UnknownVal(cty.Number),
+			cty.Number,
+		},
+		{
+			cty.UnknownVal(cty.Number).RefineNotNull(),
+			cty.Number,
+		},
 
 		{
 			cty.ListVal([]cty.Value{
@@ -105,6 +129,35 @@ func TestRoundTrip(t *testing.T) {
 		},
 		{
 			cty.ListValEmpty(cty.String),
+			cty.List(cty.String),
+		},
+		{
+			cty.UnknownVal(cty.List(cty.String)),
+			cty.List(cty.String),
+		},
+		{
+			cty.UnknownVal(cty.List(cty.String)).RefineNotNull(),
+			cty.List(cty.String),
+		},
+		{
+			cty.UnknownVal(cty.List(cty.String)).Refine().CollectionLengthLowerBound(1).NewValue(),
+			cty.List(cty.String),
+		},
+		{
+			cty.UnknownVal(cty.List(cty.String)).Refine().CollectionLengthUpperBound(1).NewValue(),
+			cty.List(cty.String),
+		},
+		{
+			cty.UnknownVal(cty.List(cty.String)).Refine().CollectionLengthLowerBound(1).CollectionLengthUpperBound(2).NewValue(),
+			cty.List(cty.String),
+		},
+		{
+			// NOTE: This refinement should collapse to a known 2-element list with unknown elements
+			cty.UnknownVal(cty.List(cty.String)).Refine().CollectionLengthLowerBound(2).CollectionLengthUpperBound(2).NewValue(),
+			cty.List(cty.String),
+		},
+		{
+			cty.UnknownVal(cty.List(cty.String)).Refine().CollectionLengthUpperBound(1).NotNull().NewValue(),
 			cty.List(cty.String),
 		},
 
