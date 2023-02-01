@@ -158,6 +158,9 @@ func (b *RefinementBuilder) NotNull() *RefinementBuilder {
 	if b.orig.IsKnown() && b.orig.IsNull() {
 		panic("refining null value as non-null")
 	}
+	if b.wip.null() == tristateTrue {
+		panic("refining null value as non-null")
+	}
 
 	b.wip.setNull(tristateFalse)
 
@@ -177,6 +180,9 @@ func (b *RefinementBuilder) Null() *RefinementBuilder {
 	b.assertRefineable()
 
 	if b.orig.IsKnown() && !b.orig.IsNull() {
+		panic("refining non-null value as null")
+	}
+	if b.wip.null() == tristateFalse {
 		panic("refining non-null value as null")
 	}
 
@@ -232,7 +238,7 @@ func (b *RefinementBuilder) NumberRangeLowerBound(min Value, inclusive bool) *Re
 			ok = min.GreaterThanOrEqualTo(wip.min)
 		}
 		if ok.IsKnown() && ok.False() {
-			panic("refined number lower bound is inconsistent with existing lower bound")
+			return b // Our existing refinement is more constrained
 		}
 	}
 
@@ -279,7 +285,7 @@ func (b *RefinementBuilder) NumberRangeUpperBound(max Value, inclusive bool) *Re
 			ok = max.LessThanOrEqualTo(wip.max)
 		}
 		if ok.IsKnown() && ok.False() {
-			panic("refined number upper bound is inconsistent with existing upper bound")
+			return b // Our existing refinement is more constrained
 		}
 	}
 
@@ -310,7 +316,7 @@ func (b *RefinementBuilder) CollectionLengthLowerBound(min int) *RefinementBuild
 	}
 
 	if wip.minLen > min {
-		panic(fmt.Sprintf("refined collection length lower bound %d is inconsistent with existing lower bound %d", min, wip.minLen))
+		return b // Our existing refinement is more constrained
 	}
 
 	wip.minLen = min
@@ -342,7 +348,7 @@ func (b *RefinementBuilder) CollectionLengthUpperBound(max int) *RefinementBuild
 	}
 
 	if wip.maxLen < max {
-		panic(fmt.Sprintf("refined collection length upper bound %d is inconsistent with existing upper bound %d", max, wip.maxLen))
+		return b // Our existing refinement is more constrained
 	}
 
 	wip.maxLen = max
