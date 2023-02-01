@@ -973,18 +973,15 @@ func TestLength(t *testing.T) {
 		},
 		{
 			cty.UnknownVal(cty.List(cty.Bool)),
-			cty.UnknownVal(cty.Number).Refine().NotNull().NumberRangeInclusive(cty.Zero, cty.UnknownVal(cty.Number)).NewValue(),
+			cty.UnknownVal(cty.Number).Refine().NotNull().NumberRangeInclusive(cty.Zero, cty.NumberIntVal(int64(math.MaxInt))).NewValue(),
 		},
 		{
 			cty.DynamicVal,
-			cty.UnknownVal(cty.Number).Refine().NotNull().NumberRangeInclusive(cty.Zero, cty.UnknownVal(cty.Number)).NewValue(),
+			cty.UnknownVal(cty.Number).Refine().NotNull().NumberRangeInclusive(cty.Zero, cty.NumberIntVal(int64(math.MaxInt))).NewValue(),
 		},
 		{
-			// TODO: This one should really preserve the length bounds as the
-			// numeric bounds of its result, but cty.Value.Length isn't yet
-			// able to do that.
 			cty.UnknownVal(cty.List(cty.Bool)).Refine().CollectionLengthUpperBound(2).NewValue(),
-			cty.UnknownVal(cty.Number).Refine().NotNull().NumberRangeInclusive(cty.Zero, cty.UnknownVal(cty.Number)).NewValue(),
+			cty.UnknownVal(cty.Number).Refine().NotNull().NumberRangeInclusive(cty.Zero, cty.NumberIntVal(2)).NewValue(),
 		},
 		{ // Marked collections return a marked length
 			cty.ListVal([]cty.Value{

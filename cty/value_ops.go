@@ -1043,9 +1043,10 @@ func (val Value) Length() Value {
 	}
 
 	if !val.IsKnown() {
-		// TODO: If the unknown value has been refined with explicit length
-		// bounds then we should use those as the refined range of this result.
-		return UnknownVal(Number).Refine().NotNull().NumberRangeInclusive(Zero, UnknownVal(Number)).NewValue()
+		// If the whole collection isn't known then the length isn't known
+		// either, but we can still put some bounds on the range of the result.
+		rng := val.Range()
+		return UnknownVal(Number).RefineWith(valueRefineLengthResult(rng))
 	}
 	if val.Type().IsSetType() {
 		// The Length rules are a little different for sets because if any
@@ -1070,6 +1071,17 @@ func (val Value) Length() Value {
 	}
 
 	return NumberIntVal(int64(val.LengthInt()))
+}
+
+func valueRefineLengthResult(collRng ValueRange) func(*RefinementBuilder) *RefinementBuilder {
+	return func(b *RefinementBuilder) *RefinementBuilder {
+		return b.
+			NotNull().
+			NumberRangeInclusive(
+				NumberIntVal(int64(collRng.LengthLowerBound())),
+				NumberIntVal(int64(collRng.LengthUpperBound())),
+			)
+	}
 }
 
 // LengthInt is like Length except it returns an int. It has the same behavior
