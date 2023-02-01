@@ -193,7 +193,101 @@ func (b *RefinementBuilder) Null() *RefinementBuilder {
 // If either of the given values is not a non-null number value then this
 // function will panic.
 func (b *RefinementBuilder) NumberRangeInclusive(min, max Value) *RefinementBuilder {
-	return b.numberRange(min, max, true, true)
+	return b.NumberRangeLowerBound(min, true).NumberRangeUpperBound(max, true)
+}
+
+// NumberRangeLowerBound constraints the lower bound of a number value, or
+// panics if this builder is not refining a number value.
+func (b *RefinementBuilder) NumberRangeLowerBound(min Value, inclusive bool) *RefinementBuilder {
+	b.assertRefineable()
+
+	wip, ok := b.wip.(*refinementNumber)
+	if !ok {
+		panic(fmt.Sprintf("cannot refine numeric bounds for a %#v value", b.orig.Type()))
+	}
+
+	if !min.IsKnown() {
+		// Nothing to do if the lower bound is unknown.
+		return b
+	}
+	if min.IsNull() {
+		panic("number range lower bound must not be null")
+	}
+
+	if inclusive {
+		if gt := min.GreaterThan(b.orig); gt.IsKnown() && gt.True() {
+			panic(fmt.Sprintf("refining %#v to be >= %#v", b.orig, min))
+		}
+	} else {
+		if gt := min.GreaterThanOrEqualTo(b.orig); gt.IsKnown() && gt.True() {
+			panic(fmt.Sprintf("refining %#v to be > %#v", b.orig, min))
+		}
+	}
+
+	if wip.min != NilVal {
+		var ok Value
+		if inclusive && !wip.minInc {
+			ok = min.GreaterThan(wip.min)
+		} else {
+			ok = min.GreaterThanOrEqualTo(wip.min)
+		}
+		if ok.IsKnown() && ok.False() {
+			panic("refined number lower bound is inconsistent with existing lower bound")
+		}
+	}
+
+	wip.min = min
+	wip.minInc = inclusive
+
+	wip.assertConsistentBounds()
+	return b
+}
+
+// NumberRangeUpperBound constraints the upper bound of a number value, or
+// panics if this builder is not refining a number value.
+func (b *RefinementBuilder) NumberRangeUpperBound(max Value, inclusive bool) *RefinementBuilder {
+	b.assertRefineable()
+
+	wip, ok := b.wip.(*refinementNumber)
+	if !ok {
+		panic(fmt.Sprintf("cannot refine numeric bounds for a %#v value", b.orig.Type()))
+	}
+
+	if !max.IsKnown() {
+		// Nothing to do if the upper bound is unknown.
+		return b
+	}
+	if max.IsNull() {
+		panic("number range upper bound must not be null")
+	}
+
+	if inclusive {
+		if lt := max.LessThan(b.orig); lt.IsKnown() && lt.True() {
+			panic(fmt.Sprintf("refining %#v to be <= %#v", b.orig, max))
+		}
+	} else {
+		if lt := max.LessThanOrEqualTo(b.orig); lt.IsKnown() && lt.True() {
+			panic(fmt.Sprintf("refining %#v to be < %#v", b.orig, max))
+		}
+	}
+
+	if wip.max != NilVal {
+		var ok Value
+		if inclusive && !wip.maxInc {
+			ok = max.LessThan(wip.max)
+		} else {
+			ok = max.LessThanOrEqualTo(wip.max)
+		}
+		if ok.IsKnown() && ok.False() {
+			panic("refined number upper bound is inconsistent with existing upper bound")
+		}
+	}
+
+	wip.max = max
+	wip.maxInc = inclusive
+
+	wip.assertConsistentBounds()
+	return b
 }
 
 // CollectionLengthLowerBound constrains the lower bound of the length of a
@@ -312,93 +406,6 @@ func (b *RefinementBuilder) StringPrefix(prefix string) *RefinementBuilder {
 	if len(prefix) > len(wip.prefix) {
 		wip.prefix = prefix
 	}
-
-	return b
-}
-
-func (b *RefinementBuilder) numberRange(min, max Value, minInc, maxInc bool) *RefinementBuilder {
-	b.assertRefineable()
-
-	wip, ok := b.wip.(*refinementNumber)
-	if !ok {
-		panic(fmt.Sprintf("cannot refine numeric range for a %#v value", b.orig.Type()))
-	}
-	// After this point b.orig is guaranteed to have type cty.Number
-
-	if min.Type() != Number || max.Type() != Number {
-		panic("refining numeric range with a non-numeric bound")
-	}
-	if min.IsNull() || max.IsNull() {
-		panic("refining numeric range with a null bound")
-	}
-
-	uncomparable := func(v Value) bool {
-		return v.IsNull() || !v.IsKnown()
-	}
-	checkMinRangeFunc := func(inclusive bool) func(Value, Value) bool {
-		if inclusive {
-			return func(a, b Value) bool {
-				if uncomparable(a) || uncomparable(b) {
-					return true // default to valid if we're not sure
-				}
-				return a.GreaterThanOrEqualTo(b).True()
-			}
-		} else {
-			return func(a, b Value) bool {
-				if uncomparable(a) || uncomparable(b) {
-					return true // default to valid if we're not sure
-				}
-				return a.GreaterThan(b).True()
-			}
-		}
-	}
-	checkMaxRangeFunc := func(inclusive bool) func(Value, Value) bool {
-		if inclusive {
-			return func(a, b Value) bool {
-				if uncomparable(a) || uncomparable(b) {
-					return true // default to valid if we're not sure
-				}
-				return a.LessThanOrEqualTo(b).True()
-			}
-		} else {
-			return func(a, b Value) bool {
-				if uncomparable(a) || uncomparable(b) {
-					return true // default to valid if we're not sure
-				}
-				return a.LessThan(b).True()
-			}
-		}
-	}
-
-	// If our original value is known then it must be in the given range.
-	if v := b.orig; v.IsKnown() && !v.IsNull() {
-		if !checkMinRangeFunc(minInc)(v, min) {
-			panic(fmt.Sprintf("refining %#v with invalid lower bound %#v", v, min))
-		}
-		if !checkMaxRangeFunc(maxInc)(v, max) {
-			panic(fmt.Sprintf("refining %#v with invalid upper bound %#v", v, min))
-		}
-	}
-
-	// If we already have bounds then the new bounds must be consistent with them.
-	if wip.min != NilVal && !checkMinRangeFunc(wip.minInc)(wip.min, min) {
-		panic(fmt.Sprintf("new refined lower bound %#v conflicts with previous %#v", min, wip.min))
-	}
-	if wip.max != NilVal && !checkMaxRangeFunc(wip.maxInc)(wip.max, max) {
-		panic(fmt.Sprintf("new refined upper bound %#v conflicts with previous %#v", min, wip.min))
-	}
-
-	// We only record known bounds. An unknown value for either bound means
-	// it's either unbounded or we'll retain a prevously-recorded bound.
-	if min.IsKnown() {
-		wip.min = min
-		wip.minInc = minInc
-	}
-	if max.IsKnown() {
-		wip.max = max
-		wip.maxInc = maxInc
-	}
-	wip.assertConsistentBounds()
 
 	return b
 }
@@ -570,8 +577,17 @@ func (r *refinementNumber) GoString() string {
 }
 
 func (r *refinementNumber) assertConsistentBounds() {
-	if r.min != NilVal && r.max != NilVal && r.max.LessThan(r.min).True() {
-		panic("number upper bound is less than lower bound")
+	if r.min == NilVal || r.max == NilVal {
+		return // If only one bound is constrained then there's nothing to be inconsistent with
+	}
+	var ok Value
+	if r.minInc != r.maxInc {
+		ok = r.min.LessThan(r.max)
+	} else {
+		ok = r.min.LessThanOrEqualTo(r.max)
+	}
+	if ok.IsKnown() && ok.False() {
+		panic(fmt.Sprintf("number lower bound %#v is greater than upper bound %#v", r.min, r.max))
 	}
 }
 
