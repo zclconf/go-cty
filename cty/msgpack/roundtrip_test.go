@@ -104,6 +104,26 @@ func TestRoundTrip(t *testing.T) {
 			cty.UnknownVal(cty.Number).RefineNotNull(),
 			cty.Number,
 		},
+		{
+			cty.UnknownVal(cty.Number).Refine().NumberRangeLowerBound(cty.Zero, true).NewValue(),
+			cty.Number,
+		},
+		{
+			cty.UnknownVal(cty.Number).Refine().NumberRangeLowerBound(cty.Zero, false).NewValue(),
+			cty.Number,
+		},
+		{
+			cty.UnknownVal(cty.Number).Refine().NumberRangeUpperBound(cty.Zero, true).NewValue(),
+			cty.Number,
+		},
+		{
+			cty.UnknownVal(cty.Number).Refine().NumberRangeUpperBound(cty.Zero, false).NewValue(),
+			cty.Number,
+		},
+		{
+			cty.UnknownVal(cty.Number).Refine().NumberRangeInclusive(cty.Zero, cty.NumberIntVal(1)).NewValue(),
+			cty.Number,
+		},
 
 		{
 			cty.ListVal([]cty.Value{

@@ -289,12 +289,12 @@ func unmarshalUnknownValue(dec *msgpack.Decoder, ty cty.Type, path cty.Path) (ct
 			if isIncVal.Type() != cty.Bool || !isIncVal.IsKnown() || isIncVal.IsNull() {
 				return cty.DynamicVal, path.NewErrorf("failed to decode msgpack extension body: length bound refinement must be [number, bool] array")
 			}
-			//isInc := isIncVal.True()
+			isInc := isIncVal.True()
 			switch keyCode {
 			case unknownValNumberMin:
-				// TODO: builder doesn't have a NumberRangeLowerBound method yet
+				builder = builder.NumberRangeLowerBound(boundVal, isInc)
 			case unknownValNumberMax:
-				// TODO: builder doesn't have a NumberRangeUpperBound method yet
+				builder = builder.NumberRangeUpperBound(boundVal, isInc)
 			default:
 				panic("unsupported keyCode") // should not get here
 			}
