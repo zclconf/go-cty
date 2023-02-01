@@ -400,6 +400,11 @@ func TestLessThan(t *testing.T) {
 			cty.UnknownVal(cty.Bool).RefineNotNull(),
 		},
 		{
+			cty.NumberIntVal(1),
+			cty.UnknownVal(cty.Number).Refine().NumberRangeLowerBound(cty.NumberIntVal(2), true).NewValue(),
+			cty.True, // deduced from refinement
+		},
+		{
 			cty.UnknownVal(cty.Number),
 			cty.UnknownVal(cty.Number),
 			cty.UnknownVal(cty.Bool).RefineNotNull(),

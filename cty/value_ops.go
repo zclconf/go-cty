@@ -1264,6 +1264,28 @@ func (val Value) LessThan(other Value) Value {
 	}
 
 	if shortCircuit := mustTypeCheck(Number, Bool, val, other); shortCircuit != nil {
+		// We might be able to return a known answer even with unknown inputs.
+		// FIXME: This is more conservative than it needs to be, because it
+		// treats all bounds as exclusive bounds.
+		valRng := val.Range()
+		otherRng := other.Range()
+		if valRng.TypeConstraint() == Number && other.Range().TypeConstraint() == Number {
+			valMax, _ := valRng.NumberUpperBound()
+			otherMin, _ := otherRng.NumberLowerBound()
+			if valMax.IsKnown() && otherMin.IsKnown() {
+				if r := valMax.LessThan(otherMin); r.True() {
+					return True
+				}
+			}
+			valMin, _ := valRng.NumberLowerBound()
+			otherMax, _ := otherRng.NumberUpperBound()
+			if valMin.IsKnown() && otherMax.IsKnown() {
+				if r := valMin.GreaterThan(otherMax); r.True() {
+					return False
+				}
+			}
+		}
+
 		shortCircuit = forceShortCircuitType(shortCircuit, Bool)
 		return (*shortCircuit).RefineNotNull()
 	}
@@ -1281,6 +1303,28 @@ func (val Value) GreaterThan(other Value) Value {
 	}
 
 	if shortCircuit := mustTypeCheck(Number, Bool, val, other); shortCircuit != nil {
+		// We might be able to return a known answer even with unknown inputs.
+		// FIXME: This is more conservative than it needs to be, because it
+		// treats all bounds as exclusive bounds.
+		valRng := val.Range()
+		otherRng := other.Range()
+		if valRng.TypeConstraint() == Number && other.Range().TypeConstraint() == Number {
+			valMin, _ := valRng.NumberLowerBound()
+			otherMax, _ := otherRng.NumberUpperBound()
+			if valMin.IsKnown() && otherMax.IsKnown() {
+				if r := valMin.GreaterThan(otherMax); r.True() {
+					return True
+				}
+			}
+			valMax, _ := valRng.NumberUpperBound()
+			otherMin, _ := otherRng.NumberLowerBound()
+			if valMax.IsKnown() && otherMin.IsKnown() {
+				if r := valMax.LessThan(otherMin); r.True() {
+					return False
+				}
+			}
+		}
+
 		shortCircuit = forceShortCircuitType(shortCircuit, Bool)
 		return (*shortCircuit).RefineNotNull()
 	}

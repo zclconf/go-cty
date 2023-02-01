@@ -3003,6 +3003,16 @@ func TestLessThan(t *testing.T) {
 			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
+			UnknownVal(Number).Refine().NumberRangeUpperBound(Zero, true).NewValue(),
+			NumberIntVal(1),
+			True, // Deduction from the refinement
+		},
+		{
+			UnknownVal(Number).Refine().NumberRangeLowerBound(NumberIntVal(2), true).NewValue(),
+			NumberIntVal(1),
+			False, // Deduction from the refinement
+		},
+		{
 			DynamicVal,
 			DynamicVal,
 			UnknownVal(Bool).RefineNotNull(),
@@ -3104,6 +3114,16 @@ func TestGreaterThan(t *testing.T) {
 			UnknownVal(Number),
 			NumberIntVal(1),
 			UnknownVal(Bool).RefineNotNull(),
+		},
+		{
+			UnknownVal(Number).Refine().NumberRangeLowerBound(NumberIntVal(2), true).NewValue(),
+			NumberIntVal(1),
+			True, // Deduction based on the refinements
+		},
+		{
+			UnknownVal(Number).Refine().NumberRangeUpperBound(NumberIntVal(0), true).NewValue(),
+			NumberIntVal(1),
+			False, // Deduction based on the refinements
 		},
 		{
 			DynamicVal,

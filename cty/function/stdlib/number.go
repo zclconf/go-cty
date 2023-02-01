@@ -211,12 +211,14 @@ var GreaterThanFunc = function.New(&function.Spec{
 		{
 			Name:             "a",
 			Type:             cty.Number,
+			AllowUnknown:     true,
 			AllowDynamicType: true,
 			AllowMarked:      true,
 		},
 		{
 			Name:             "b",
 			Type:             cty.Number,
+			AllowUnknown:     true,
 			AllowDynamicType: true,
 			AllowMarked:      true,
 		},
@@ -234,12 +236,14 @@ var GreaterThanOrEqualToFunc = function.New(&function.Spec{
 		{
 			Name:             "a",
 			Type:             cty.Number,
+			AllowUnknown:     true,
 			AllowDynamicType: true,
 			AllowMarked:      true,
 		},
 		{
 			Name:             "b",
 			Type:             cty.Number,
+			AllowUnknown:     true,
 			AllowDynamicType: true,
 			AllowMarked:      true,
 		},
@@ -257,12 +261,14 @@ var LessThanFunc = function.New(&function.Spec{
 		{
 			Name:             "a",
 			Type:             cty.Number,
+			AllowUnknown:     true,
 			AllowDynamicType: true,
 			AllowMarked:      true,
 		},
 		{
 			Name:             "b",
 			Type:             cty.Number,
+			AllowUnknown:     true,
 			AllowDynamicType: true,
 			AllowMarked:      true,
 		},
@@ -280,12 +286,14 @@ var LessThanOrEqualToFunc = function.New(&function.Spec{
 		{
 			Name:             "a",
 			Type:             cty.Number,
+			AllowUnknown:     true,
 			AllowDynamicType: true,
 			AllowMarked:      true,
 		},
 		{
 			Name:             "b",
 			Type:             cty.Number,
+			AllowUnknown:     true,
 			AllowDynamicType: true,
 			AllowMarked:      true,
 		},
