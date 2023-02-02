@@ -142,6 +142,20 @@ func (val Value) Equals(other Value) Value {
 	case other.IsNull() && definitelyNotNull(val):
 		return False
 	}
+	// If we have one known value and one unknown value then we may be
+	// able to quickly disqualify equality based on the range of the unknown
+	// value.
+	if val.IsKnown() && !other.IsKnown() {
+		otherRng := other.Range()
+		if ok := otherRng.Includes(val); ok.IsKnown() && ok.False() {
+			return False
+		}
+	} else if other.IsKnown() && !val.IsKnown() {
+		valRng := val.Range()
+		if ok := valRng.Includes(other); ok.IsKnown() && ok.False() {
+			return False
+		}
+	}
 
 	// We need to deal with unknown values before anything else with nulls
 	// because any unknown value that hasn't yet been refined as non-null

@@ -596,6 +596,16 @@ func TestValueEquals(t *testing.T) {
 			unknownResult,
 		},
 		{
+			NumberIntVal(2),
+			UnknownVal(Number).Refine().NumberRangeLowerBound(Zero, true).NewValue(),
+			unknownResult,
+		},
+		{
+			NumberIntVal(2),
+			UnknownVal(Number).Refine().NumberRangeLowerBound(NumberIntVal(4), true).NewValue(),
+			False, // deduction from refinement
+		},
+		{
 			DynamicVal,
 			BoolVal(true),
 			unknownResult,
@@ -626,6 +636,11 @@ func TestValueEquals(t *testing.T) {
 				UnknownVal(String),
 			}),
 			unknownResult,
+		},
+		{
+			UnknownVal(List(String)).Refine().CollectionLengthLowerBound(1).NewValue(),
+			ListValEmpty(String),
+			False, // deduction from refinement
 		},
 		{
 			MapVal(map[string]Value{
@@ -802,6 +817,26 @@ func TestValueEquals(t *testing.T) {
 			NullVal(String),
 			UnknownVal(String).Refine().Null().NewValue(),
 			True, // NOTE: The refinement should collapse to NullVal(String)
+		},
+		{
+			UnknownVal(String).Refine().StringPrefix("foo-").NewValue(),
+			StringVal("notfoo-bar"),
+			False, // Deduction from refinement
+		},
+		{
+			StringVal(""),
+			UnknownVal(String).Refine().StringPrefix("foo-").NewValue(),
+			False, // Deduction from refinement
+		},
+		{
+			StringVal("").Mark("a"),
+			UnknownVal(String).Mark("b").Refine().StringPrefix("foo-").NewValue(),
+			False.Mark("a").Mark("b"), // Deduction from refinement
+		},
+		{
+			UnknownVal(String).Refine().StringPrefix("foo-").NewValue(),
+			StringVal("foo-bar"),
+			unknownResult,
 		},
 
 		// Marks

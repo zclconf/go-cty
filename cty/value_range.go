@@ -3,6 +3,7 @@ package cty
 import (
 	"fmt"
 	"math"
+	"strings"
 )
 
 // Range returns an object that offers partial information about the range
@@ -231,6 +232,99 @@ func (r ValueRange) LengthUpperBound() int {
 		return rfn.maxLen
 	}
 	return math.MaxInt
+}
+
+// Includes determines whether the given value is in the receiving range.
+//
+// It can return only three possible values:
+//   - [cty.True] if the range definitely includes the value
+//   - [cty.False] if the range definitely does not include the value
+//   - An unknown value of [cty.Bool] if there isn't enough information to decide.
+//
+// This function is not fully comprehensive: it may return an unknown value
+// in some cases where a definitive value could be computed in principle, and
+// those same situations may begin returning known values in later releases as
+// the rules are refined to be more complete. Currently the rules focus mainly
+// on answering [cty.False], because disproving membership tends to be more
+// useful than proving membership.
+func (r ValueRange) Includes(v Value) Value {
+	unknownResult := UnknownVal(Bool).RefineNotNull()
+
+	if r.raw.null() == tristateTrue {
+		if v.IsNull() {
+			return True
+		} else {
+			return False
+		}
+	}
+	if r.raw.null() == tristateFalse {
+		if v.IsNull() {
+			return False
+		}
+		// A definitely-not-null value could potentially match
+		// but we won't know until we do some more checks below.
+	}
+	// If our range includes both null and non-null values and the value is
+	// null then it's definitely in range.
+	if v.IsNull() {
+		return True
+	}
+	if len(v.Type().TestConformance(r.TypeConstraint())) != 0 {
+		// If the value doesn't conform to the type constraint then it's
+		// definitely not in the range.
+		return False
+	}
+	if v.Type() == DynamicPseudoType {
+		// If it's an unknown value of an unknown type then there's no
+		// further tests we can make.
+		return unknownResult
+	}
+
+	switch r.raw.(type) {
+	case *refinementString:
+		if v.IsKnown() {
+			prefix := r.StringPrefix()
+			got := v.AsString()
+			fmt.Printf("prefix %q got %q\n", prefix, got)
+
+			if !strings.HasPrefix(got, prefix) {
+				return False
+			}
+		}
+	case *refinementCollection:
+		lenVal := v.Length()
+		minLen := NumberIntVal(int64(r.LengthLowerBound()))
+		maxLen := NumberIntVal(int64(r.LengthUpperBound()))
+		if minOk := lenVal.GreaterThanOrEqualTo(minLen); minOk.IsKnown() && minOk.False() {
+			return False
+		}
+		if maxOk := lenVal.LessThanOrEqualTo(maxLen); maxOk.IsKnown() && maxOk.False() {
+			return False
+		}
+	case *refinementNumber:
+		minVal, minInc := r.NumberLowerBound()
+		maxVal, maxInc := r.NumberUpperBound()
+		var minOk, maxOk Value
+		if minInc {
+			minOk = v.GreaterThanOrEqualTo(minVal)
+		} else {
+			minOk = v.GreaterThan(minVal)
+		}
+		if maxInc {
+			maxOk = v.LessThanOrEqualTo(maxVal)
+		} else {
+			maxOk = v.LessThan(maxVal)
+		}
+		if minOk.IsKnown() && minOk.False() {
+			return False
+		}
+		if maxOk.IsKnown() && maxOk.False() {
+			return False
+		}
+	}
+
+	// If we fall out here then we don't have enough information to decide.
+	return unknownResult
 }
 
 // definitelyNotNull is a convenient helper for the common situation of checking
