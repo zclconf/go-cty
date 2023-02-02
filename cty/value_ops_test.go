@@ -3442,8 +3442,12 @@ func TestValueGoString(t *testing.T) {
 			`cty.UnknownVal(cty.String).RefineNotNull()`,
 		},
 		{
-			UnknownVal(String).Refine().NotNull().StringPrefix("a").NewValue(),
-			`cty.UnknownVal(cty.String).Refine().NotNull().StringPrefix("a").NewValue()`,
+			UnknownVal(String).Refine().NotNull().StringPrefix("a-").NewValue(),
+			`cty.UnknownVal(cty.String).Refine().NotNull().StringPrefixFull("a-").NewValue()`,
+		},
+		{
+			UnknownVal(String).Refine().NotNull().StringPrefix("foo").NewValue(), // The last character of the prefix gets discarded in case the next character is a combining diacritic
+			`cty.UnknownVal(cty.String).Refine().NotNull().StringPrefixFull("fo").NewValue()`,
 		},
 		{
 			UnknownVal(Bool).Refine().NotNull().NewValue(),

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"math"
 	"strings"
+
+	"github.com/zclconf/go-cty/cty/ctystrings"
 )
 
 // Refine creates a [RefinementBuilder] with which to annotate the reciever
@@ -361,11 +363,41 @@ func (b *RefinementBuilder) CollectionLengthUpperBound(max int) *RefinementBuild
 // builder is not refining a string value.
 //
 // The given prefix will be Unicode normalized in the same way that a
-// cty.StringVal would be. However, since prefix is just a substring the
-// normalization may produce a non-matching prefix string if the given prefix
-// splits a sequence of combining characters. For correct results always ensure
-// that the prefix ends at a grapheme cluster boundary.
+// cty.StringVal would be.
+//
+// Due to Unicode normalization and grapheme cluster rules, appending new
+// characters to a string can change the meaning of earlier characters.
+// StringPrefix may discard one or more characters from the end of the given
+// prefix to avoid that problem.
+//
+// Although cty cannot check this automatically, applications should avoid
+// relying on the discarding of the suffix for correctness. For example, if the
+// prefix ends with an emoji base character then StringPrefix will discard it
+// in case subsequent characters include emoji modifiers, but it's still
+// incorrect for the final string to use an entirely different base character.
+//
+// Applications which fully control the final result and can guarantee the
+// subsequent characters will not combine with the prefix may be able to use
+// [RefinementBuilder.StringPrefixFull] instead, after carefully reviewing
+// the constraints described in its documentation.
 func (b *RefinementBuilder) StringPrefix(prefix string) *RefinementBuilder {
+	return b.StringPrefixFull(ctystrings.SafeKnownPrefix(prefix))
+}
+
+// StringPrefixFull is a variant of StringPrefix that will never shorten the
+// given prefix to take into account the possibility of the next character
+// combining with the end of the prefix.
+//
+// Applications which fully control the subsequent characters can use this
+// as long as they guarantee that the characters added later cannot possibly
+// combine with characters at the end of the prefix to form a single grapheme
+// cluster. For example, it would be unsafe to use the full prefix "hello" if
+// there is any chance that the final string will add a combining diacritic
+// character after the "o", because that would then change the final character.
+//
+// Use [RefinementBuilder.StringPrefix] instead if an application cannot fully
+// control the final result to avoid violating this rule.
+func (b *RefinementBuilder) StringPrefixFull(prefix string) *RefinementBuilder {
 	b.assertRefineable()
 
 	wip, ok := b.wip.(*refinementString)
@@ -537,7 +569,7 @@ func (r *refinementString) GoString() string {
 	var b strings.Builder
 	b.WriteString(r.refinementNullable.GoString())
 	if r.prefix != "" {
-		fmt.Fprintf(&b, ".StringPrefix(%q)", r.prefix)
+		fmt.Fprintf(&b, ".StringPrefixFull(%q)", r.prefix)
 	}
 	return b.String()
 }

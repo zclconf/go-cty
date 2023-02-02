@@ -252,7 +252,10 @@ func unmarshalUnknownValue(dec *msgpack.Decoder, ty cty.Type, path cty.Path) (ct
 			if !utf8.ValidString(prefixStr) {
 				return cty.DynamicVal, path.NewErrorf("failed to decode msgpack extension body: string prefix refinement is not valid UTF-8")
 			}
-			builder = builder.StringPrefix(prefixStr)
+			// We assume that the original creator of this value already took
+			// care of making sure the prefix is safe, so we don't need to
+			// constrain it any further.
+			builder = builder.StringPrefixFull(prefixStr)
 		case unknownValLengthMin, unknownValLengthMax:
 			if !ty.IsCollectionType() {
 				return cty.DynamicVal, path.NewErrorf("failed to decode msgpack extension body: length lower bound refinement for non-collection type")

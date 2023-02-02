@@ -285,7 +285,6 @@ func (r ValueRange) Includes(v Value) Value {
 		if v.IsKnown() {
 			prefix := r.StringPrefix()
 			got := v.AsString()
-			fmt.Printf("prefix %q got %q\n", prefix, got)
 
 			if !strings.HasPrefix(got, prefix) {
 				return False
