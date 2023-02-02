@@ -99,7 +99,7 @@ func TestFormat(t *testing.T) {
 			[]cty.Value{cty.TupleVal([]cty.Value{
 				cty.UnknownVal(cty.String),
 			})},
-			cty.UnknownVal(cty.String).RefineNotNull(),
+			cty.UnknownVal(cty.String).Refine().NotNull().StringPrefixFull("tuple with unknown ").NewValue(),
 			``,
 		},
 		{
@@ -457,12 +457,27 @@ func TestFormat(t *testing.T) {
 		{
 			cty.StringVal("Hello, %s!"),
 			[]cty.Value{cty.UnknownVal(cty.String)},
-			cty.UnknownVal(cty.String).RefineNotNull(),
+			cty.UnknownVal(cty.String).Refine().NotNull().StringPrefixFull("Hello, ").NewValue(),
+			``,
+		},
+		{
+			cty.StringVal("Hello%s"),
+			[]cty.Value{cty.UnknownVal(cty.String)},
+			// We lose the trailing "o" in the prefix here because the unknown
+			// value could potentially start with a combining diacritic, which
+			// would therefore combine into a different character.
+			cty.UnknownVal(cty.String).Refine().NotNull().StringPrefixFull("Hell").NewValue(),
 			``,
 		},
 		{
 			cty.StringVal("Hello, %[2]s!"),
 			[]cty.Value{cty.UnknownVal(cty.String), cty.StringVal("Ermintrude")},
+			cty.UnknownVal(cty.String).Refine().NotNull().StringPrefixFull("Hello, ").NewValue(),
+			``,
+		},
+		{
+			cty.StringVal("%s!"),
+			[]cty.Value{cty.UnknownVal(cty.String)},
 			cty.UnknownVal(cty.String).RefineNotNull(),
 			``,
 		},
