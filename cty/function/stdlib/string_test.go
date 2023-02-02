@@ -245,11 +245,15 @@ func TestStrlen(t *testing.T) {
 		},
 		{
 			cty.UnknownVal(cty.String),
-			cty.UnknownVal(cty.Number).RefineNotNull(),
+			cty.UnknownVal(cty.Number).Refine().NotNull().NumberRangeLowerBound(cty.Zero, true).NewValue(),
+		},
+		{
+			cty.UnknownVal(cty.String).Refine().StringPrefix("wé́́é́́é́́-").NewValue(),
+			cty.UnknownVal(cty.Number).Refine().NotNull().NumberRangeLowerBound(cty.NumberIntVal(5), true).NewValue(),
 		},
 		{
 			cty.DynamicVal,
-			cty.UnknownVal(cty.Number).RefineNotNull(),
+			cty.UnknownVal(cty.Number).Refine().NotNull().NumberRangeLowerBound(cty.Zero, true).NewValue(),
 		},
 	}
 

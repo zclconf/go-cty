@@ -84,25 +84,45 @@ var StrlenFunc = function.New(&function.Spec{
 		{
 			Name:             "str",
 			Type:             cty.String,
+			AllowUnknown:     true,
 			AllowDynamicType: true,
 		},
 	},
-	Type:         function.StaticReturnType(cty.Number),
-	RefineResult: refineNonNull,
+	Type: function.StaticReturnType(cty.Number),
+	RefineResult: func(b *cty.RefinementBuilder) *cty.RefinementBuilder {
+		// String length is never null and never negative.
+		// (We might refine the lower bound even more inside Impl.)
+		return b.NotNull().NumberRangeLowerBound(cty.NumberIntVal(0), true)
+	},
 	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
-		in := args[0].AsString()
-		l := 0
-
-		inB := []byte(in)
-		for i := 0; i < len(in); {
-			d, _, _ := textseg.ScanGraphemeClusters(inB[i:], true)
-			l++
-			i += d
+		if !args[0].IsKnown() {
+			ret := cty.UnknownVal(cty.Number)
+			// We may be able to still return a constrained result based on the
+			// refined range of the unknown value.
+			inRng := args[0].Range()
+			if inRng.TypeConstraint() == cty.String {
+				prefixLen := int64(graphemeClusterCount(inRng.StringPrefix()))
+				ret = ret.Refine().NumberRangeLowerBound(cty.NumberIntVal(prefixLen), true).NewValue()
+			}
+			return ret, nil
 		}
 
+		in := args[0].AsString()
+		l := graphemeClusterCount(in)
 		return cty.NumberIntVal(int64(l)), nil
 	},
 })
+
+func graphemeClusterCount(in string) int {
+	l := 0
+	inB := []byte(in)
+	for i := 0; i < len(in); {
+		d, _, _ := textseg.ScanGraphemeClusters(inB[i:], true)
+		l++
+		i += d
+	}
+	return l
+}
 
 var SubstrFunc = function.New(&function.Spec{
 	Description: "Extracts a substring from the given string.",
