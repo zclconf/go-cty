@@ -1615,6 +1615,161 @@ func TestConvert(t *testing.T) {
 				})),
 			}),
 		},
+
+		// Object to map refinements
+		{
+			Value: cty.UnknownVal(cty.EmptyObject),
+			Type:  cty.Map(cty.String),
+			Want: cty.UnknownVal(cty.Map(cty.String)).Refine().
+				CollectionLength(0).
+				NewValue(),
+		},
+		{
+			Value: cty.UnknownVal(cty.EmptyObject).RefineNotNull(),
+			Type:  cty.Map(cty.String),
+			Want:  cty.MapValEmpty(cty.String),
+		},
+		{
+			Value: cty.UnknownVal(cty.Object(map[string]cty.Type{"a": cty.String})),
+			Type:  cty.Map(cty.String),
+			Want: cty.UnknownVal(cty.Map(cty.String)).Refine().
+				CollectionLength(1).
+				NewValue(),
+		},
+		{
+			Value: cty.UnknownVal(cty.Object(map[string]cty.Type{"a": cty.String})).RefineNotNull(),
+			Type:  cty.Map(cty.String),
+			Want: cty.UnknownVal(cty.Map(cty.String)).Refine().
+				NotNull().
+				CollectionLength(1).
+				NewValue(),
+		},
+
+		// Tuple to list refinements
+		{
+			Value: cty.UnknownVal(cty.EmptyTuple),
+			Type:  cty.List(cty.String),
+			Want: cty.UnknownVal(cty.List(cty.String)).Refine().
+				CollectionLength(0).
+				NewValue(),
+		},
+		{
+			Value: cty.UnknownVal(cty.EmptyTuple).RefineNotNull(),
+			Type:  cty.List(cty.String),
+			Want:  cty.ListValEmpty(cty.String),
+		},
+		{
+			Value: cty.UnknownVal(cty.Tuple([]cty.Type{cty.String})),
+			Type:  cty.List(cty.String),
+			Want: cty.UnknownVal(cty.List(cty.String)).Refine().
+				CollectionLength(1).
+				NewValue(),
+		},
+		{
+			Value: cty.UnknownVal(cty.Tuple([]cty.Type{cty.String})).RefineNotNull(),
+			Type:  cty.List(cty.String),
+			Want:  cty.ListVal([]cty.Value{cty.UnknownVal(cty.String)}),
+		},
+
+		// Tuple to set refinements
+		{
+			Value: cty.UnknownVal(cty.EmptyTuple),
+			Type:  cty.Set(cty.String),
+			Want: cty.UnknownVal(cty.Set(cty.String)).Refine().
+				CollectionLength(0).
+				NewValue(),
+		},
+		{
+			Value: cty.UnknownVal(cty.EmptyTuple).RefineNotNull(),
+			Type:  cty.Set(cty.String),
+			Want:  cty.SetValEmpty(cty.String),
+		},
+		{
+			Value: cty.UnknownVal(cty.Tuple([]cty.Type{cty.String})),
+			Type:  cty.Set(cty.String),
+			Want: cty.UnknownVal(cty.Set(cty.String)).Refine().
+				CollectionLength(1).
+				NewValue(),
+		},
+		{
+			Value: cty.UnknownVal(cty.Tuple([]cty.Type{cty.String})).RefineNotNull(),
+			Type:  cty.Set(cty.String),
+			Want:  cty.SetVal([]cty.Value{cty.UnknownVal(cty.String)}),
+		},
+		{
+			Value: cty.UnknownVal(cty.Tuple([]cty.Type{cty.String, cty.String})),
+			Type:  cty.Set(cty.String),
+			Want: cty.UnknownVal(cty.Set(cty.String)).Refine().
+				CollectionLengthLowerBound(1).
+				CollectionLengthUpperBound(2).
+				NewValue(),
+		},
+		{
+			Value: cty.UnknownVal(cty.Tuple([]cty.Type{cty.String, cty.String})).RefineNotNull(),
+			Type:  cty.Set(cty.String),
+			Want: cty.UnknownVal(cty.Set(cty.String)).Refine().
+				NotNull().
+				CollectionLengthLowerBound(1).
+				CollectionLengthUpperBound(2).
+				NewValue(),
+		},
+
+		// Collection to collection refinements
+		{
+			Value: cty.UnknownVal(cty.List(cty.String)).Refine().
+				CollectionLengthLowerBound(2).
+				CollectionLengthUpperBound(4).
+				NewValue(),
+			Type: cty.Set(cty.String),
+			Want: cty.UnknownVal(cty.Set(cty.String)).Refine().
+				CollectionLengthLowerBound(1).
+				CollectionLengthUpperBound(4).
+				NewValue(),
+		},
+		{
+			Value: cty.UnknownVal(cty.List(cty.String)).Refine().
+				NotNull().
+				CollectionLengthLowerBound(2).
+				CollectionLengthUpperBound(4).
+				NewValue(),
+			Type: cty.Set(cty.String),
+			Want: cty.UnknownVal(cty.Set(cty.String)).Refine().
+				NotNull().
+				CollectionLengthLowerBound(1).
+				CollectionLengthUpperBound(4).
+				NewValue(),
+		},
+		{
+			Value: cty.UnknownVal(cty.Set(cty.String)).Refine().
+				CollectionLengthLowerBound(2).
+				CollectionLengthUpperBound(4).
+				NewValue(),
+			Type: cty.List(cty.String),
+			Want: cty.UnknownVal(cty.List(cty.String)).Refine().
+				CollectionLengthLowerBound(2).
+				CollectionLengthUpperBound(4).
+				NewValue(),
+		},
+		{
+			Value: cty.UnknownVal(cty.Set(cty.String)).Refine().
+				NotNull().
+				CollectionLengthLowerBound(2).
+				CollectionLengthUpperBound(4).
+				NewValue(),
+			Type: cty.List(cty.String),
+			Want: cty.UnknownVal(cty.List(cty.String)).Refine().
+				NotNull().
+				CollectionLengthLowerBound(2).
+				CollectionLengthUpperBound(4).
+				NewValue(),
+		},
+
+		// General unknown value refinements
+		{
+			Value: cty.UnknownVal(cty.Bool).RefineNotNull(),
+			Type:  cty.String,
+			Want:  cty.UnknownVal(cty.String).RefineNotNull(),
+		},
 	}
 
 	for _, test := range tests {

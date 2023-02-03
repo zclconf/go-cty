@@ -361,6 +361,21 @@ func (b *RefinementBuilder) CollectionLengthUpperBound(max int) *RefinementBuild
 	return b
 }
 
+// CollectionLength is a shorthand for passing the same length to both
+// [CollectionLengthLowerBound] and [CollectionLengthUpperBound].
+//
+// A collection with a refined length with equal bounds can sometimes collapse
+// to a known value. Refining to length zero always produces a known value.
+// The behavior for other lengths varies by collection type kind.
+//
+// If the unknown value is of a set type, it's only valid to use this method
+// if the caller knows that there will be the given number of _unique_ values
+// in the set. If any values might potentially coalesce together once known,
+// use [CollectionLengthUpperBound] instead.
+func (b *RefinementBuilder) CollectionLength(length int) *RefinementBuilder {
+	return b.CollectionLengthLowerBound(length).CollectionLengthUpperBound(length)
+}
+
 // StringPrefix constrains the prefix of a string value, or panics if this
 // builder is not refining a string value.
 //
