@@ -246,8 +246,10 @@ func (b *RefinementBuilder) NumberRangeLowerBound(min Value, inclusive bool) *Re
 		}
 	}
 
-	wip.min = min
-	wip.minInc = inclusive
+	if min != NegativeInfinity {
+		wip.min = min
+		wip.minInc = inclusive
+	}
 
 	wip.assertConsistentBounds()
 	return b
@@ -293,8 +295,10 @@ func (b *RefinementBuilder) NumberRangeUpperBound(max Value, inclusive bool) *Re
 		}
 	}
 
-	wip.max = max
-	wip.maxInc = inclusive
+	if max != PositiveInfinity {
+		wip.max = max
+		wip.maxInc = inclusive
+	}
 
 	wip.assertConsistentBounds()
 	return b

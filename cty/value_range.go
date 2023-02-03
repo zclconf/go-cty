@@ -137,6 +137,9 @@ func (r ValueRange) NumberLowerBound() (min Value, inclusive bool) {
 		panic(fmt.Sprintf("NumberLowerBound for %#v", r.ty))
 	}
 	if rfn, ok := r.raw.(*refinementNumber); ok && rfn.min != NilVal {
+		if !rfn.min.IsKnown() {
+			return NegativeInfinity, true
+		}
 		return rfn.min, rfn.minInc
 	}
 	return UnknownVal(Number), false
@@ -159,6 +162,9 @@ func (r ValueRange) NumberUpperBound() (max Value, inclusive bool) {
 		panic(fmt.Sprintf("NumberUpperBound for %#v", r.ty))
 	}
 	if rfn, ok := r.raw.(*refinementNumber); ok && rfn.max != NilVal {
+		if !rfn.max.IsKnown() {
+			return PositiveInfinity, true
+		}
 		return rfn.max, rfn.maxInc
 	}
 	return UnknownVal(Number), false
