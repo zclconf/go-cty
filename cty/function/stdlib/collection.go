@@ -931,10 +931,11 @@ var SetProductFunc = function.New(&function.Spec{
 	Description: `Calculates the cartesian product of two or more sets.`,
 	Params:      []function.Parameter{},
 	VarParam: &function.Parameter{
-		Name:        "sets",
-		Description: "The sets to consider. Also accepts lists and tuples, and if all arguments are of list or tuple type then the result will preserve the input ordering",
-		Type:        cty.DynamicPseudoType,
-		AllowMarked: true,
+		Name:         "sets",
+		Description:  "The sets to consider. Also accepts lists and tuples, and if all arguments are of list or tuple type then the result will preserve the input ordering",
+		Type:         cty.DynamicPseudoType,
+		AllowMarked:  true,
+		AllowUnknown: true,
 	},
 	Type: func(args []cty.Value) (retType cty.Type, err error) {
 		if len(args) < 2 {
@@ -989,7 +990,7 @@ var SetProductFunc = function.New(&function.Spec{
 
 			// Continue processing after we find an argument with unknown
 			// length to ensure that we cover all the marks
-			if !arg.Length().IsKnown() {
+			if !(arg.IsKnown() && arg.Length().IsKnown()) {
 				hasUnknownLength = true
 				continue
 			}
@@ -1001,7 +1002,62 @@ var SetProductFunc = function.New(&function.Spec{
 		}
 
 		if hasUnknownLength {
-			return cty.UnknownVal(retType).WithMarks(retMarks), nil
+			defer func() {
+				// We're definitely going to return from somewhere in this
+				// branch and however we do it we must reapply the marks
+				// on the way out.
+				ret = ret.WithMarks(retMarks)
+			}()
+			ret := cty.UnknownVal(retType)
+
+			// Even if we don't know the exact length we may be able to
+			// constrain the upper and lower bounds of the resulting length.
+			maxLength := 1
+			for _, arg := range args {
+				arg, _ := arg.Unmark() // safe to discard marks because "retMarks" already contains them all
+				argRng := arg.Range()
+				ty := argRng.TypeConstraint()
+				var argMaxLen int
+				if ty.IsCollectionType() {
+					argMaxLen = argRng.LengthUpperBound()
+				} else if ty.IsTupleType() {
+					argMaxLen = ty.Length()
+				} else {
+					// Should not get here but if we do then we'll just
+					// bail out with an unrefined unknown value.
+					return ret, nil
+				}
+				// The upper bound of a totally-unrefined collection is
+				// math.MaxInt, which will quickly get us to integer overflow
+				// here, and so out of pragmatism we'll just impose a reasonable
+				// upper limit on what is a useful bound to track and return
+				// unrefined for unusually-large input.
+				if argMaxLen > 1024 { // arbitrarily-decided threshold
+					return ret, nil
+				}
+				maxLength *= argMaxLen
+				if maxLength > 2048 { // arbitrarily-decided threshold
+					return ret, nil
+				}
+				if maxLength < 0 { // Seems like we already overflowed, then.
+					return ret, nil
+				}
+			}
+
+			if maxLength == 0 {
+				// This refinement will typically allow the unknown value to
+				// collapse into a known empty collection.
+				ret = ret.Refine().CollectionLength(0).NewValue()
+			} else {
+				// If we know there's a nonzero maximum number of elements then
+				// set element coalescing cannot reduce to fewer than one
+				// element.
+				ret = ret.Refine().
+					CollectionLengthLowerBound(1).
+					CollectionLengthUpperBound(maxLength).
+					NewValue()
+			}
+			return ret, nil
 		}
 
 		if total == 0 {

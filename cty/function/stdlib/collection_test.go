@@ -2498,6 +2498,100 @@ func TestSetproduct(t *testing.T) {
 			cty.UnknownVal(cty.Set(cty.Tuple([]cty.Type{cty.String, cty.Bool}))).RefineNotNull().WithMarks(cty.NewValueMarks("a", "b")),
 			``,
 		},
+
+		// If the inputs have unknown lengths but have length refinements then
+		// we can potentially refine our unknown result too.
+		{
+			[]cty.Value{
+				cty.UnknownVal(cty.Set(cty.String)).Refine().CollectionLengthUpperBound(2).NewValue(),
+				cty.UnknownVal(cty.Set(cty.Number)).Refine().CollectionLengthUpperBound(3).NewValue(),
+			},
+			cty.UnknownVal(cty.Set(cty.Tuple([]cty.Type{cty.String, cty.Number}))).Refine().
+				NotNull().
+				CollectionLengthLowerBound(1).
+				CollectionLengthUpperBound(6).
+				NewValue(),
+			``,
+		},
+		{
+			[]cty.Value{
+				cty.UnknownVal(cty.Set(cty.String)).Refine().CollectionLengthUpperBound(2).NewValue(),
+				cty.SetValEmpty(cty.Number),
+			},
+			cty.SetValEmpty(cty.Tuple([]cty.Type{cty.String, cty.Number})), // deduced from refinements
+			``,
+		},
+		{
+			// If we have any input with a very large maximum element count then we'll
+			// just leave the result length unrefined to reduce the risk of integer overflow.
+			[]cty.Value{
+				cty.UnknownVal(cty.Set(cty.String)).Refine().CollectionLengthUpperBound(2).NewValue(),
+				cty.UnknownVal(cty.Set(cty.Number)).Refine().CollectionLengthUpperBound(4096).NewValue(),
+			},
+			cty.UnknownVal(cty.Set(cty.Tuple([]cty.Type{cty.String, cty.Number}))).RefineNotNull(),
+			``,
+		},
+		{
+			[]cty.Value{
+				cty.UnknownVal(cty.List(cty.String)).Refine().CollectionLengthUpperBound(2).NewValue(),
+				cty.UnknownVal(cty.List(cty.Number)).Refine().CollectionLengthUpperBound(3).NewValue(),
+			},
+			// NOTE: When the result is a list rather than a set there is no
+			// coalescing and so we could potentially also calculate a more
+			// refined lower bound on the collection length, but since
+			// this function is primarily for sets for now we just accept a
+			// set-oriented refinement. If we find that it would be productive
+			// to further constrain the range of a list result then we can
+			// make this more precise later.
+			cty.UnknownVal(cty.List(cty.Tuple([]cty.Type{cty.String, cty.Number}))).Refine().
+				NotNull().
+				CollectionLengthLowerBound(1).
+				CollectionLengthUpperBound(6).
+				NewValue(),
+			``,
+		},
+		{
+			[]cty.Value{
+				cty.UnknownVal(cty.List(cty.String)).Refine().CollectionLengthUpperBound(2).NewValue(),
+				cty.ListValEmpty(cty.Number),
+			},
+			cty.ListValEmpty(cty.Tuple([]cty.Type{cty.String, cty.Number})), // deduced from refinements
+			``,
+		},
+		{
+			[]cty.Value{
+				cty.UnknownVal(cty.Tuple([]cty.Type{cty.String, cty.String})),
+				cty.UnknownVal(cty.Tuple([]cty.Type{cty.Number, cty.Number, cty.Number})),
+			},
+			// NOTE: When the result is a list rather than a set there is no
+			// coalescing and so we could potentially also calculate a more
+			// refined lower bound on the collection length, but since
+			// this function is primarily for sets for now we just accept a
+			// set-oriented refinement. If we find that it would be productive
+			// to further constrain the range of a list result then we can
+			// make this more precise later.
+			cty.UnknownVal(cty.List(cty.Tuple([]cty.Type{cty.String, cty.Number}))).Refine().
+				NotNull().
+				CollectionLengthLowerBound(1).
+				CollectionLengthUpperBound(6).
+				NewValue(),
+			``,
+		},
+		{
+			[]cty.Value{
+				cty.UnknownVal(cty.Tuple([]cty.Type{cty.String, cty.String})),
+				cty.EmptyTupleVal,
+			},
+			// NOTE: When the result is a list rather than a set there is no
+			// coalescing and so we could potentially also calculate a more
+			// refined lower bound on the collection length, but since
+			// this function is primarily for sets for now we just accept a
+			// set-oriented refinement. If we find that it would be productive
+			// to further constrain the range of a list result then we can
+			// make this more precise later.
+			cty.ListValEmpty(cty.Tuple([]cty.Type{cty.String, cty.DynamicPseudoType})),
+			``,
+		},
 	}
 
 	for _, test := range tests {
