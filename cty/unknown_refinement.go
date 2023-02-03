@@ -32,11 +32,12 @@ import (
 // must at least have a known root type before it can support further
 // refinement.
 func (v Value) Refine() *RefinementBuilder {
+	v, marks := v.Unmark()
 	if unk, isUnk := v.v.(*unknownType); isUnk && unk.refinement != nil {
 		// We're refining a value that's already been refined before, so
 		// we'll start from a copy of its existing refinements.
 		wip := unk.refinement.copy()
-		return &RefinementBuilder{v, wip}
+		return &RefinementBuilder{v, marks, wip}
 	}
 
 	ty := v.Type()
@@ -80,7 +81,7 @@ func (v Value) Refine() *RefinementBuilder {
 		// unknown value would break existing code relying on that.
 	}
 
-	return &RefinementBuilder{v, wip}
+	return &RefinementBuilder{v, marks, wip}
 }
 
 // RefineWith is a variant of Refine which uses callback functions instead of
@@ -130,8 +131,9 @@ func (v Value) RefineNotNull() Value {
 // for method call chaining. End call chains with a call to
 // [RefinementBuilder.NewValue] to obtain the newly-refined value.
 type RefinementBuilder struct {
-	orig Value
-	wip  unknownValRefinement
+	orig  Value
+	marks ValueMarks
+	wip   unknownValRefinement
 }
 
 func (b *RefinementBuilder) assertRefineable() {
@@ -459,7 +461,13 @@ func (b *RefinementBuilder) StringPrefixFull(prefix string) *RefinementBuilder {
 // but may have additional refinements compared to the original. If the applied
 // refinements have reduced the range to a single exact value then the result
 // might be that known value.
-func (b *RefinementBuilder) NewValue() Value {
+func (b *RefinementBuilder) NewValue() (ret Value) {
+	defer func() {
+		// Regardless of how we return, the new value should have the same
+		// marks as our original value.
+		ret = ret.WithMarks(b.marks)
+	}()
+
 	if b.orig.IsKnown() {
 		return b.orig
 	}
@@ -526,7 +534,7 @@ func (b *RefinementBuilder) NewValue() Value {
 	return Value{
 		ty: b.orig.ty,
 		v:  &unknownType{refinement: b.wip},
-	}.WithSameMarks(b.orig)
+	}
 }
 
 // unknownValRefinment is an interface pretending to be a sum type representing
