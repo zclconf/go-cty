@@ -593,7 +593,8 @@ func (val Value) Add(other Value) Value {
 
 	if shortCircuit := mustTypeCheck(Number, Number, val, other); shortCircuit != nil {
 		shortCircuit = forceShortCircuitType(shortCircuit, Number)
-		return (*shortCircuit).RefineNotNull()
+		ret := shortCircuit.RefineWith(numericRangeArithmetic(Value.Add, val.Range(), other.Range()))
+		return ret.RefineNotNull()
 	}
 
 	ret := new(big.Float)
@@ -612,7 +613,8 @@ func (val Value) Subtract(other Value) Value {
 
 	if shortCircuit := mustTypeCheck(Number, Number, val, other); shortCircuit != nil {
 		shortCircuit = forceShortCircuitType(shortCircuit, Number)
-		return (*shortCircuit).RefineNotNull()
+		ret := shortCircuit.RefineWith(numericRangeArithmetic(Value.Subtract, val.Range(), other.Range()))
+		return ret.RefineNotNull()
 	}
 
 	return val.Add(other.Negate())
@@ -646,7 +648,8 @@ func (val Value) Multiply(other Value) Value {
 
 	if shortCircuit := mustTypeCheck(Number, Number, val, other); shortCircuit != nil {
 		shortCircuit = forceShortCircuitType(shortCircuit, Number)
-		return (*shortCircuit).RefineNotNull()
+		ret := shortCircuit.RefineWith(numericRangeArithmetic(Value.Multiply, val.Range(), other.Range()))
+		return ret.RefineNotNull()
 	}
 
 	// find the larger precision of the arguments
@@ -691,6 +694,9 @@ func (val Value) Divide(other Value) Value {
 
 	if shortCircuit := mustTypeCheck(Number, Number, val, other); shortCircuit != nil {
 		shortCircuit = forceShortCircuitType(shortCircuit, Number)
+		// TODO: We could potentially refine the range of the result here, but
+		// we don't right now because our division operation is not monotone
+		// if the denominator could potentially be zero.
 		return (*shortCircuit).RefineNotNull()
 	}
 

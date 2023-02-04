@@ -63,7 +63,7 @@ func marshalUnknownValue(rng cty.ValueRange, path cty.Path, enc *msgpack.Encoder
 		lower, lowerInc := rng.NumberLowerBound()
 		upper, upperInc := rng.NumberUpperBound()
 		boundTy := cty.Tuple([]cty.Type{cty.Number, cty.Bool})
-		if lower.IsKnown() {
+		if lower.IsKnown() && lower != cty.NegativeInfinity {
 			mapLen++
 			refnEnc.EncodeInt(int64(unknownValNumberMin))
 			marshal(
@@ -73,7 +73,7 @@ func marshalUnknownValue(rng cty.ValueRange, path cty.Path, enc *msgpack.Encoder
 				refnEnc,
 			)
 		}
-		if upper.IsKnown() {
+		if upper.IsKnown() && upper != cty.PositiveInfinity {
 			mapLen++
 			refnEnc.EncodeInt(int64(unknownValNumberMax))
 			marshal(

@@ -142,7 +142,7 @@ func (r ValueRange) NumberLowerBound() (min Value, inclusive bool) {
 		}
 		return rfn.min, rfn.minInc
 	}
-	return UnknownVal(Number), false
+	return NegativeInfinity, false
 }
 
 // NumberUpperBound returns information about the upper bound of the range of
@@ -167,7 +167,7 @@ func (r ValueRange) NumberUpperBound() (max Value, inclusive bool) {
 		}
 		return rfn.max, rfn.maxInc
 	}
-	return UnknownVal(Number), false
+	return PositiveInfinity, false
 }
 
 // StringPrefix returns a string that is guaranteed to be the prefix of
@@ -330,6 +330,68 @@ func (r ValueRange) Includes(v Value) Value {
 
 	// If we fall out here then we don't have enough information to decide.
 	return unknownResult
+}
+
+// numericRangeArithmetic is a helper we use to calculate derived numeric ranges
+// for arithmetic on refined numeric values.
+//
+// op must be a monotone operation. numericRangeArithmetic adapts that operation
+// into the equivalent interval arithmetic operation.
+//
+// The result is a superset of the range of the given operation against the
+// given input ranges, if it's possible to calculate that without encountering
+// an invalid operation. Currently the result is inexact due to ignoring
+// the inclusiveness of the input bounds and just always returning inclusive
+// bounds.
+func numericRangeArithmetic(op func(a, b Value) Value, a, b ValueRange) func(*RefinementBuilder) *RefinementBuilder {
+	wrapOp := func(a, b Value) (ret Value) {
+		// Our functions have various panicking edge cases involving incompatible
+		// uses of infinities. To keep things simple here we'll catch those
+		// and just return an unconstrained number.
+		defer func() {
+			if v := recover(); v != nil {
+				ret = UnknownVal(Number)
+			}
+		}()
+		return op(a, b)
+	}
+
+	return func(builder *RefinementBuilder) *RefinementBuilder {
+		aMin, _ := a.NumberLowerBound()
+		aMax, _ := a.NumberUpperBound()
+		bMin, _ := b.NumberLowerBound()
+		bMax, _ := b.NumberUpperBound()
+
+		v1 := wrapOp(aMin, bMin)
+		v2 := wrapOp(aMin, bMax)
+		v3 := wrapOp(aMax, bMin)
+		v4 := wrapOp(aMax, bMax)
+
+		newMin := mostNumberValue(Value.LessThan, v1, v2, v3, v4)
+		newMax := mostNumberValue(Value.GreaterThan, v1, v2, v3, v4)
+
+		if isInf := newMin.Equals(NegativeInfinity); isInf.IsKnown() && isInf.False() {
+			builder = builder.NumberRangeLowerBound(newMin, true)
+		}
+		if isInf := newMax.Equals(PositiveInfinity); isInf.IsKnown() && isInf.False() {
+			builder = builder.NumberRangeUpperBound(newMax, true)
+		}
+		return builder
+	}
+}
+
+func mostNumberValue(op func(i, j Value) Value, v1 Value, vN ...Value) Value {
+	r := v1
+	for _, v := range vN {
+		more := op(v, r)
+		if !more.IsKnown() {
+			return UnknownVal(Number)
+		}
+		if more.True() {
+			r = v
+		}
+	}
+	return r
 }
 
 // definitelyNotNull is a convenient helper for the common situation of checking

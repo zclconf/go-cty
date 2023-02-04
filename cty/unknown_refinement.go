@@ -632,10 +632,10 @@ func (r *refinementNumber) rawEqual(other unknownValRefinement) bool {
 func (r *refinementNumber) GoString() string {
 	var b strings.Builder
 	b.WriteString(r.refinementNullable.GoString())
-	if r.min != NilVal {
+	if r.min != NilVal && r.min != NegativeInfinity {
 		fmt.Fprintf(&b, ".NumberLowerBound(%#v, %t)", r.min, r.minInc)
 	}
-	if r.max != NilVal {
+	if r.max != NilVal && r.max != PositiveInfinity {
 		fmt.Fprintf(&b, ".NumberUpperBound(%#v, %t)", r.max, r.maxInc)
 	}
 	return b.String()

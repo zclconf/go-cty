@@ -1768,6 +1768,66 @@ func TestValueAdd(t *testing.T) {
 			UnknownVal(Number).RefineNotNull(),
 		},
 		{
+			NumberIntVal(1),
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(2), false).
+				NewValue(),
+			UnknownVal(Number).Refine().
+				NotNull().
+				NumberRangeLowerBound(NumberIntVal(3), true).
+				NewValue(),
+		},
+		{
+			Zero,
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(2), false).
+				NewValue(),
+			UnknownVal(Number).Refine().
+				NotNull().
+				NumberRangeLowerBound(NumberIntVal(2), true).
+				NewValue(),
+		},
+		{
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(2), false).
+				NewValue(),
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(2), false).
+				NewValue(),
+			UnknownVal(Number).Refine().
+				NotNull().
+				NumberRangeLowerBound(NumberIntVal(4), true).
+				NewValue(),
+		},
+		{
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(1), true).
+				NumberRangeUpperBound(NumberIntVal(2), false).
+				NewValue(),
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(2), false).
+				NewValue(),
+			UnknownVal(Number).Refine().
+				NotNull().
+				NumberRangeLowerBound(NumberIntVal(3), true).
+				NewValue(),
+		},
+		{
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(1), true).
+				NumberRangeUpperBound(NumberIntVal(2), false).
+				NewValue(),
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(2), false).
+				NumberRangeUpperBound(NumberIntVal(3), false).
+				NewValue(),
+			UnknownVal(Number).Refine().
+				NotNull().
+				NumberRangeLowerBound(NumberIntVal(3), true).
+				NumberRangeUpperBound(NumberIntVal(5), true).
+				NewValue(),
+		},
+		{
 			UnknownVal(Number),
 			UnknownVal(Number),
 			UnknownVal(Number).RefineNotNull(),
@@ -1803,7 +1863,7 @@ func TestValueAdd(t *testing.T) {
 		t.Run(fmt.Sprintf("%#v.Add(%#v)", test.LHS, test.RHS), func(t *testing.T) {
 			got := test.LHS.Add(test.RHS)
 			if !got.RawEquals(test.Expected) {
-				t.Fatalf("Add returned %#v; want %#v", got, test.Expected)
+				t.Fatalf("Wrong result\ngot:  %#v\nwant: %#v", got, test.Expected)
 			}
 		})
 	}
@@ -1842,6 +1902,63 @@ func TestValueSubtract(t *testing.T) {
 		},
 		{
 			NumberIntVal(1),
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(2), true).
+				NewValue(),
+			UnknownVal(Number).Refine().
+				NotNull().
+				NumberRangeUpperBound(NumberIntVal(-1), true).
+				NewValue(),
+		},
+		{
+			Zero,
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(2), true).
+				NewValue(),
+			UnknownVal(Number).Refine().
+				NotNull().
+				NumberRangeUpperBound(NumberIntVal(-2), true).
+				NewValue(),
+		},
+		{
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(2), true).
+				NewValue(),
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(2), true).
+				NewValue(),
+			UnknownVal(Number).RefineNotNull(), // We don't currently refine this case
+		},
+		{
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(1), true).
+				NumberRangeUpperBound(NumberIntVal(2), false).
+				NewValue(),
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(2), true).
+				NewValue(),
+			UnknownVal(Number).Refine().
+				NotNull().
+				NumberRangeUpperBound(NumberIntVal(0), true).
+				NewValue(),
+		},
+		{
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(1), true).
+				NumberRangeUpperBound(NumberIntVal(2), false).
+				NewValue(),
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(2), false).
+				NumberRangeUpperBound(NumberIntVal(3), false).
+				NewValue(),
+			UnknownVal(Number).Refine().
+				NotNull().
+				NumberRangeLowerBound(NumberIntVal(-2), true).
+				NumberRangeUpperBound(NumberIntVal(0), true).
+				NewValue(),
+		},
+		{
+			NumberIntVal(1),
 			DynamicVal,
 			UnknownVal(Number).RefineNotNull(),
 		},
@@ -1871,7 +1988,7 @@ func TestValueSubtract(t *testing.T) {
 		t.Run(fmt.Sprintf("%#v.Subtract(%#v)", test.LHS, test.RHS), func(t *testing.T) {
 			got := test.LHS.Subtract(test.RHS)
 			if !got.RawEquals(test.Expected) {
-				t.Fatalf("Subtract returned %#v; want %#v", got, test.Expected)
+				t.Fatalf("wrong result\ngot:  %#v\nwant: %#v", got, test.Expected)
 			}
 		})
 	}
@@ -1908,7 +2025,7 @@ func TestValueNegate(t *testing.T) {
 		t.Run(fmt.Sprintf("%#v.Negate()", test.Receiver), func(t *testing.T) {
 			got := test.Receiver.Negate()
 			if !got.RawEquals(test.Expected) {
-				t.Fatalf("Negate returned %#v; want %#v", got, test.Expected)
+				t.Fatalf("wrong result\ngot:  %#v\nwant: %#v", got, test.Expected)
 			}
 		})
 	}
@@ -1944,6 +2061,71 @@ func TestValueMultiply(t *testing.T) {
 			UnknownVal(Number),
 			UnknownVal(Number),
 			UnknownVal(Number).RefineNotNull(),
+		},
+		{
+			NumberIntVal(3),
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(2), false).
+				NewValue(),
+			UnknownVal(Number).Refine().
+				NotNull().
+				NumberRangeLowerBound(NumberIntVal(6), true).
+				NewValue(),
+		},
+		{
+			Zero,
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(2), false).
+				NewValue(),
+			UnknownVal(Number).RefineNotNull(), // We can't currently refine this case
+		},
+		{
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(2), false).
+				NewValue(),
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(4), false).
+				NewValue(),
+			UnknownVal(Number).Refine().
+				NotNull().
+				NumberRangeLowerBound(NumberIntVal(8), true).
+				NewValue(),
+		},
+		{
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(3), true).
+				NumberRangeUpperBound(NumberIntVal(4), false).
+				NewValue(),
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(2), false).
+				NewValue(),
+			UnknownVal(Number).Refine().
+				NotNull().
+				NumberRangeLowerBound(NumberIntVal(6), true).
+				NewValue(),
+		},
+		{
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(1), true).
+				NumberRangeUpperBound(NumberIntVal(2), false).
+				NewValue(),
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(2), false).
+				NumberRangeUpperBound(NumberIntVal(3), false).
+				NewValue(),
+			UnknownVal(Number).Refine().
+				NotNull().
+				NumberRangeLowerBound(NumberIntVal(2), true).
+				NumberRangeUpperBound(NumberIntVal(6), true).
+				NewValue(),
+		},
+		{
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(1), true).
+				NumberRangeUpperBound(NumberIntVal(2), false).
+				NewValue(),
+			Zero,
+			Zero, // deduced by refinement
 		},
 		{
 			NumberIntVal(1),
@@ -1986,7 +2168,7 @@ func TestValueMultiply(t *testing.T) {
 		t.Run(fmt.Sprintf("%#v.Multiply(%#v)", test.LHS, test.RHS), func(t *testing.T) {
 			got := test.LHS.Multiply(test.RHS)
 			if !got.RawEquals(test.Expected) {
-				t.Fatalf("Multiply returned %#v; want %#v", got, test.Expected)
+				t.Fatalf("wrong result\ngot:  %#v\nwant: %#v", got, test.Expected)
 			}
 		})
 	}
@@ -2064,7 +2246,7 @@ func TestValueDivide(t *testing.T) {
 		t.Run(fmt.Sprintf("%#v.Divide(%#v)", test.LHS, test.RHS), func(t *testing.T) {
 			got := test.LHS.Divide(test.RHS)
 			if !got.RawEquals(test.Expected) {
-				t.Fatalf("Divide returned %#v; want %#v", got, test.Expected)
+				t.Fatalf("wrong result\ngot:  %#v\nwant: %#v", got, test.Expected)
 			}
 		})
 	}
