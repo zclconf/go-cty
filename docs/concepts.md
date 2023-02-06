@@ -75,6 +75,11 @@ promises to never produce an unknown value for an operation unless one of the
 operands is itself unknown, and so applications can opt out of this additional
 complexity by never providing unknown values as operands.
 
+At minimum an unknown value has a type constraint which describes a set of
+types that the final value could possibly have once known. In some cases we
+can refine an unknown value with additional dynamic information, using
+[Value Refinements](refinements.md).
+
 ## Type Equality and Type Conformance
 
 Two types are said to be equal if they are exactly equivalent. Each type kind

@@ -106,3 +106,12 @@ unmark the whole data structure first (e.g. using `Value.UnmarkDeep`) and then
 decide what to do with those marks in order to ensure that if it makes sense
 to propagate them through the serialization then they will get represented
 somehow.
+
+## Relationship to "Refinements"
+
+The idea of annotating a value with additional information has some overlap
+with the concept of [Refinements](refinements.md). However, the two have
+different purposes and so different design details and tradeoffs.
+
+For more details, see
+[the corresponding section in the Refinements documentation](refinements.md#relationship-to-marks).
