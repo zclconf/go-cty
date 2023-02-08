@@ -2074,10 +2074,20 @@ func TestValueMultiply(t *testing.T) {
 		},
 		{
 			Zero,
+			UnknownVal(Number),
+			Zero,
+		},
+		{
+			UnknownVal(Number),
+			Zero,
+			Zero,
+		},
+		{
+			Zero,
 			UnknownVal(Number).Refine().
 				NumberRangeLowerBound(NumberIntVal(2), false).
 				NewValue(),
-			UnknownVal(Number).RefineNotNull(), // We can't currently refine this case
+			Zero,
 		},
 		{
 			UnknownVal(Number).Refine().
@@ -3034,6 +3044,16 @@ func TestValueAnd(t *testing.T) {
 			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
+			False,
+			UnknownVal(Bool),
+			False,
+		},
+		{
+			UnknownVal(Bool),
+			False,
+			False,
+		},
+		{
 			DynamicVal,
 			DynamicVal,
 			UnknownVal(Bool).RefineNotNull(),
@@ -3047,6 +3067,16 @@ func TestValueAnd(t *testing.T) {
 			DynamicVal,
 			True,
 			UnknownVal(Bool).RefineNotNull(),
+		},
+		{
+			False,
+			DynamicVal,
+			False,
+		},
+		{
+			DynamicVal,
+			False,
+			False,
 		},
 		{
 			True.Mark(1),
@@ -3109,11 +3139,21 @@ func TestValueOr(t *testing.T) {
 		{
 			True,
 			UnknownVal(Bool),
-			UnknownVal(Bool).RefineNotNull(),
+			True,
 		},
 		{
 			UnknownVal(Bool),
 			True,
+			True,
+		},
+		{
+			False,
+			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
+		},
+		{
+			UnknownVal(Bool),
+			False,
 			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
@@ -3124,11 +3164,21 @@ func TestValueOr(t *testing.T) {
 		{
 			True,
 			DynamicVal,
-			UnknownVal(Bool).RefineNotNull(),
+			True,
 		},
 		{
 			DynamicVal,
 			True,
+			True,
+		},
+		{
+			False,
+			DynamicVal,
+			UnknownVal(Bool).RefineNotNull(),
+		},
+		{
+			DynamicVal,
+			False,
 			UnknownVal(Bool).RefineNotNull(),
 		},
 		{

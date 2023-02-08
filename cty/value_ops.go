@@ -647,6 +647,11 @@ func (val Value) Multiply(other Value) Value {
 	}
 
 	if shortCircuit := mustTypeCheck(Number, Number, val, other); shortCircuit != nil {
+		// If either value is exactly zero then the result must either be
+		// zero or an error.
+		if val == Zero || other == Zero {
+			return Zero
+		}
 		shortCircuit = forceShortCircuitType(shortCircuit, Number)
 		ret := shortCircuit.RefineWith(numericRangeArithmetic(Value.Multiply, val.Range(), other.Range()))
 		return ret.RefineNotNull()
@@ -1250,6 +1255,12 @@ func (val Value) And(other Value) Value {
 	}
 
 	if shortCircuit := mustTypeCheck(Bool, Bool, val, other); shortCircuit != nil {
+		// If either value is known to be exactly False then it doesn't
+		// matter what the other value is, because the final result must
+		// either be False or an error.
+		if val == False || other == False {
+			return False
+		}
 		shortCircuit = forceShortCircuitType(shortCircuit, Bool)
 		return (*shortCircuit).RefineNotNull()
 	}
@@ -1267,6 +1278,12 @@ func (val Value) Or(other Value) Value {
 	}
 
 	if shortCircuit := mustTypeCheck(Bool, Bool, val, other); shortCircuit != nil {
+		// If either value is known to be exactly True then it doesn't
+		// matter what the other value is, because the final result must
+		// either be True or an error.
+		if val == True || other == True {
+			return True
+		}
 		shortCircuit = forceShortCircuitType(shortCircuit, Bool)
 		return (*shortCircuit).RefineNotNull()
 	}
