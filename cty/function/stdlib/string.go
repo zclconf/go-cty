@@ -284,8 +284,9 @@ var SortFunc = function.New(&function.Spec{
 	Description: "Applies a lexicographic sort to the elements of the given list.",
 	Params: []function.Parameter{
 		{
-			Name: "list",
-			Type: cty.List(cty.String),
+			Name:         "list",
+			Type:         cty.List(cty.String),
+			AllowUnknown: true,
 		},
 	},
 	Type:         function.StaticReturnType(cty.List(cty.String)),
@@ -295,8 +296,17 @@ var SortFunc = function.New(&function.Spec{
 
 		if !listVal.IsWhollyKnown() {
 			// If some of the element values aren't known yet then we
-			// can't yet predict the order of the result.
-			return cty.UnknownVal(retType), nil
+			// can't yet predict the order of the result, but we can be
+			// sure that the length won't change.
+			ret := cty.UnknownVal(retType)
+			if listVal.Type().IsListType() {
+				rng := listVal.Range()
+				ret = ret.Refine().
+					CollectionLengthLowerBound(rng.LengthLowerBound()).
+					CollectionLengthUpperBound(rng.LengthUpperBound()).
+					NewValue()
+			}
+			return ret, nil
 		}
 		if listVal.LengthInt() == 0 { // Easy path
 			return listVal, nil
