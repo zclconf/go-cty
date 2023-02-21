@@ -42,6 +42,9 @@ For more details, see the following documentation:
 * [Conversion to and from native Go values](./docs/gocty.md)
 * [JSON serialization](./docs/json.md)
 * [`cty` Functions system](./docs/functions.md)
+* [Compatibility Policy for future Minor Releases](./COMPATIBILITY.md): please
+  review this before using `cty` in your application to avoid depending on
+  implementation details that may change.
 
 ---
 
