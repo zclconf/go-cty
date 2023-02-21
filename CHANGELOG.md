@@ -1,5 +1,16 @@
 # 1.13.0 (Unreleased)
 
+## Upgrade Notes
+
+This release introduces a new concept called [Refinements](./docs/refinements.md), which allow `cty` to constrain the range of an unknown value beyond just a type constraint and then make deductions about validity or result range based on those refinements.
+
+These changes are consistent with [the backward-compatibility policy](COMPATIBILITY.md) but you may see some changed results in your unit tests of operations involving unknown values. If the new results don't seem like valid refinements of what was previously being returned in the v1.12 series, please open an issue to discuss that.
+
+If the new results have a range that is a valid subset of the old results then that is expected behavior and you should update your tests as part of upgrading.
+
+## Other changes in this release
+
+* Refinements: `cty` will can track a refined range for some unknown values and will take those into account when evaluating certain operations, thereby allowing a "more known" result than before. ([#153](https://github.com/zclconf/go-cty/pull/153))
 * `function/stdlib`: The `FormatDate` and `TimeAdd` functions in previous releases were accidentally more liberal than intended in their interpretation of timestamp strings documented as requiring RFC3339. ([#152](https://github.com/zclconf/go-cty/pull/152))
 
     Those functions are now corrected to use a stricter RFC3339 parser, meaning that they will now reject some inputs that were previously accepted but were not valid per the RFC3339 syntax rules. The documentation for these functions already specified that RFC3339 syntax was required and so this is a fix to a defect rather than a breaking change, but calling applications which embed these functions may wish to pass on an upgrade note about this behavior difference in their own releaase notes after upgrading.
