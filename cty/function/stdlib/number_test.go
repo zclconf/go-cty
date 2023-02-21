@@ -36,11 +36,11 @@ func TestAbsolute(t *testing.T) {
 		},
 		{
 			cty.UnknownVal(cty.Number),
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).RefineNotNull(),
 		},
 		{
 			cty.DynamicVal,
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).RefineNotNull(),
 		},
 	}
 
@@ -73,22 +73,22 @@ func TestAdd(t *testing.T) {
 		{
 			cty.NumberIntVal(1),
 			cty.UnknownVal(cty.Number),
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).RefineNotNull(),
 		},
 		{
 			cty.UnknownVal(cty.Number),
 			cty.UnknownVal(cty.Number),
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).RefineNotNull(),
 		},
 		{
 			cty.NumberIntVal(1),
 			cty.DynamicVal,
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).RefineNotNull(),
 		},
 		{
 			cty.DynamicVal,
 			cty.DynamicVal,
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).RefineNotNull(),
 		},
 	}
 
@@ -121,22 +121,22 @@ func TestSubtract(t *testing.T) {
 		{
 			cty.NumberIntVal(1),
 			cty.UnknownVal(cty.Number),
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).RefineNotNull(),
 		},
 		{
 			cty.UnknownVal(cty.Number),
 			cty.UnknownVal(cty.Number),
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).RefineNotNull(),
 		},
 		{
 			cty.NumberIntVal(1),
 			cty.DynamicVal,
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).RefineNotNull(),
 		},
 		{
 			cty.DynamicVal,
 			cty.DynamicVal,
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).RefineNotNull(),
 		},
 	}
 
@@ -169,22 +169,22 @@ func TestMultiply(t *testing.T) {
 		{
 			cty.NumberIntVal(1),
 			cty.UnknownVal(cty.Number),
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).RefineNotNull(),
 		},
 		{
 			cty.UnknownVal(cty.Number),
 			cty.UnknownVal(cty.Number),
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).RefineNotNull(),
 		},
 		{
 			cty.NumberIntVal(1),
 			cty.DynamicVal,
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).RefineNotNull(),
 		},
 		{
 			cty.DynamicVal,
 			cty.DynamicVal,
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).RefineNotNull(),
 		},
 	}
 
@@ -237,22 +237,22 @@ func TestDivide(t *testing.T) {
 		{
 			cty.NumberIntVal(1),
 			cty.UnknownVal(cty.Number),
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).RefineNotNull(),
 		},
 		{
 			cty.UnknownVal(cty.Number),
 			cty.UnknownVal(cty.Number),
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).RefineNotNull(),
 		},
 		{
 			cty.NumberIntVal(1),
 			cty.DynamicVal,
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).RefineNotNull(),
 		},
 		{
 			cty.DynamicVal,
 			cty.DynamicVal,
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).RefineNotNull(),
 		},
 	}
 
@@ -305,22 +305,22 @@ func TestModulo(t *testing.T) {
 		{
 			cty.NumberIntVal(1),
 			cty.UnknownVal(cty.Number),
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).RefineNotNull(),
 		},
 		{
 			cty.UnknownVal(cty.Number),
 			cty.UnknownVal(cty.Number),
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).RefineNotNull(),
 		},
 		{
 			cty.NumberIntVal(1),
 			cty.DynamicVal,
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).RefineNotNull(),
 		},
 		{
 			cty.DynamicVal,
 			cty.DynamicVal,
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).RefineNotNull(),
 		},
 	}
 
@@ -350,11 +350,11 @@ func TestNegate(t *testing.T) {
 		},
 		{
 			cty.UnknownVal(cty.Number),
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).RefineNotNull(),
 		},
 		{
 			cty.DynamicVal,
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).RefineNotNull(),
 		},
 	}
 
@@ -397,22 +397,27 @@ func TestLessThan(t *testing.T) {
 		{
 			cty.NumberIntVal(1),
 			cty.UnknownVal(cty.Number),
-			cty.UnknownVal(cty.Bool),
+			cty.UnknownVal(cty.Bool).RefineNotNull(),
+		},
+		{
+			cty.NumberIntVal(1),
+			cty.UnknownVal(cty.Number).Refine().NumberRangeLowerBound(cty.NumberIntVal(2), true).NewValue(),
+			cty.True, // deduced from refinement
 		},
 		{
 			cty.UnknownVal(cty.Number),
 			cty.UnknownVal(cty.Number),
-			cty.UnknownVal(cty.Bool),
+			cty.UnknownVal(cty.Bool).RefineNotNull(),
 		},
 		{
 			cty.NumberIntVal(1),
 			cty.DynamicVal,
-			cty.UnknownVal(cty.Bool),
+			cty.UnknownVal(cty.Bool).RefineNotNull(),
 		},
 		{
 			cty.DynamicVal,
 			cty.DynamicVal,
-			cty.UnknownVal(cty.Bool),
+			cty.UnknownVal(cty.Bool).RefineNotNull(),
 		},
 	}
 
@@ -455,22 +460,22 @@ func TestLessThanOrEqualTo(t *testing.T) {
 		{
 			cty.NumberIntVal(1),
 			cty.UnknownVal(cty.Number),
-			cty.UnknownVal(cty.Bool),
+			cty.UnknownVal(cty.Bool).RefineNotNull(),
 		},
 		{
 			cty.UnknownVal(cty.Number),
 			cty.UnknownVal(cty.Number),
-			cty.UnknownVal(cty.Bool),
+			cty.UnknownVal(cty.Bool).RefineNotNull(),
 		},
 		{
 			cty.NumberIntVal(1),
 			cty.DynamicVal,
-			cty.UnknownVal(cty.Bool),
+			cty.UnknownVal(cty.Bool).RefineNotNull(),
 		},
 		{
 			cty.DynamicVal,
 			cty.DynamicVal,
-			cty.UnknownVal(cty.Bool),
+			cty.UnknownVal(cty.Bool).RefineNotNull(),
 		},
 	}
 
@@ -513,22 +518,22 @@ func TestGreaterThan(t *testing.T) {
 		{
 			cty.NumberIntVal(1),
 			cty.UnknownVal(cty.Number),
-			cty.UnknownVal(cty.Bool),
+			cty.UnknownVal(cty.Bool).RefineNotNull(),
 		},
 		{
 			cty.UnknownVal(cty.Number),
 			cty.UnknownVal(cty.Number),
-			cty.UnknownVal(cty.Bool),
+			cty.UnknownVal(cty.Bool).RefineNotNull(),
 		},
 		{
 			cty.NumberIntVal(1),
 			cty.DynamicVal,
-			cty.UnknownVal(cty.Bool),
+			cty.UnknownVal(cty.Bool).RefineNotNull(),
 		},
 		{
 			cty.DynamicVal,
 			cty.DynamicVal,
-			cty.UnknownVal(cty.Bool),
+			cty.UnknownVal(cty.Bool).RefineNotNull(),
 		},
 	}
 
@@ -571,22 +576,22 @@ func TestGreaterThanOrEqualTo(t *testing.T) {
 		{
 			cty.NumberIntVal(1),
 			cty.UnknownVal(cty.Number),
-			cty.UnknownVal(cty.Bool),
+			cty.UnknownVal(cty.Bool).RefineNotNull(),
 		},
 		{
 			cty.UnknownVal(cty.Number),
 			cty.UnknownVal(cty.Number),
-			cty.UnknownVal(cty.Bool),
+			cty.UnknownVal(cty.Bool).RefineNotNull(),
 		},
 		{
 			cty.NumberIntVal(1),
 			cty.DynamicVal,
-			cty.UnknownVal(cty.Bool),
+			cty.UnknownVal(cty.Bool).RefineNotNull(),
 		},
 		{
 			cty.DynamicVal,
 			cty.DynamicVal,
-			cty.UnknownVal(cty.Bool),
+			cty.UnknownVal(cty.Bool).RefineNotNull(),
 		},
 	}
 
@@ -640,11 +645,11 @@ func TestMin(t *testing.T) {
 		},
 		{
 			[]cty.Value{cty.PositiveInfinity, cty.UnknownVal(cty.Number)},
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).RefineNotNull(),
 		},
 		{
 			[]cty.Value{cty.PositiveInfinity, cty.DynamicVal},
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).RefineNotNull(),
 		},
 		{
 			[]cty.Value{cty.Zero.Mark(1), cty.NumberIntVal(1)},
@@ -702,11 +707,11 @@ func TestMax(t *testing.T) {
 		},
 		{
 			[]cty.Value{cty.PositiveInfinity, cty.UnknownVal(cty.Number)},
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).RefineNotNull(),
 		},
 		{
 			[]cty.Value{cty.PositiveInfinity, cty.DynamicVal},
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).RefineNotNull(),
 		},
 	}
 
@@ -1170,55 +1175,55 @@ func TestParseInt(t *testing.T) {
 		{
 			cty.StringVal("FF"),
 			cty.NumberIntVal(10),
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).RefineNotNull(),
 			true,
 		},
 		{
 			cty.StringVal("00FF"),
 			cty.NumberIntVal(10),
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).RefineNotNull(),
 			true,
 		},
 		{
 			cty.StringVal("-00FF"),
 			cty.NumberIntVal(10),
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).RefineNotNull(),
 			true,
 		},
 		{
 			cty.NumberIntVal(2),
 			cty.NumberIntVal(10),
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).RefineNotNull(),
 			true,
 		},
 		{
 			cty.StringVal("1"),
 			cty.NumberIntVal(63),
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).RefineNotNull(),
 			true,
 		},
 		{
 			cty.StringVal("1"),
 			cty.NumberIntVal(-1),
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).RefineNotNull(),
 			true,
 		},
 		{
 			cty.StringVal("1"),
 			cty.NumberIntVal(1),
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).RefineNotNull(),
 			true,
 		},
 		{
 			cty.StringVal("1"),
 			cty.NumberIntVal(0),
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).RefineNotNull(),
 			true,
 		},
 		{
 			cty.StringVal("1.2"),
 			cty.NumberIntVal(10),
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).RefineNotNull(),
 			true,
 		},
 	}

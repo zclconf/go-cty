@@ -23,7 +23,8 @@ var FormatDateFunc = function.New(&function.Spec{
 			Type: cty.String,
 		},
 	},
-	Type: function.StaticReturnType(cty.String),
+	Type:         function.StaticReturnType(cty.String),
+	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
 		formatStr := args[0].AsString()
 		timeStr := args[1].AsString()

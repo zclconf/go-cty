@@ -81,7 +81,7 @@ func TestSetUnion(t *testing.T) {
 				cty.SetVal([]cty.Value{cty.StringVal("5")}),
 				cty.UnknownVal(cty.Set(cty.Number)),
 			},
-			cty.UnknownVal(cty.Set(cty.String)),
+			cty.UnknownVal(cty.Set(cty.String)).RefineNotNull(),
 		},
 		{
 			[]cty.Value{
@@ -178,14 +178,14 @@ func TestSetIntersection(t *testing.T) {
 				cty.SetVal([]cty.Value{cty.StringVal("5")}),
 				cty.UnknownVal(cty.Set(cty.Number)),
 			},
-			cty.UnknownVal(cty.Set(cty.String)),
+			cty.UnknownVal(cty.Set(cty.String)).RefineNotNull(),
 		},
 		{
 			[]cty.Value{
 				cty.SetVal([]cty.Value{cty.StringVal("5")}),
 				cty.SetVal([]cty.Value{cty.UnknownVal(cty.String)}),
 			},
-			cty.UnknownVal(cty.Set(cty.String)),
+			cty.UnknownVal(cty.Set(cty.String)).RefineNotNull(),
 		},
 	}
 
@@ -257,12 +257,12 @@ func TestSetSubtract(t *testing.T) {
 		{
 			cty.SetVal([]cty.Value{cty.StringVal("5")}),
 			cty.UnknownVal(cty.Set(cty.Number)),
-			cty.UnknownVal(cty.Set(cty.String)),
+			cty.UnknownVal(cty.Set(cty.String)).RefineNotNull(),
 		},
 		{
 			cty.SetVal([]cty.Value{cty.StringVal("5")}),
 			cty.SetVal([]cty.Value{cty.UnknownVal(cty.String)}),
-			cty.UnknownVal(cty.Set(cty.String)),
+			cty.UnknownVal(cty.Set(cty.String)).RefineNotNull(),
 		},
 	}
 
@@ -334,12 +334,12 @@ func TestSetSymmetricDifference(t *testing.T) {
 		{
 			cty.SetVal([]cty.Value{cty.StringVal("5")}),
 			cty.UnknownVal(cty.Set(cty.Number)),
-			cty.UnknownVal(cty.Set(cty.String)),
+			cty.UnknownVal(cty.Set(cty.String)).RefineNotNull(),
 		},
 		{
 			cty.SetVal([]cty.Value{cty.StringVal("5")}),
 			cty.SetVal([]cty.Value{cty.UnknownVal(cty.Number)}),
-			cty.UnknownVal(cty.Set(cty.String)),
+			cty.UnknownVal(cty.Set(cty.String)).RefineNotNull(),
 		},
 	}
 

@@ -11,6 +11,8 @@ func TestValueEquals(t *testing.T) {
 	capsuleB := CapsuleVal(capsuleTestType1, &capsuleTestType1Native{"capsuleB"})
 	capsuleC := CapsuleVal(capsuleTestType2, &capsuleTestType2Native{"capsuleC"})
 
+	unknownResult := UnknownVal(Bool).RefineNotNull()
+
 	tests := []struct {
 		LHS      Value
 		RHS      Value
@@ -250,47 +252,47 @@ func TestValueEquals(t *testing.T) {
 		{
 			TupleVal([]Value{UnknownVal(Number)}),
 			TupleVal([]Value{NumberIntVal(1)}),
-			UnknownVal(Bool),
+			unknownResult,
 		},
 		{
 			TupleVal([]Value{UnknownVal(Number)}),
 			TupleVal([]Value{UnknownVal(Number)}),
-			UnknownVal(Bool),
+			unknownResult,
 		},
 		{
 			TupleVal([]Value{NumberIntVal(1)}),
 			TupleVal([]Value{UnknownVal(Number)}),
-			UnknownVal(Bool),
+			unknownResult,
 		},
 		{
 			TupleVal([]Value{NumberIntVal(1)}),
 			TupleVal([]Value{DynamicVal}),
-			UnknownVal(Bool),
+			unknownResult,
 		},
 		{
 			TupleVal([]Value{DynamicVal}),
 			TupleVal([]Value{NumberIntVal(1)}),
-			UnknownVal(Bool),
+			unknownResult,
 		},
 		{
 			TupleVal([]Value{NumberIntVal(1)}),
 			UnknownVal(Tuple([]Type{Number})),
-			UnknownVal(Bool),
+			unknownResult,
 		},
 		{
 			UnknownVal(Tuple([]Type{Number})),
 			TupleVal([]Value{NumberIntVal(1)}),
-			UnknownVal(Bool),
+			unknownResult,
 		},
 		{
 			DynamicVal,
 			TupleVal([]Value{NumberIntVal(1)}),
-			UnknownVal(Bool),
+			unknownResult,
 		},
 		{
 			TupleVal([]Value{NumberIntVal(1)}),
 			DynamicVal,
-			UnknownVal(Bool),
+			unknownResult,
 		},
 
 		// Lists
@@ -532,7 +534,7 @@ func TestValueEquals(t *testing.T) {
 			SetVal([]Value{
 				UnknownVal(Number),
 			}),
-			UnknownVal(Bool),
+			unknownResult,
 		},
 		{
 			SetVal([]Value{
@@ -542,7 +544,7 @@ func TestValueEquals(t *testing.T) {
 				NumberIntVal(1),
 				UnknownVal(Number),
 			}),
-			UnknownVal(Bool),
+			unknownResult,
 		},
 		{
 			SetVal([]Value{
@@ -552,7 +554,7 @@ func TestValueEquals(t *testing.T) {
 			SetVal([]Value{
 				NumberIntVal(1),
 			}),
-			UnknownVal(Bool),
+			unknownResult,
 		},
 
 		// Capsules
@@ -574,7 +576,7 @@ func TestValueEquals(t *testing.T) {
 		{
 			capsuleA,
 			UnknownVal(capsuleTestType1), // same type
-			UnknownVal(Bool),
+			unknownResult,
 		},
 		{
 			capsuleA,
@@ -586,22 +588,32 @@ func TestValueEquals(t *testing.T) {
 		{
 			NumberIntVal(2),
 			UnknownVal(Number),
-			UnknownVal(Bool),
+			unknownResult,
 		},
 		{
 			NumberIntVal(1),
 			DynamicVal,
-			UnknownVal(Bool),
+			unknownResult,
+		},
+		{
+			NumberIntVal(2),
+			UnknownVal(Number).Refine().NumberRangeLowerBound(Zero, true).NewValue(),
+			unknownResult,
+		},
+		{
+			NumberIntVal(2),
+			UnknownVal(Number).Refine().NumberRangeLowerBound(NumberIntVal(4), true).NewValue(),
+			False, // deduction from refinement
 		},
 		{
 			DynamicVal,
 			BoolVal(true),
-			UnknownVal(Bool),
+			unknownResult,
 		},
 		{
 			DynamicVal,
 			DynamicVal,
-			UnknownVal(Bool),
+			unknownResult,
 		},
 		{
 			ListVal([]Value{
@@ -612,7 +624,7 @@ func TestValueEquals(t *testing.T) {
 				StringVal("hi"),
 				DynamicVal,
 			}),
-			UnknownVal(Bool),
+			unknownResult,
 		},
 		{
 			ListVal([]Value{
@@ -623,7 +635,12 @@ func TestValueEquals(t *testing.T) {
 				StringVal("hi"),
 				UnknownVal(String),
 			}),
-			UnknownVal(Bool),
+			unknownResult,
+		},
+		{
+			UnknownVal(List(String)).Refine().CollectionLengthLowerBound(1).NewValue(),
+			ListValEmpty(String),
+			False, // deduction from refinement
 		},
 		{
 			MapVal(map[string]Value{
@@ -634,7 +651,7 @@ func TestValueEquals(t *testing.T) {
 				"static":  StringVal("hi"),
 				"dynamic": DynamicVal,
 			}),
-			UnknownVal(Bool),
+			unknownResult,
 		},
 		{
 			MapVal(map[string]Value{
@@ -645,7 +662,7 @@ func TestValueEquals(t *testing.T) {
 				"static":  StringVal("hi"),
 				"dynamic": UnknownVal(String),
 			}),
-			UnknownVal(Bool),
+			unknownResult,
 		},
 		{
 			NullVal(String),
@@ -660,7 +677,7 @@ func TestValueEquals(t *testing.T) {
 		{
 			UnknownVal(String),
 			UnknownVal(Number),
-			UnknownVal(Bool),
+			unknownResult,
 		},
 		{
 			StringVal(""),
@@ -675,7 +692,7 @@ func TestValueEquals(t *testing.T) {
 		{
 			StringVal(""),
 			UnknownVal(String),
-			UnknownVal(Bool),
+			unknownResult,
 		},
 		{
 			NullVal(DynamicPseudoType),
@@ -685,17 +702,17 @@ func TestValueEquals(t *testing.T) {
 		{
 			NullVal(String),
 			UnknownVal(Number),
-			UnknownVal(Bool), // because second operand might eventually be null
+			unknownResult, // because second operand might eventually be null
 		},
 		{
 			UnknownVal(String),
 			NullVal(Number),
-			UnknownVal(Bool), // because first operand might eventually be null
+			unknownResult, // because first operand might eventually be null
 		},
 		{
 			UnknownVal(String),
 			UnknownVal(Number),
-			UnknownVal(Bool), // because both operands might eventually be null
+			unknownResult, // because both operands might eventually be null
 		},
 		{
 			StringVal("hello"),
@@ -759,7 +776,7 @@ func TestValueEquals(t *testing.T) {
 			ObjectVal(map[string]Value{
 				"a": DynamicVal,
 			}),
-			UnknownVal(Bool),
+			unknownResult,
 		},
 		{
 			ObjectVal(map[string]Value{
@@ -779,7 +796,47 @@ func TestValueEquals(t *testing.T) {
 			ObjectVal(map[string]Value{
 				"a": UnknownVal(List(List(DynamicPseudoType))),
 			}),
-			UnknownVal(Bool),
+			unknownResult,
+		},
+		{
+			NullVal(String),
+			UnknownVal(String).Refine().NotNull().NewValue(),
+			False,
+		},
+		{
+			UnknownVal(String).Refine().NotNull().NewValue(),
+			NullVal(String),
+			False,
+		},
+		{
+			UnknownVal(String).Refine().Null().NewValue(),
+			NullVal(String),
+			True, // NOTE: The refinement should collapse to NullVal(String)
+		},
+		{
+			NullVal(String),
+			UnknownVal(String).Refine().Null().NewValue(),
+			True, // NOTE: The refinement should collapse to NullVal(String)
+		},
+		{
+			UnknownVal(String).Refine().StringPrefix("foo-").NewValue(),
+			StringVal("notfoo-bar"),
+			False, // Deduction from refinement
+		},
+		{
+			StringVal(""),
+			UnknownVal(String).Refine().StringPrefix("foo-").NewValue(),
+			False, // Deduction from refinement
+		},
+		{
+			StringVal("").Mark("a"),
+			UnknownVal(String).Mark("b").Refine().StringPrefix("foo-").NewValue(),
+			False.Mark("a").Mark("b"), // Deduction from refinement
+		},
+		{
+			UnknownVal(String).Refine().StringPrefix("foo-").NewValue(),
+			StringVal("foo-bar"),
+			unknownResult,
 		},
 
 		// Marks
@@ -814,7 +871,7 @@ func TestValueEquals(t *testing.T) {
 		t.Run(fmt.Sprintf("%#v.Equals(%#v)", test.LHS, test.RHS), func(t *testing.T) {
 			got := test.LHS.Equals(test.RHS)
 			if !got.RawEquals(test.Expected) {
-				t.Fatalf("wrong Equals result\ngot:  %#v\nwant: %#v", got, test.Expected)
+				t.Fatalf("wrong Equals result\nLHS:  %#v\nRHS:  %#v\ngot:  %#v\nwant: %#v", test.LHS, test.RHS, got, test.Expected)
 			}
 		})
 	}
@@ -1595,6 +1652,67 @@ func TestValueRawEquals(t *testing.T) {
 			}),
 			false,
 		},
+		{
+			UnknownVal(Bool).Refine().NotNull().NewValue(),
+			UnknownVal(Bool),
+			false,
+		},
+		{
+			UnknownVal(Bool),
+			UnknownVal(Bool).Refine().NotNull().NewValue(),
+			false,
+		},
+		{
+			UnknownVal(Number).Refine().NumberRangeInclusive(Zero, NumberIntVal(1)).NewValue(),
+			UnknownVal(Number).Refine().NumberRangeInclusive(Zero, NumberIntVal(2)).NewValue(),
+			false,
+		},
+		{
+			UnknownVal(Number).Refine().NumberRangeInclusive(Zero, NumberIntVal(1)).NewValue(),
+			UnknownVal(Number).Refine().NumberRangeInclusive(Zero, NumberIntVal(1)).NewValue(),
+			true,
+		},
+		{
+			UnknownVal(String),
+			UnknownVal(String).Refine().StringPrefix("foo").NewValue(),
+			false,
+		},
+		{
+			UnknownVal(String).Refine().StringPrefix("foo").NewValue(),
+			UnknownVal(String).Refine().StringPrefix("foo").NewValue(),
+			true,
+		},
+		{
+			UnknownVal(String).Refine().NotNull().StringPrefix("foo").NewValue(),
+			UnknownVal(String).Refine().StringPrefix("foo").NewValue(),
+			false,
+		},
+		{
+			UnknownVal(String).Refine().StringPrefix("foo").NewValue(),
+			UnknownVal(String).Refine().StringPrefix("bar").NewValue(),
+			false,
+		},
+		{
+			UnknownVal(String).Refine().Null().NewValue(),
+			NullVal(String),
+			true, // The refinement expression collapses into a simple null
+		},
+		{
+			UnknownVal(Number).Refine().NumberRangeInclusive(Zero, Zero).NewValue(),
+			Zero,
+			false, // Refinement can't collapse to zero because it might be null
+		},
+		{
+			UnknownVal(Number).Refine().NotNull().NumberRangeInclusive(Zero, Zero).NewValue(),
+			Zero,
+			true, // Refinement collapses to zero because it's not null and the two bounds are equal
+		},
+		{
+			UnknownVal(List(String)).Refine().NotNull().CollectionLengthUpperBound(0).NewValue(),
+			ListValEmpty(String),
+			true, // Colection length lower bound is always at least zero so this refinement collapses to an empty list
+		},
+
 		// Marks
 		{
 			StringVal("a").Mark(1),
@@ -1617,7 +1735,7 @@ func TestValueRawEquals(t *testing.T) {
 		t.Run(fmt.Sprintf("%#v.RawEquals(%#v)", test.LHS, test.RHS), func(t *testing.T) {
 			got := test.LHS.RawEquals(test.RHS)
 			if !got == test.Expected {
-				t.Fatalf("wrong Equals result\ngot:  %#v\nwant: %#v", got, test.Expected)
+				t.Fatalf("wrong RawEquals result\ngot:  %#v\nwant: %#v", got, test.Expected)
 			}
 		})
 	}
@@ -1647,22 +1765,82 @@ func TestValueAdd(t *testing.T) {
 		{
 			NumberIntVal(1),
 			UnknownVal(Number),
-			UnknownVal(Number),
+			UnknownVal(Number).RefineNotNull(),
+		},
+		{
+			NumberIntVal(1),
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(2), false).
+				NewValue(),
+			UnknownVal(Number).Refine().
+				NotNull().
+				NumberRangeLowerBound(NumberIntVal(3), true).
+				NewValue(),
+		},
+		{
+			Zero,
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(2), false).
+				NewValue(),
+			UnknownVal(Number).Refine().
+				NotNull().
+				NumberRangeLowerBound(NumberIntVal(2), true).
+				NewValue(),
+		},
+		{
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(2), false).
+				NewValue(),
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(2), false).
+				NewValue(),
+			UnknownVal(Number).Refine().
+				NotNull().
+				NumberRangeLowerBound(NumberIntVal(4), true).
+				NewValue(),
+		},
+		{
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(1), true).
+				NumberRangeUpperBound(NumberIntVal(2), false).
+				NewValue(),
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(2), false).
+				NewValue(),
+			UnknownVal(Number).Refine().
+				NotNull().
+				NumberRangeLowerBound(NumberIntVal(3), true).
+				NewValue(),
+		},
+		{
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(1), true).
+				NumberRangeUpperBound(NumberIntVal(2), false).
+				NewValue(),
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(2), false).
+				NumberRangeUpperBound(NumberIntVal(3), false).
+				NewValue(),
+			UnknownVal(Number).Refine().
+				NotNull().
+				NumberRangeLowerBound(NumberIntVal(3), true).
+				NumberRangeUpperBound(NumberIntVal(5), true).
+				NewValue(),
 		},
 		{
 			UnknownVal(Number),
 			UnknownVal(Number),
-			UnknownVal(Number),
+			UnknownVal(Number).RefineNotNull(),
 		},
 		{
 			NumberIntVal(1),
 			DynamicVal,
-			UnknownVal(Number),
+			UnknownVal(Number).RefineNotNull(),
 		},
 		{
 			DynamicVal,
 			DynamicVal,
-			UnknownVal(Number),
+			UnknownVal(Number).RefineNotNull(),
 		},
 		{
 			Zero.Mark(1),
@@ -1685,7 +1863,7 @@ func TestValueAdd(t *testing.T) {
 		t.Run(fmt.Sprintf("%#v.Add(%#v)", test.LHS, test.RHS), func(t *testing.T) {
 			got := test.LHS.Add(test.RHS)
 			if !got.RawEquals(test.Expected) {
-				t.Fatalf("Add returned %#v; want %#v", got, test.Expected)
+				t.Fatalf("Wrong result\ngot:  %#v\nwant: %#v", got, test.Expected)
 			}
 		})
 	}
@@ -1715,22 +1893,79 @@ func TestValueSubtract(t *testing.T) {
 		{
 			NumberIntVal(1),
 			UnknownVal(Number),
-			UnknownVal(Number),
+			UnknownVal(Number).RefineNotNull(),
 		},
 		{
 			UnknownVal(Number),
 			UnknownVal(Number),
-			UnknownVal(Number),
+			UnknownVal(Number).RefineNotNull(),
+		},
+		{
+			NumberIntVal(1),
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(2), true).
+				NewValue(),
+			UnknownVal(Number).Refine().
+				NotNull().
+				NumberRangeUpperBound(NumberIntVal(-1), true).
+				NewValue(),
+		},
+		{
+			Zero,
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(2), true).
+				NewValue(),
+			UnknownVal(Number).Refine().
+				NotNull().
+				NumberRangeUpperBound(NumberIntVal(-2), true).
+				NewValue(),
+		},
+		{
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(2), true).
+				NewValue(),
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(2), true).
+				NewValue(),
+			UnknownVal(Number).RefineNotNull(), // We don't currently refine this case
+		},
+		{
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(1), true).
+				NumberRangeUpperBound(NumberIntVal(2), false).
+				NewValue(),
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(2), true).
+				NewValue(),
+			UnknownVal(Number).Refine().
+				NotNull().
+				NumberRangeUpperBound(NumberIntVal(0), true).
+				NewValue(),
+		},
+		{
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(1), true).
+				NumberRangeUpperBound(NumberIntVal(2), false).
+				NewValue(),
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(2), false).
+				NumberRangeUpperBound(NumberIntVal(3), false).
+				NewValue(),
+			UnknownVal(Number).Refine().
+				NotNull().
+				NumberRangeLowerBound(NumberIntVal(-2), true).
+				NumberRangeUpperBound(NumberIntVal(0), true).
+				NewValue(),
 		},
 		{
 			NumberIntVal(1),
 			DynamicVal,
-			UnknownVal(Number),
+			UnknownVal(Number).RefineNotNull(),
 		},
 		{
 			DynamicVal,
 			DynamicVal,
-			UnknownVal(Number),
+			UnknownVal(Number).RefineNotNull(),
 		},
 		{
 			Zero.Mark(1),
@@ -1753,7 +1988,7 @@ func TestValueSubtract(t *testing.T) {
 		t.Run(fmt.Sprintf("%#v.Subtract(%#v)", test.LHS, test.RHS), func(t *testing.T) {
 			got := test.LHS.Subtract(test.RHS)
 			if !got.RawEquals(test.Expected) {
-				t.Fatalf("Subtract returned %#v; want %#v", got, test.Expected)
+				t.Fatalf("wrong result\ngot:  %#v\nwant: %#v", got, test.Expected)
 			}
 		})
 	}
@@ -1774,11 +2009,11 @@ func TestValueNegate(t *testing.T) {
 		},
 		{
 			UnknownVal(Number),
-			UnknownVal(Number),
+			UnknownVal(Number).RefineNotNull(),
 		},
 		{
 			DynamicVal,
-			UnknownVal(Number),
+			UnknownVal(Number).RefineNotNull(),
 		},
 		{
 			Zero.Mark(1),
@@ -1790,7 +2025,7 @@ func TestValueNegate(t *testing.T) {
 		t.Run(fmt.Sprintf("%#v.Negate()", test.Receiver), func(t *testing.T) {
 			got := test.Receiver.Negate()
 			if !got.RawEquals(test.Expected) {
-				t.Fatalf("Negate returned %#v; want %#v", got, test.Expected)
+				t.Fatalf("wrong result\ngot:  %#v\nwant: %#v", got, test.Expected)
 			}
 		})
 	}
@@ -1820,22 +2055,97 @@ func TestValueMultiply(t *testing.T) {
 		{
 			NumberIntVal(1),
 			UnknownVal(Number),
-			UnknownVal(Number),
+			UnknownVal(Number).RefineNotNull(),
 		},
 		{
 			UnknownVal(Number),
 			UnknownVal(Number),
+			UnknownVal(Number).RefineNotNull(),
+		},
+		{
+			NumberIntVal(3),
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(2), false).
+				NewValue(),
+			UnknownVal(Number).Refine().
+				NotNull().
+				NumberRangeLowerBound(NumberIntVal(6), true).
+				NewValue(),
+		},
+		{
+			Zero,
 			UnknownVal(Number),
+			Zero,
+		},
+		{
+			UnknownVal(Number),
+			Zero,
+			Zero,
+		},
+		{
+			Zero,
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(2), false).
+				NewValue(),
+			Zero,
+		},
+		{
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(2), false).
+				NewValue(),
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(4), false).
+				NewValue(),
+			UnknownVal(Number).Refine().
+				NotNull().
+				NumberRangeLowerBound(NumberIntVal(8), true).
+				NewValue(),
+		},
+		{
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(3), true).
+				NumberRangeUpperBound(NumberIntVal(4), false).
+				NewValue(),
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(2), false).
+				NewValue(),
+			UnknownVal(Number).Refine().
+				NotNull().
+				NumberRangeLowerBound(NumberIntVal(6), true).
+				NewValue(),
+		},
+		{
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(1), true).
+				NumberRangeUpperBound(NumberIntVal(2), false).
+				NewValue(),
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(2), false).
+				NumberRangeUpperBound(NumberIntVal(3), false).
+				NewValue(),
+			UnknownVal(Number).Refine().
+				NotNull().
+				NumberRangeLowerBound(NumberIntVal(2), true).
+				NumberRangeUpperBound(NumberIntVal(6), true).
+				NewValue(),
+		},
+		{
+			UnknownVal(Number).Refine().
+				NumberRangeLowerBound(NumberIntVal(1), true).
+				NumberRangeUpperBound(NumberIntVal(2), false).
+				NewValue(),
+			Zero,
+			Zero, // deduced by refinement
 		},
 		{
 			NumberIntVal(1),
 			DynamicVal,
-			UnknownVal(Number),
+			UnknownVal(Number).RefineNotNull(),
 		},
 		{
 			DynamicVal,
 			DynamicVal,
-			UnknownVal(Number),
+			UnknownVal(Number).RefineNotNull(),
 		},
 		{
 			Zero.Mark(1),
@@ -1868,7 +2178,7 @@ func TestValueMultiply(t *testing.T) {
 		t.Run(fmt.Sprintf("%#v.Multiply(%#v)", test.LHS, test.RHS), func(t *testing.T) {
 			got := test.LHS.Multiply(test.RHS)
 			if !got.RawEquals(test.Expected) {
-				t.Fatalf("Multiply returned %#v; want %#v", got, test.Expected)
+				t.Fatalf("wrong result\ngot:  %#v\nwant: %#v", got, test.Expected)
 			}
 		})
 	}
@@ -1908,22 +2218,22 @@ func TestValueDivide(t *testing.T) {
 		{
 			NumberIntVal(1),
 			UnknownVal(Number),
-			UnknownVal(Number),
+			UnknownVal(Number).RefineNotNull(),
 		},
 		{
 			UnknownVal(Number),
 			UnknownVal(Number),
-			UnknownVal(Number),
+			UnknownVal(Number).RefineNotNull(),
 		},
 		{
 			NumberIntVal(1),
 			DynamicVal,
-			UnknownVal(Number),
+			UnknownVal(Number).RefineNotNull(),
 		},
 		{
 			DynamicVal,
 			DynamicVal,
-			UnknownVal(Number),
+			UnknownVal(Number).RefineNotNull(),
 		},
 		{
 			Zero.Mark(1),
@@ -1946,7 +2256,7 @@ func TestValueDivide(t *testing.T) {
 		t.Run(fmt.Sprintf("%#v.Divide(%#v)", test.LHS, test.RHS), func(t *testing.T) {
 			got := test.LHS.Divide(test.RHS)
 			if !got.RawEquals(test.Expected) {
-				t.Fatalf("Divide returned %#v; want %#v", got, test.Expected)
+				t.Fatalf("wrong result\ngot:  %#v\nwant: %#v", got, test.Expected)
 			}
 		})
 	}
@@ -2006,22 +2316,22 @@ func TestValueModulo(t *testing.T) {
 		{
 			NumberIntVal(1),
 			UnknownVal(Number),
-			UnknownVal(Number),
+			UnknownVal(Number).RefineNotNull(),
 		},
 		{
 			UnknownVal(Number),
 			UnknownVal(Number),
-			UnknownVal(Number),
+			UnknownVal(Number).RefineNotNull(),
 		},
 		{
 			NumberIntVal(1),
 			DynamicVal,
-			UnknownVal(Number),
+			UnknownVal(Number).RefineNotNull(),
 		},
 		{
 			DynamicVal,
 			DynamicVal,
-			UnknownVal(Number),
+			UnknownVal(Number).RefineNotNull(),
 		},
 		{
 			NumberIntVal(10).Mark(1),
@@ -2086,11 +2396,11 @@ func TestValueAbsolute(t *testing.T) {
 		},
 		{
 			UnknownVal(Number),
-			UnknownVal(Number),
+			UnknownVal(Number).Refine().NotNull().NumberRangeInclusive(Zero, UnknownVal(Number)).NewValue(),
 		},
 		{
 			DynamicVal,
-			UnknownVal(Number),
+			UnknownVal(Number).Refine().NotNull().NumberRangeInclusive(Zero, UnknownVal(Number)).NewValue(),
 		},
 		{
 			NumberIntVal(-1).Mark(1),
@@ -2102,7 +2412,7 @@ func TestValueAbsolute(t *testing.T) {
 		t.Run(fmt.Sprintf("%#v.Absolute()", test.Receiver), func(t *testing.T) {
 			got := test.Receiver.Absolute()
 			if !got.RawEquals(test.Expected) {
-				t.Fatalf("Absolute returned %#v; want %#v", got, test.Expected)
+				t.Fatalf("wrong result\ngot:  %#v\nwant: %#v", got, test.Expected)
 			}
 		})
 	}
@@ -2336,17 +2646,17 @@ func TestValueHasIndex(t *testing.T) {
 		{
 			ListVal([]Value{StringVal("hello")}),
 			UnknownVal(Number),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			ListVal([]Value{StringVal("hello")}),
 			DynamicVal,
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			UnknownVal(List(String)),
 			NumberIntVal(0),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			UnknownVal(List(String)),
@@ -2386,17 +2696,17 @@ func TestValueHasIndex(t *testing.T) {
 		{
 			MapVal(map[string]Value{"greeting": StringVal("hello")}),
 			UnknownVal(String),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			MapVal(map[string]Value{"greeting": StringVal("hello")}),
 			DynamicVal,
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			UnknownVal(Map(String)),
 			StringVal("hello"),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			UnknownVal(Map(String)),
@@ -2441,7 +2751,7 @@ func TestValueHasIndex(t *testing.T) {
 		{
 			TupleVal([]Value{StringVal("hello")}),
 			UnknownVal(Number),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			UnknownVal(Tuple([]Type{String})),
@@ -2451,17 +2761,17 @@ func TestValueHasIndex(t *testing.T) {
 		{
 			TupleVal([]Value{StringVal("hello")}),
 			DynamicVal,
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			DynamicVal,
 			StringVal("hello"),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			DynamicVal,
 			NumberIntVal(0),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			ListVal([]Value{StringVal("hello")}).Mark(1),
@@ -2670,11 +2980,11 @@ func TestValueNot(t *testing.T) {
 		},
 		{
 			UnknownVal(Bool),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			DynamicVal,
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			True.Mark(1),
@@ -2721,32 +3031,52 @@ func TestValueAnd(t *testing.T) {
 		{
 			UnknownVal(Bool),
 			UnknownVal(Bool),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			True,
 			UnknownVal(Bool),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			UnknownVal(Bool),
 			True,
+			UnknownVal(Bool).RefineNotNull(),
+		},
+		{
+			False,
 			UnknownVal(Bool),
+			False,
+		},
+		{
+			UnknownVal(Bool),
+			False,
+			False,
 		},
 		{
 			DynamicVal,
 			DynamicVal,
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			True,
 			DynamicVal,
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			DynamicVal,
 			True,
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
+		},
+		{
+			False,
+			DynamicVal,
+			False,
+		},
+		{
+			DynamicVal,
+			False,
+			False,
 		},
 		{
 			True.Mark(1),
@@ -2804,32 +3134,52 @@ func TestValueOr(t *testing.T) {
 		{
 			UnknownVal(Bool),
 			UnknownVal(Bool),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			True,
 			UnknownVal(Bool),
-			UnknownVal(Bool),
+			True,
 		},
 		{
 			UnknownVal(Bool),
 			True,
+			True,
+		},
+		{
+			False,
 			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
+		},
+		{
+			UnknownVal(Bool),
+			False,
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			DynamicVal,
 			DynamicVal,
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			True,
 			DynamicVal,
-			UnknownVal(Bool),
+			True,
 		},
 		{
 			DynamicVal,
 			True,
-			UnknownVal(Bool),
+			True,
+		},
+		{
+			False,
+			DynamicVal,
+			UnknownVal(Bool).RefineNotNull(),
+		},
+		{
+			DynamicVal,
+			False,
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			True.Mark(1),
@@ -2907,32 +3257,42 @@ func TestLessThan(t *testing.T) {
 		{
 			UnknownVal(Number),
 			UnknownVal(Number),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			NumberIntVal(1),
 			UnknownVal(Number),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			UnknownVal(Number),
 			NumberIntVal(1),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
+		},
+		{
+			UnknownVal(Number).Refine().NumberRangeUpperBound(Zero, true).NewValue(),
+			NumberIntVal(1),
+			True, // Deduction from the refinement
+		},
+		{
+			UnknownVal(Number).Refine().NumberRangeLowerBound(NumberIntVal(2), true).NewValue(),
+			NumberIntVal(1),
+			False, // Deduction from the refinement
 		},
 		{
 			DynamicVal,
 			DynamicVal,
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			NumberIntVal(1),
 			DynamicVal,
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			DynamicVal,
 			NumberIntVal(1),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			NumberIntVal(0).Mark(1),
@@ -3010,32 +3370,42 @@ func TestGreaterThan(t *testing.T) {
 		{
 			UnknownVal(Number),
 			UnknownVal(Number),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			NumberIntVal(1),
 			UnknownVal(Number),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			UnknownVal(Number),
 			NumberIntVal(1),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
+		},
+		{
+			UnknownVal(Number).Refine().NumberRangeLowerBound(NumberIntVal(2), true).NewValue(),
+			NumberIntVal(1),
+			True, // Deduction based on the refinements
+		},
+		{
+			UnknownVal(Number).Refine().NumberRangeUpperBound(NumberIntVal(0), true).NewValue(),
+			NumberIntVal(1),
+			False, // Deduction based on the refinements
 		},
 		{
 			DynamicVal,
 			DynamicVal,
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			NumberIntVal(1),
 			DynamicVal,
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			DynamicVal,
 			NumberIntVal(1),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			NumberIntVal(1).Mark(1),
@@ -3113,32 +3483,32 @@ func TestLessThanOrEqualTo(t *testing.T) {
 		{
 			UnknownVal(Number),
 			UnknownVal(Number),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			NumberIntVal(1),
 			UnknownVal(Number),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			UnknownVal(Number),
 			NumberIntVal(1),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			DynamicVal,
 			DynamicVal,
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			NumberIntVal(1),
 			DynamicVal,
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			DynamicVal,
 			NumberIntVal(1),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			NumberIntVal(0).Mark(1),
@@ -3216,32 +3586,32 @@ func TestGreaterThanOrEqualTo(t *testing.T) {
 		{
 			UnknownVal(Number),
 			UnknownVal(Number),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			NumberIntVal(1),
 			UnknownVal(Number),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			UnknownVal(Number),
 			NumberIntVal(1),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			DynamicVal,
 			DynamicVal,
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			NumberIntVal(1),
 			DynamicVal,
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			DynamicVal,
 			NumberIntVal(1),
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			NumberIntVal(0).Mark(1),
@@ -3298,6 +3668,30 @@ func TestValueGoString(t *testing.T) {
 		{
 			UnknownVal(Tuple([]Type{String, Bool})),
 			`cty.UnknownVal(cty.Tuple([]cty.Type{cty.String, cty.Bool}))`,
+		},
+		{
+			UnknownVal(String).Refine().NotNull().NewValue(),
+			`cty.UnknownVal(cty.String).RefineNotNull()`,
+		},
+		{
+			UnknownVal(String).Refine().NotNull().StringPrefix("a-").NewValue(),
+			`cty.UnknownVal(cty.String).Refine().NotNull().StringPrefixFull("a-").NewValue()`,
+		},
+		{
+			UnknownVal(String).Refine().NotNull().StringPrefix("foo").NewValue(), // The last character of the prefix gets discarded in case the next character is a combining diacritic
+			`cty.UnknownVal(cty.String).Refine().NotNull().StringPrefixFull("fo").NewValue()`,
+		},
+		{
+			UnknownVal(Bool).Refine().NotNull().NewValue(),
+			`cty.UnknownVal(cty.Bool).RefineNotNull()`,
+		},
+		{
+			UnknownVal(Number).Refine().NumberRangeInclusive(Zero, UnknownVal(Number)).NewValue(),
+			`cty.UnknownVal(cty.Number).Refine().NumberLowerBound(cty.NumberIntVal(0), true).NewValue()`,
+		},
+		{
+			UnknownVal(Number).Refine().NumberRangeInclusive(Zero, NumberIntVal(1)).NewValue(),
+			`cty.UnknownVal(cty.Number).Refine().NumberLowerBound(cty.NumberIntVal(0), true).NumberUpperBound(cty.NumberIntVal(1), true).NewValue()`,
 		},
 
 		{

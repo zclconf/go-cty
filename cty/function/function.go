@@ -39,6 +39,19 @@ type Spec struct {
 	// depending on its arguments.
 	Type TypeFunc
 
+	// RefineResult is an optional callback for describing additional
+	// refinements for the result value beyond what can be described using
+	// a type constraint.
+	//
+	// A refinement callback should always return the same builder it was
+	// given, typically after modifying it using the methods of
+	// [cty.RefinementBuilder].
+	//
+	// Any refinements described by this callback must hold for the entire
+	// range of results from the function. For refinements that only apply
+	// to certain results, use direct refinement within [Impl] instead.
+	RefineResult func(*cty.RefinementBuilder) *cty.RefinementBuilder
+
 	// Impl is the ImplFunc that implements the function's behavior.
 	//
 	// Functions are expected to behave as pure functions, and not create
@@ -231,6 +244,22 @@ func (f Function) Call(args []cty.Value) (val cty.Value, err error) {
 	expectedType, err := f.ReturnTypeForValues(args)
 	if err != nil {
 		return cty.NilVal, err
+	}
+
+	if refineResult := f.spec.RefineResult; refineResult != nil {
+		// If this function has a refinement callback then we'll refine
+		// our result value in the same way regardless of how we return.
+		// It's the function author's responsibility to ensure that the
+		// refinements they specify are valid for the full range of possible
+		// return values from the function. If not, this will panic when
+		// detecting an inconsistency.
+		defer func() {
+			if val != cty.NilVal {
+				if val.IsKnown() || val.Type() != cty.DynamicPseudoType {
+					val = val.RefineWith(refineResult)
+				}
+			}
+		}()
 	}
 
 	// Type checking already dealt with most situations relating to our

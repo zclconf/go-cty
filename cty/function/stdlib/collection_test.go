@@ -57,22 +57,22 @@ func TestHasIndex(t *testing.T) {
 		{
 			cty.ListValEmpty(cty.Number),
 			cty.UnknownVal(cty.Number),
-			cty.UnknownVal(cty.Bool),
+			cty.UnknownVal(cty.Bool).RefineNotNull(),
 		},
 		{
 			cty.UnknownVal(cty.List(cty.Bool)),
 			cty.UnknownVal(cty.Number),
-			cty.UnknownVal(cty.Bool),
+			cty.UnknownVal(cty.Bool).RefineNotNull(),
 		},
 		{
 			cty.ListValEmpty(cty.Number),
 			cty.DynamicVal,
-			cty.UnknownVal(cty.Bool),
+			cty.UnknownVal(cty.Bool).RefineNotNull(),
 		},
 		{
 			cty.DynamicVal,
 			cty.DynamicVal,
-			cty.UnknownVal(cty.Bool),
+			cty.UnknownVal(cty.Bool).RefineNotNull(),
 		},
 	}
 
@@ -107,7 +107,7 @@ func TestChunklist(t *testing.T) {
 		{
 			cty.UnknownVal(cty.List(cty.String)),
 			cty.NumberIntVal(2),
-			cty.UnknownVal(cty.List(cty.List(cty.String))),
+			cty.UnknownVal(cty.List(cty.List(cty.String))).RefineNotNull(),
 			``,
 		},
 		{
@@ -359,7 +359,7 @@ func TestContains(t *testing.T) {
 		{
 			listWithUnknown,
 			cty.StringVal("orange"),
-			cty.UnknownVal(cty.Bool),
+			cty.UnknownVal(cty.Bool).RefineNotNull(),
 			false,
 		},
 		{
@@ -404,7 +404,7 @@ func TestContains(t *testing.T) {
 				cty.StringVal("fox"),
 			}),
 			cty.StringVal("quick"),
-			cty.UnknownVal(cty.Bool),
+			cty.UnknownVal(cty.Bool).RefineNotNull(),
 			false,
 		},
 		{ // set val
@@ -424,7 +424,7 @@ func TestContains(t *testing.T) {
 				cty.StringVal("fox"),
 			}),
 			cty.StringVal("quick"),
-			cty.UnknownVal(cty.Bool),
+			cty.UnknownVal(cty.Bool).RefineNotNull(),
 			false,
 		},
 		{ // nested unknown
@@ -436,7 +436,7 @@ func TestContains(t *testing.T) {
 			cty.ObjectVal(map[string]cty.Value{
 				"a": cty.StringVal("b"),
 			}),
-			cty.UnknownVal(cty.Bool),
+			cty.UnknownVal(cty.Bool).RefineNotNull(),
 			false,
 		},
 		{ // tuple val
@@ -557,7 +557,7 @@ func TestMerge(t *testing.T) {
 					"c": cty.StringVal("d"),
 				}),
 			},
-			cty.UnknownVal(cty.Map(cty.String)),
+			cty.UnknownVal(cty.Map(cty.String)).RefineNotNull(),
 			false,
 		},
 		{ // handle dynamic unknown
@@ -947,7 +947,9 @@ func TestLength(t *testing.T) {
 		},
 		{
 			cty.SetVal([]cty.Value{cty.True, cty.UnknownVal(cty.Bool)}),
-			cty.UnknownVal(cty.Number), // Don't know if the unknown in the input represents cty.True or cty.False
+			// Don't know if the unknown in the input represents cty.True or cty.False,
+			// so it may or may not coalesce with the one known value.
+			cty.UnknownVal(cty.Number).Refine().NotNull().NumberRangeInclusive(cty.NumberIntVal(1), cty.NumberIntVal(2)).NewValue(),
 		},
 		{
 			cty.SetVal([]cty.Value{cty.UnknownVal(cty.Bool)}),
@@ -971,11 +973,15 @@ func TestLength(t *testing.T) {
 		},
 		{
 			cty.UnknownVal(cty.List(cty.Bool)),
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).Refine().NotNull().NumberRangeInclusive(cty.Zero, cty.NumberIntVal(int64(math.MaxInt))).NewValue(),
 		},
 		{
 			cty.DynamicVal,
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).Refine().NotNull().NumberRangeInclusive(cty.Zero, cty.NumberIntVal(int64(math.MaxInt))).NewValue(),
+		},
+		{
+			cty.UnknownVal(cty.List(cty.Bool)).Refine().CollectionLengthUpperBound(2).NewValue(),
+			cty.UnknownVal(cty.Number).Refine().NotNull().NumberRangeInclusive(cty.Zero, cty.NumberIntVal(2)).NewValue(),
 		},
 		{ // Marked collections return a marked length
 			cty.ListVal([]cty.Value{
@@ -1389,7 +1395,7 @@ func TestValues(t *testing.T) {
 		},
 		{
 			cty.UnknownVal(cty.Map(cty.String)),
-			cty.UnknownVal(cty.List(cty.String)),
+			cty.UnknownVal(cty.List(cty.String)).RefineNotNull(),
 			``,
 		},
 		{
@@ -1434,12 +1440,12 @@ func TestValues(t *testing.T) {
 		},
 		{
 			cty.UnknownVal(cty.EmptyObject),
-			cty.UnknownVal(cty.EmptyTuple),
+			cty.UnknownVal(cty.EmptyTuple).RefineNotNull(),
 			``,
 		},
 		{
 			cty.UnknownVal(cty.Object(map[string]cty.Type{"a": cty.String})),
-			cty.UnknownVal(cty.Tuple([]cty.Type{cty.String})),
+			cty.UnknownVal(cty.Tuple([]cty.Type{cty.String})).RefineNotNull(),
 			``,
 		},
 		{ // The object itself is not marked, just an inner attribute value.
@@ -1515,19 +1521,19 @@ func TestZipMap(t *testing.T) {
 		{
 			cty.UnknownVal(cty.List(cty.String)),
 			cty.UnknownVal(cty.List(cty.String)),
-			cty.UnknownVal(cty.Map(cty.String)),
+			cty.UnknownVal(cty.Map(cty.String)).RefineNotNull(),
 			``,
 		},
 		{
 			cty.UnknownVal(cty.List(cty.String)),
 			cty.ListValEmpty(cty.String),
-			cty.UnknownVal(cty.Map(cty.String)),
+			cty.UnknownVal(cty.Map(cty.String)).RefineNotNull(),
 			``,
 		},
 		{
 			cty.ListValEmpty(cty.String),
 			cty.UnknownVal(cty.List(cty.String)),
-			cty.UnknownVal(cty.Map(cty.String)),
+			cty.UnknownVal(cty.Map(cty.String)).RefineNotNull(),
 			``,
 		},
 		{
@@ -1626,7 +1632,7 @@ func TestZipMap(t *testing.T) {
 		{
 			cty.ListValEmpty(cty.String),
 			cty.UnknownVal(cty.EmptyTuple),
-			cty.UnknownVal(cty.EmptyObject),
+			cty.UnknownVal(cty.EmptyObject).RefineNotNull(),
 			``,
 		},
 		{
@@ -2489,7 +2495,101 @@ func TestSetproduct(t *testing.T) {
 				cty.SetVal([]cty.Value{cty.StringVal("x"), cty.UnknownVal(cty.String)}).Mark("a"),
 				cty.SetVal([]cty.Value{cty.True, cty.False}).Mark("b"),
 			},
-			cty.UnknownVal(cty.Set(cty.Tuple([]cty.Type{cty.String, cty.Bool}))).WithMarks(cty.NewValueMarks("a", "b")),
+			cty.UnknownVal(cty.Set(cty.Tuple([]cty.Type{cty.String, cty.Bool}))).RefineNotNull().WithMarks(cty.NewValueMarks("a", "b")),
+			``,
+		},
+
+		// If the inputs have unknown lengths but have length refinements then
+		// we can potentially refine our unknown result too.
+		{
+			[]cty.Value{
+				cty.UnknownVal(cty.Set(cty.String)).Refine().CollectionLengthUpperBound(2).NewValue(),
+				cty.UnknownVal(cty.Set(cty.Number)).Refine().CollectionLengthUpperBound(3).NewValue(),
+			},
+			cty.UnknownVal(cty.Set(cty.Tuple([]cty.Type{cty.String, cty.Number}))).Refine().
+				NotNull().
+				CollectionLengthLowerBound(1).
+				CollectionLengthUpperBound(6).
+				NewValue(),
+			``,
+		},
+		{
+			[]cty.Value{
+				cty.UnknownVal(cty.Set(cty.String)).Refine().CollectionLengthUpperBound(2).NewValue(),
+				cty.SetValEmpty(cty.Number),
+			},
+			cty.SetValEmpty(cty.Tuple([]cty.Type{cty.String, cty.Number})), // deduced from refinements
+			``,
+		},
+		{
+			// If we have any input with a very large maximum element count then we'll
+			// just leave the result length unrefined to reduce the risk of integer overflow.
+			[]cty.Value{
+				cty.UnknownVal(cty.Set(cty.String)).Refine().CollectionLengthUpperBound(2).NewValue(),
+				cty.UnknownVal(cty.Set(cty.Number)).Refine().CollectionLengthUpperBound(4096).NewValue(),
+			},
+			cty.UnknownVal(cty.Set(cty.Tuple([]cty.Type{cty.String, cty.Number}))).RefineNotNull(),
+			``,
+		},
+		{
+			[]cty.Value{
+				cty.UnknownVal(cty.List(cty.String)).Refine().CollectionLengthUpperBound(2).NewValue(),
+				cty.UnknownVal(cty.List(cty.Number)).Refine().CollectionLengthUpperBound(3).NewValue(),
+			},
+			// NOTE: When the result is a list rather than a set there is no
+			// coalescing and so we could potentially also calculate a more
+			// refined lower bound on the collection length, but since
+			// this function is primarily for sets for now we just accept a
+			// set-oriented refinement. If we find that it would be productive
+			// to further constrain the range of a list result then we can
+			// make this more precise later.
+			cty.UnknownVal(cty.List(cty.Tuple([]cty.Type{cty.String, cty.Number}))).Refine().
+				NotNull().
+				CollectionLengthLowerBound(1).
+				CollectionLengthUpperBound(6).
+				NewValue(),
+			``,
+		},
+		{
+			[]cty.Value{
+				cty.UnknownVal(cty.List(cty.String)).Refine().CollectionLengthUpperBound(2).NewValue(),
+				cty.ListValEmpty(cty.Number),
+			},
+			cty.ListValEmpty(cty.Tuple([]cty.Type{cty.String, cty.Number})), // deduced from refinements
+			``,
+		},
+		{
+			[]cty.Value{
+				cty.UnknownVal(cty.Tuple([]cty.Type{cty.String, cty.String})),
+				cty.UnknownVal(cty.Tuple([]cty.Type{cty.Number, cty.Number, cty.Number})),
+			},
+			// NOTE: When the result is a list rather than a set there is no
+			// coalescing and so we could potentially also calculate a more
+			// refined lower bound on the collection length, but since
+			// this function is primarily for sets for now we just accept a
+			// set-oriented refinement. If we find that it would be productive
+			// to further constrain the range of a list result then we can
+			// make this more precise later.
+			cty.UnknownVal(cty.List(cty.Tuple([]cty.Type{cty.String, cty.Number}))).Refine().
+				NotNull().
+				CollectionLengthLowerBound(1).
+				CollectionLengthUpperBound(6).
+				NewValue(),
+			``,
+		},
+		{
+			[]cty.Value{
+				cty.UnknownVal(cty.Tuple([]cty.Type{cty.String, cty.String})),
+				cty.EmptyTupleVal,
+			},
+			// NOTE: When the result is a list rather than a set there is no
+			// coalescing and so we could potentially also calculate a more
+			// refined lower bound on the collection length, but since
+			// this function is primarily for sets for now we just accept a
+			// set-oriented refinement. If we find that it would be productive
+			// to further constrain the range of a list result then we can
+			// make this more precise later.
+			cty.ListValEmpty(cty.Tuple([]cty.Type{cty.String, cty.DynamicPseudoType})),
 			``,
 		},
 	}
@@ -2539,7 +2639,7 @@ func TestReverseList(t *testing.T) {
 		},
 		{
 			cty.UnknownVal(cty.List(cty.String)),
-			cty.UnknownVal(cty.List(cty.String)),
+			cty.UnknownVal(cty.List(cty.String)).RefineNotNull(),
 			``,
 		},
 		{ // marks on list elements

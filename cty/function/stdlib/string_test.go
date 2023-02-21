@@ -1,6 +1,7 @@
 package stdlib
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/zclconf/go-cty/cty"
@@ -49,11 +50,11 @@ func TestUpper(t *testing.T) {
 		},
 		{
 			cty.UnknownVal(cty.String),
-			cty.UnknownVal(cty.String),
+			cty.UnknownVal(cty.String).RefineNotNull(),
 		},
 		{
 			cty.DynamicVal,
-			cty.UnknownVal(cty.String),
+			cty.UnknownVal(cty.String).RefineNotNull(),
 		},
 		{
 			cty.StringVal("hello").Mark(1),
@@ -103,11 +104,11 @@ func TestLower(t *testing.T) {
 		},
 		{
 			cty.UnknownVal(cty.String),
-			cty.UnknownVal(cty.String),
+			cty.UnknownVal(cty.String).RefineNotNull(),
 		},
 		{
 			cty.DynamicVal,
-			cty.UnknownVal(cty.String),
+			cty.UnknownVal(cty.String).RefineNotNull(),
 		},
 	}
 
@@ -174,11 +175,11 @@ func TestReverse(t *testing.T) {
 		},
 		{
 			cty.UnknownVal(cty.String),
-			cty.UnknownVal(cty.String),
+			cty.UnknownVal(cty.String).RefineNotNull(),
 		},
 		{
 			cty.DynamicVal,
-			cty.UnknownVal(cty.String),
+			cty.UnknownVal(cty.String).RefineNotNull(),
 		},
 	}
 
@@ -245,11 +246,15 @@ func TestStrlen(t *testing.T) {
 		},
 		{
 			cty.UnknownVal(cty.String),
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).Refine().NotNull().NumberRangeLowerBound(cty.Zero, true).NewValue(),
+		},
+		{
+			cty.UnknownVal(cty.String).Refine().StringPrefix("wé́́é́́é́́-").NewValue(),
+			cty.UnknownVal(cty.Number).Refine().NotNull().NumberRangeLowerBound(cty.NumberIntVal(5), true).NewValue(),
 		},
 		{
 			cty.DynamicVal,
-			cty.UnknownVal(cty.Number),
+			cty.UnknownVal(cty.Number).Refine().NotNull().NumberRangeLowerBound(cty.Zero, true).NewValue(),
 		},
 	}
 
@@ -469,6 +474,85 @@ func TestJoin(t *testing.T) {
 
 			if !got.RawEquals(test.Want) {
 				t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, test.Want)
+			}
+		})
+	}
+}
+
+func TestSort(t *testing.T) {
+	tests := []struct {
+		Input   cty.Value
+		Want    cty.Value
+		WantErr string
+	}{
+		{
+			cty.ListValEmpty(cty.String),
+			cty.ListValEmpty(cty.String),
+			``,
+		},
+		{
+			cty.ListVal([]cty.Value{cty.StringVal("a")}),
+			cty.ListVal([]cty.Value{cty.StringVal("a")}),
+			``,
+		},
+		{
+			cty.ListVal([]cty.Value{cty.StringVal("b"), cty.StringVal("a")}),
+			cty.ListVal([]cty.Value{cty.StringVal("a"), cty.StringVal("b")}),
+			``,
+		},
+		{
+			cty.ListVal([]cty.Value{cty.StringVal("b"), cty.StringVal("a"), cty.StringVal("c")}),
+			cty.ListVal([]cty.Value{cty.StringVal("a"), cty.StringVal("b"), cty.StringVal("c")}),
+			``,
+		},
+		{
+			cty.UnknownVal(cty.List(cty.String)),
+			cty.UnknownVal(cty.List(cty.String)).RefineNotNull(),
+			``,
+		},
+		{
+			// If the list contains any unknown values then we can still
+			// preserve the length of the list by generating a known list
+			// with unknown elements, because sort can never change the length.
+			cty.ListVal([]cty.Value{cty.StringVal("b"), cty.UnknownVal(cty.String)}),
+			cty.ListVal([]cty.Value{cty.UnknownVal(cty.String), cty.UnknownVal(cty.String)}),
+			``,
+		},
+		{
+			// For a completely unknown list we can still preserve any
+			// refinements it had for its length, because sorting can never
+			// change the length.
+			cty.UnknownVal(cty.List(cty.String)).Refine().
+				CollectionLengthLowerBound(1).
+				CollectionLengthUpperBound(2).
+				NewValue(),
+			cty.UnknownVal(cty.List(cty.String)).Refine().
+				NotNull().
+				CollectionLengthLowerBound(1).
+				CollectionLengthUpperBound(2).
+				NewValue(),
+			``,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("Sort(%#v)", test.Input), func(t *testing.T) {
+			got, err := Sort(test.Input)
+
+			if test.WantErr != "" {
+				errStr := fmt.Sprintf("%s", err)
+				if errStr != test.WantErr {
+					t.Errorf("wrong error\ngot:  %s\nwant: %s", errStr, test.WantErr)
+				}
+				return
+			}
+
+			if err != nil {
+				t.Fatalf("unexpected error: %s", err.Error())
+			}
+
+			if !got.RawEquals(test.Want) {
+				t.Errorf("wrong result\ninput: %#v\ngot:   %#v\nwant:  %#v", test.Input, got, test.Want)
 			}
 		})
 	}
