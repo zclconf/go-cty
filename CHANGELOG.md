@@ -1,4 +1,4 @@
-# 1.13.0 (Unreleased)
+# 1.13.0 (February 23, 2023)
 
 ## Upgrade Notes
 
