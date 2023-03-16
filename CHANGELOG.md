@@ -1,3 +1,11 @@
+# 1.13.1 (Unreleased)
+
+* `function`: If a function parameter that doesn't declare `AllowDynamicType: true` recieves a `cty.DynamicVal`, the function system would previously just skip calling the function's `Type` callback and treat the result type as unknown. However, the `Call` method was then still calling a function's `Impl` callback anyway, which violated the usual contract that `Type` acts as a guard for `Impl` so `Impl` doesn't have to repeat type-checking already done in `Type`: it's only valid to call `Impl` if `Type` was previosly called _and_ it succeeded.
+
+    The function system will now skip calling `Impl` if it skips calling `Type`, immediately returning `cty.DynamicVal` in that case. Individual functions can opt out of this behavior by marking one or more of their parameters as `AllowDynamicType: true` and then handling that situation manually inside the `Type` and `Impl` callbacks.
+
+    As a result of this problem, some of the `function/stdlib` functions were not correctly handling `cty.DynamicVal` arguments after being extended to support refinements in the v1.13.0 release, causing unexpected errors or panics when calling them. Those functions are fixed indirectly by this change, since their callbacks will no longer run at all in those cases, as was true before they were extended to support refinements.
+
 # 1.13.0 (February 23, 2023)
 
 ## Upgrade Notes

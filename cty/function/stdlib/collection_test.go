@@ -2498,6 +2498,14 @@ func TestSetproduct(t *testing.T) {
 			cty.UnknownVal(cty.Set(cty.Tuple([]cty.Type{cty.String, cty.Bool}))).RefineNotNull().WithMarks(cty.NewValueMarks("a", "b")),
 			``,
 		},
+		{
+			[]cty.Value{
+				cty.SetVal([]cty.Value{cty.True}),
+				cty.DynamicVal,
+			},
+			cty.DynamicVal,
+			``,
+		},
 
 		// If the inputs have unknown lengths but have length refinements then
 		// we can potentially refine our unknown result too.
