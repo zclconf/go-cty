@@ -1,3 +1,6 @@
+# 1.13.2 (Unreleased)
+
+
 # 1.13.1 (March 16, 2023)
 
 * `function`: If a function parameter that doesn't declare `AllowDynamicType: true` recieves a `cty.DynamicVal`, the function system would previously just skip calling the function's `Type` callback and treat the result type as unknown. However, the `Call` method was then still calling a function's `Impl` callback anyway, which violated the usual contract that `Type` acts as a guard for `Impl` so `Impl` doesn't have to repeat type-checking already done in `Type`: it's only valid to call `Impl` if `Type` was previosly called _and_ it succeeded.
