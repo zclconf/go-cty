@@ -96,6 +96,70 @@ func TestPathApply(t *testing.T) {
 			cty.NilVal,
 			`at step 0: cannot access attributes on a null value`,
 		},
+		{
+			cty.ListVal([]cty.Value{
+				cty.ListVal([]cty.Value{cty.StringVal("hello")}).Mark(2),
+			}).Mark(1),
+			(cty.Path)(nil).Index(cty.NumberIntVal(0)).Index(cty.NumberIntVal(0)),
+			cty.StringVal("hello").Mark(1).Mark(2),
+			``,
+		},
+		{
+			cty.TupleVal([]cty.Value{
+				cty.ListVal([]cty.Value{cty.StringVal("hello")}).Mark(2),
+			}).Mark(1),
+			(cty.Path)(nil).Index(cty.NumberIntVal(0)).Index(cty.NumberIntVal(0)),
+			cty.StringVal("hello").Mark(1).Mark(2),
+			``,
+		},
+		{
+			cty.MapVal(map[string]cty.Value{
+				"hello": cty.StringVal("there"),
+			}).Mark(1),
+			(cty.Path)(nil).Index(cty.StringVal("hello")),
+			cty.StringVal("there").Mark(1),
+			``,
+		},
+		{
+			cty.ObjectVal(map[string]cty.Value{
+				"hello": cty.StringVal("there"),
+			}).Mark(1),
+			cty.GetAttrPath("hello"),
+			cty.StringVal("there").Mark(1),
+			``,
+		},
+		{
+			cty.ListVal([]cty.Value{
+				cty.StringVal("hello").Mark(1),
+			}),
+			(cty.Path)(nil).Index(cty.NumberIntVal(0)),
+			cty.StringVal("hello").Mark(1),
+			``,
+		},
+		{
+			cty.TupleVal([]cty.Value{
+				cty.StringVal("hello").Mark(1),
+			}),
+			(cty.Path)(nil).Index(cty.NumberIntVal(0)),
+			cty.StringVal("hello").Mark(1),
+			``,
+		},
+		{
+			cty.MapVal(map[string]cty.Value{
+				"hello": cty.StringVal("there").Mark(1),
+			}),
+			(cty.Path)(nil).Index(cty.StringVal("hello")),
+			cty.StringVal("there").Mark(1),
+			``,
+		},
+		{
+			cty.ObjectVal(map[string]cty.Value{
+				"hello": cty.StringVal("there").Mark(1),
+			}),
+			cty.GetAttrPath("hello"),
+			cty.StringVal("there").Mark(1),
+			``,
+		},
 	}
 
 	for _, test := range tests {
