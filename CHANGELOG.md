@@ -1,5 +1,6 @@
-# 1.13.2 (Unreleased)
+# 1.13.2 (May 22, 2023)
 
+* `cty`: `IndexStep.Apply` will no longer panic if given a marked collection to traverse through. ([#160](https://github.com/zclconf/go-cty/pull/160)).
 
 # 1.13.1 (March 16, 2023)
 
