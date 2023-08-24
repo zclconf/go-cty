@@ -206,9 +206,9 @@ func TestFormatDate(t *testing.T) {
 		},
 		{
 			cty.StringVal(`2-12-02T00:00:00Z`),
-			// Go parser seems to be trying to parse "2-12" as a year here,
-			// producing a confusing error message.
-			`not a valid RFC3339 timestamp: cannot use "-02T00:00:00Z" as year`,
+			// Go parser seems to be trying to parse the whole thing as a year
+			// here, producing a confusing error message.
+			`not a valid RFC3339 timestamp: cannot use "2-12-02T00:00:00Z" as year`,
 		},
 		{
 			cty.StringVal(`2000-01-01T1:12:34Z`),
