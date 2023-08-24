@@ -8,6 +8,7 @@ import (
 
 	"github.com/vmihailenco/msgpack/v5"
 	"github.com/zclconf/go-cty/cty"
+	"github.com/zclconf/go-cty/cty/ctystrings"
 )
 
 type unknownType struct{}
@@ -85,6 +86,16 @@ func marshalUnknownValue(rng cty.ValueRange, path cty.Path, enc *msgpack.Encoder
 		}
 	case rng.TypeConstraint() == cty.String:
 		if prefix := rng.StringPrefix(); prefix != "" {
+			// To ensure the total size of the refinements blob does not exceed
+			// the limit set by our decoder, truncate the prefix string.
+			// We could allow up to 1018 bytes here if we assume that this
+			// refinement will only ever be combined with NotNull(), but there
+			// is no need for such long prefix refinements at the moment.
+			maxPrefixLength := 256
+			if len(prefix) > maxPrefixLength {
+				prefix = prefix[:maxPrefixLength-1]
+				prefix = ctystrings.SafeKnownPrefix(prefix)
+			}
 			mapLen++
 			refnEnc.EncodeInt(int64(unknownValStringPrefix))
 			refnEnc.EncodeString(prefix)

@@ -2,6 +2,7 @@ package msgpack
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/zclconf/go-cty/cty"
@@ -50,7 +51,6 @@ func TestRoundTrip(t *testing.T) {
 			cty.UnknownVal(cty.String).Refine().NotNull().StringPrefix("foo-").NewValue(),
 			cty.String,
 		},
-
 		{
 			cty.True,
 			cty.Bool,
@@ -346,6 +346,61 @@ func TestRoundTrip(t *testing.T) {
 					"value did not round-trip\ninput:  %#v\nresult: %#v",
 					test.Value, got,
 				)
+			}
+		})
+	}
+}
+
+// Unknown values with very long string prefix refinements do not round-trip
+// losslessly. If the prefix is longer than 256 bytes it will be truncated to
+// a maximum of 256 bytes.
+func TestRoundTrip_truncatesStringPrefixRefinement(t *testing.T) {
+	tests := []struct {
+		Value          cty.Value
+		Type           cty.Type
+		RoundTripValue cty.Value
+	}{
+		{
+			cty.UnknownVal(cty.String).Refine().StringPrefix(strings.Repeat("a", 1024)).NewValue(),
+			cty.String,
+			cty.UnknownVal(cty.String).Refine().StringPrefix(strings.Repeat("a", 255)).NewValue(),
+		},
+		{
+			cty.UnknownVal(cty.String).Refine().NotNull().StringPrefix(strings.Repeat("b", 1024)).NewValue(),
+			cty.String,
+			cty.UnknownVal(cty.String).Refine().NotNull().StringPrefix(strings.Repeat("b", 255)).NewValue(),
+		},
+		{
+			cty.UnknownVal(cty.String).Refine().StringPrefix(strings.Repeat("c", 255) + "-").NewValue(),
+			cty.String,
+			cty.UnknownVal(cty.String).Refine().StringPrefix(strings.Repeat("c", 255) + "-").NewValue(),
+		},
+		{
+			cty.UnknownVal(cty.String).Refine().StringPrefix(strings.Repeat("d", 255) + "🤷🤷").NewValue(),
+
+			cty.String,
+			cty.UnknownVal(cty.String).Refine().StringPrefix(strings.Repeat("d", 255)).NewValue(),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%#v as %#v", test.Value, test.Type), func(t *testing.T) {
+			b, err := Marshal(test.Value, test.Type)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			t.Logf("encoded as %x", b)
+
+			got, err := Unmarshal(b, test.Type)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if !got.RawEquals(test.RoundTripValue) {
+				t.Errorf(
+					"unexpected value after round-trip\ninput:  %#v\nexpect: %#v\nresult: %#v",
+					test.Value, test.RoundTripValue, got)
 			}
 		})
 	}
