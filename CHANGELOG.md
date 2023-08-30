@@ -1,6 +1,8 @@
-# 1.14.0 (Unreleased)
+# 1.14.0 (August 30, 2023)
 
 This release updates the supported version of Unicode from Unicode 13 to Unicode 15. This is a backwards-compatible change that means that cty supports normalization and segmentation of strings containing new Unicode characters. The algorithms for normalization and segmentation themselves are unchanged.
+
+If you use `cty` in an application that cares about consistent Unicode support, you should upgrade to Go 1.21 at the same time as updating to `cty` v1.14, because that will then also update the Unicode tables embedded in the Go standard library (used for case folding, etc).
 
 * `cty`: The `cty.String` type will now normalize incoming string values using the Unicode 15 normalization rules.
 * `function/stdlib`: The various string functions which split strings into individual characters as part of their work will now use the Unicode 15 version of the text segmentation algorithm to do so.
