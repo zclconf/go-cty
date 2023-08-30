@@ -1,5 +1,9 @@
-# 1.13.4 (Unreleased)
+# 1.14.0 (Unreleased)
 
+This release updates the supported version of Unicode from Unicode 13 to Unicode 15. This is a backwards-compatible change that means that cty supports normalization and segmentation of strings containing new Unicode characters. The algorithms for normalization and segmentation themselves are unchanged.
+
+* `cty`: The `cty.String` type will now normalize incoming string values using the Unicode 15 normalization rules.
+* `function/stdlib`: The various string functions which split strings into individual characters as part of their work will now use the Unicode 15 version of the text segmentation algorithm to do so.
 
 # 1.13.3 (August 24, 2023)
 
