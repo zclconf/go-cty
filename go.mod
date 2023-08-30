@@ -1,7 +1,7 @@
 module github.com/zclconf/go-cty
 
 require (
-	github.com/apparentlymart/go-textseg/v13 v13.0.0
+	github.com/apparentlymart/go-textseg/v15 v15.0.0
 	github.com/google/go-cmp v0.3.1
 	github.com/vmihailenco/msgpack/v5 v5.3.5
 	golang.org/x/text v0.3.8
