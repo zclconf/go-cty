@@ -65,6 +65,10 @@ func TestWithoutOptionalAttributesDeep(t *testing.T) {
 			DynamicPseudoType,
 		},
 		{
+			NilType,
+			NilType,
+		},
+		{
 			List(DynamicPseudoType),
 			List(DynamicPseudoType),
 		},

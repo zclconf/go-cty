@@ -120,7 +120,7 @@ func (t Type) HasDynamicTypes() bool {
 // object types. This operation is applied recursively.
 func (t Type) WithoutOptionalAttributesDeep() Type {
 	switch {
-	case t == DynamicPseudoType, t.IsPrimitiveType(), t.IsCapsuleType():
+	case t == DynamicPseudoType, t == NilType, t.IsPrimitiveType(), t.IsCapsuleType():
 		return t
 	case t.IsMapType():
 		return Map(t.ElementType().WithoutOptionalAttributesDeep())
