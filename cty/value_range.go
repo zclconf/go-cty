@@ -21,6 +21,10 @@ import (
 // offered by ranges and so can share code between both known and unknown
 // values.
 func (v Value) Range() ValueRange {
+	// The value range makes no use of marks. Remove them now to simplify the
+	// logic below.
+	v, _ = v.Unmark()
+
 	// For an unknown value we just use its own refinements.
 	if unk, isUnk := v.v.(*unknownType); isUnk {
 		refinement := unk.refinement
