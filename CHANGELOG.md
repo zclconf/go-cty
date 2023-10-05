@@ -1,5 +1,6 @@
 # 1.14.1 (Unreleased)
 
+* `cty`: It's now valid to use the `Refine` method on `cty.DynamicVal`, although all refinements will be silently discarded. This replaces the original behavior of panicking when trying to refine `cty.DynamicVal`.
 
 # 1.14.0 (August 30, 2023)
 

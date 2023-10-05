@@ -100,11 +100,11 @@ The most notable restriction on refinements is that the available refinements
 vary depending on the type constraint of the value being refined.
 
 The least flexible case is `cty.DynamicVal` -- an unknown value of an unknown
-type -- which is the one value that cannot be refined at all and will cause
-a panic if you try. This is a pragmatic compromise for backward compatibility:
-existing callers use patterns like `val == cty.DynamicVal` to test for this
-specific special value, and any refinements of that value would make it no
-longer equal.
+type -- which is the one value that cannot be refined at all and will silently
+ignore any attempts to do so, leaving the result still totally unrefined. This
+is a pragmatic compromise for backward compatibility: existing callers use
+patterns like `val == cty.DynamicVal` to test for this specific special value,
+and any refinements of that value would make it no longer equal.
 
 Unknown values of built-in exact types, and also unknown values whose type
 _kind_ is constrained even if the element/attribute types are not, can at
