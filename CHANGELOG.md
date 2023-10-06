@@ -1,6 +1,9 @@
-# 1.14.1 (Unreleased)
+# 1.14.1 (October 5, 2023)
 
 * `cty`: It's now valid to use the `Refine` method on `cty.DynamicVal`, although all refinements will be silently discarded. This replaces the original behavior of panicking when trying to refine `cty.DynamicVal`.
+* `cty`: `Value.Range` will now return a clearer panic message if called on a marked value. The "value range" concept is only applicable to unmarked values because not all of the `ValueRange` functions are able to propagate marks into their return values, due to returning Go primitive types instead of new `cty.Value` results.
+
+    Callers that use marks must, as usual, take care to unmark them before exporting values into "normal" Go types, and then explicitly re-apply the marks to their result as appropriate. Applications that make no use of value marks, and library callers that exclude marked values from what they support, can safely ignore this requirement.
 
 # 1.14.0 (August 30, 2023)
 
