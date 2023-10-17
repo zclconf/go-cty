@@ -1,5 +1,7 @@
 package cty
 
+import "fmt"
+
 // Type represents value types within the type system.
 //
 // This is a closed interface type, meaning that only the concrete
@@ -120,6 +122,8 @@ func (t Type) HasDynamicTypes() bool {
 // object types. This operation is applied recursively.
 func (t Type) WithoutOptionalAttributesDeep() Type {
 	switch {
+	case t == NilType:
+		return t
 	case t == DynamicPseudoType, t.IsPrimitiveType(), t.IsCapsuleType():
 		return t
 	case t.IsMapType():
@@ -149,7 +153,7 @@ func (t Type) WithoutOptionalAttributesDeep() Type {
 		return Object(attrTypes)
 	default:
 		// Should never happen, since above should be exhaustive
-		panic("WithoutOptionalAttributesDeep does not support the given type")
+		panic(fmt.Sprintf("WithoutOptionalAttributesDeep does not support the given type: %#v", t))
 	}
 }
 

@@ -61,6 +61,10 @@ func TestWithoutOptionalAttributesDeep(t *testing.T) {
 		expected Type
 	}{
 		{
+			NilType,
+			NilType,
+		},
+		{
 			DynamicPseudoType,
 			DynamicPseudoType,
 		},
