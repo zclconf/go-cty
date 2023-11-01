@@ -170,6 +170,12 @@ func (f Function) returnTypeForValues(args []cty.Value) (ty cty.Type, dynTypedAr
 			return cty.Type{}, false, NewArgErrorf(i, "argument must not be null")
 		}
 
+		if val.IsNull() && val.Type() == cty.DynamicPseudoType {
+			// this is a null literal, which is a known value and valid for any
+			// parameter type
+			continue
+		}
+
 		// AllowUnknown is ignored for type-checking, since we expect to be
 		// able to type check with unknown values. We *do* still need to deal
 		// with DynamicPseudoType here though, since the Type function might
@@ -203,6 +209,12 @@ func (f Function) returnTypeForValues(args []cty.Value) (ty cty.Type, dynTypedAr
 
 			if val.IsNull() && !spec.AllowNull {
 				return cty.Type{}, false, NewArgErrorf(realI, "argument must not be null")
+			}
+
+			if val.IsNull() && val.Type() == cty.DynamicPseudoType {
+				// this is a null literal, which is a known value and valid for
+				// any parameter type
+				continue
 			}
 
 			if val.Type() == cty.DynamicPseudoType {

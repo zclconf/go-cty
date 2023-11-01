@@ -126,6 +126,20 @@ func TestReturnTypeForValues(t *testing.T) {
 			Spec: &Spec{
 				Params: []Parameter{
 					{
+						Type:      cty.Number,
+						AllowNull: true,
+					},
+				},
+				Type: StaticReturnType(cty.Number),
+				Impl: stubImpl,
+			},
+			Args:     []cty.Value{cty.NullVal(cty.DynamicPseudoType)},
+			WantType: cty.Number,
+		},
+		{
+			Spec: &Spec{
+				Params: []Parameter{
+					{
 						Type: cty.List(cty.DynamicPseudoType),
 					},
 				},
