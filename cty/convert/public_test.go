@@ -1770,6 +1770,30 @@ func TestConvert(t *testing.T) {
 			Type:  cty.String,
 			Want:  cty.UnknownVal(cty.String).RefineNotNull(),
 		},
+
+		// Make sure we get valid unknown attribute types when converting from
+		// a map to an object with optional attributes.
+		{
+			Value: cty.ObjectVal(map[string]cty.Value{
+				"TTTattr": cty.UnknownVal(cty.Map(cty.String)),
+			}),
+			Type: cty.Object(map[string]cty.Type{
+				"TTTattr": cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+					"string": cty.String,
+					"set":    cty.Set(cty.String),
+					"list":   cty.List(cty.String),
+					"map":    cty.Map(cty.String),
+				}, []string{"set", "list", "map"}),
+			}),
+			Want: cty.ObjectVal(map[string]cty.Value{
+				"TTTattr": cty.UnknownVal(cty.Object(map[string]cty.Type{
+					"list":   cty.List(cty.String),
+					"map":    cty.Map(cty.String),
+					"set":    cty.Set(cty.String),
+					"string": cty.String,
+				})),
+			}),
+		},
 	}
 
 	for _, test := range tests {
