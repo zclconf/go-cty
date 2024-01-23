@@ -1,4 +1,4 @@
-# 1.14.2 (Unreleased)
+# 1.14.2 (January 23, 2024)
 
 * `convert`: Converting from an unknown map value to an object type now correctly handles the situation where the map element type disagrees with an _optional_ attribute of the target type, since when a map value is unknown we don't yet know which keys it has and thus cannot predict what subset of the elements will get converted as attributes in the resulting object. ([#175](https://github.com/zclconf/go-cty/pull/175))
 
