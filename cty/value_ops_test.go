@@ -91,6 +91,11 @@ func TestValueEquals(t *testing.T) {
 			NumberFloatVal(1.22222),
 			BoolVal(true),
 		},
+		{
+			MustParseNumberVal("9223372036854775808"),
+			NumberFloatVal(float64(9223372036854775808)),
+			BoolVal(true),
+		},
 
 		// Strings
 		{
