@@ -32,7 +32,10 @@ func Marshal(val cty.Value, ty cty.Type) ([]byte, error) {
 	var buf bytes.Buffer
 	enc := msgpack.NewEncoder(&buf)
 	enc.UseCompactInts(true)
-	enc.UseCompactFloats(true)
+
+	// UseCompactFloats can fail on some platforms due to undefined behavior of
+	// float conversions
+	enc.UseCompactFloats(false)
 
 	err := marshal(val, ty, path, enc)
 	if err != nil {

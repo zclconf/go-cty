@@ -85,6 +85,18 @@ func TestRoundTrip(t *testing.T) {
 			cty.Number,
 		},
 		{
+			cty.MustParseNumberVal("9223372036854775807"),
+			cty.Number,
+		},
+		{
+			cty.MustParseNumberVal("9223372036854775808"),
+			cty.Number,
+		},
+		{
+			cty.MustParseNumberVal("9223372036854775809"),
+			cty.Number,
+		},
+		{
 			awkwardFractionVal,
 			cty.Number,
 		},
