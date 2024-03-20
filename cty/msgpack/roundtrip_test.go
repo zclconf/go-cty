@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/zclconf/go-cty/cty"
+	"github.com/zclconf/go-cty/cty/convert"
 )
 
 func TestRoundTrip(t *testing.T) {
@@ -94,6 +95,10 @@ func TestRoundTrip(t *testing.T) {
 		},
 		{
 			cty.MustParseNumberVal("9223372036854775809"),
+			cty.Number,
+		},
+		{
+			cty.MustParseNumberVal("18446744073709551616"),
 			cty.Number,
 		},
 		{
@@ -359,6 +364,82 @@ func TestRoundTrip(t *testing.T) {
 					test.Value, got,
 				)
 			}
+		})
+	}
+}
+
+func TestRoundTrip_fromString(t *testing.T) {
+	tests := []struct {
+		Value string
+		Type  cty.Type
+	}{
+		{
+			"9223372036854775807",
+			cty.Number,
+		},
+		{
+			"9223372036854775808",
+			cty.Number,
+		},
+		{
+			"9223372036854775809",
+			cty.Number,
+		},
+		{
+			"18446744073709551616",
+			cty.Number,
+		},
+	}
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%#v as %#v", test.Value, test.Type), func(t *testing.T) {
+			stringVal := cty.StringVal(test.Value)
+
+			original, err := convert.Convert(stringVal, test.Type)
+			if err != nil {
+				t.Fatalf("input type must be convertible from string: %s", err)
+			}
+
+			{
+				// Just do a little sanity check that the conversion works
+				// without any msgpack shenanigans.
+				stringGot, err := convert.Convert(original, cty.String)
+				if err != nil {
+					t.Fatalf("result must be convertible to string: %s", err)
+				}
+
+				if !stringGot.RawEquals(stringVal) {
+					t.Fatalf("value did not round-trip to string even without msgpack\ninput:  %#v\nresult: %#v", test.Value, stringGot)
+				}
+			}
+
+			b, err := Marshal(original, test.Type)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			t.Logf("encoded as %x", b)
+
+			got, err := Unmarshal(b, test.Type)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if !got.RawEquals(original) {
+				t.Errorf(
+					"value did not round-trip\ninput:  %#v\nresult: %#v",
+					test.Value, got,
+				)
+			}
+
+			stringGot, err := convert.Convert(got, cty.String)
+			if err != nil {
+				t.Fatalf("result must be convertible to string: %s", err)
+			}
+
+			if !stringGot.RawEquals(stringVal) {
+				t.Errorf("value did not round-trip to string\ninput:  %#v\nresult: %#v", test.Value, stringGot)
+			}
+
 		})
 	}
 }
