@@ -1,4 +1,4 @@
-# 1.14.4 (Unreleased)
+# 1.14.4 (March 20, 2024)
 
 * `msgpack`: Now uses string encoding instead of float encoding for a whole number that is too large to fit in any of MessagePack's integer types.
 * `function/stdlib`: Type conversion functions (constructed with `MakeToFunc`) can now convert null values of unknown type into null values of the target type, rather than returning an unknown value in that case.
