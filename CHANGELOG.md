@@ -1,5 +1,6 @@
 # 1.14.4 (Unreleased)
 
+* `msgpack`: Now uses string encoding instead of float encoding for a whole number that is too large to fit in any of MessagePack's integer types.
 
 # 1.14.3 (February 29, 2024)
 

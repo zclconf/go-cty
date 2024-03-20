@@ -89,7 +89,7 @@ func marshal(val cty.Value, ty cty.Type, path cty.Path, enc *msgpack.Encoder) er
 				bf := val.AsBigFloat()
 				if iv, acc := bf.Int64(); acc == big.Exact {
 					err = enc.EncodeInt(iv)
-				} else if fv, acc := bf.Float64(); acc == big.Exact {
+				} else if fv, acc := bf.Float64(); acc == big.Exact && !bf.IsInt() {
 					err = enc.EncodeFloat64(fv)
 				} else {
 					err = enc.EncodeString(bf.Text('f', -1))
