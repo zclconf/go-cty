@@ -57,6 +57,12 @@ func TestTo(t *testing.T) {
 			``,
 		},
 		{
+			cty.NullVal(cty.DynamicPseudoType),
+			cty.Number,
+			cty.NullVal(cty.Number),
+			``,
+		},
+		{
 			cty.UnknownVal(cty.Bool),
 			cty.String,
 			cty.UnknownVal(cty.String),
