@@ -2,6 +2,7 @@
 
 * `msgpack`: Now uses string encoding instead of float encoding for a whole number that is too large to fit in any of MessagePack's integer types.
 * `function/stdlib`: Type conversion functions (constructed with `MakeToFunc`) can now convert null values of unknown type into null values of the target type, rather than returning an unknown value in that case.
+* `json`: Will now correctly reject attempts to encode `cty.DynamicVal`, whereas before it would just produce an invalid JSON document without any error. (This is invalid because JSON encoding cannot support unknown values at all; `cty.DynamicVal` is a special case of unknown value where even the _type_ isn't known.)
 
 # 1.14.3 (February 29, 2024)
 
