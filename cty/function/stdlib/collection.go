@@ -397,9 +397,15 @@ var DistinctFunc = function.New(&function.Spec{
 		}
 		var list []cty.Value
 
+		buckets := make(map[int][]cty.Value)
 		for it := listVal.ElementIterator(); it.Next(); {
 			_, v := it.Element()
-			list, err = appendIfMissing(list, v)
+			h := v.Hash()
+			if _, ok := buckets[h]; !ok {
+				buckets[h] = make([]cty.Value, 0)
+			}
+
+			list, buckets[h], err = appendIfMissing(list, buckets[h], v)
 			if err != nil {
 				return cty.NilVal, err
 			}
@@ -1429,18 +1435,18 @@ var ZipmapFunc = function.New(&function.Spec{
 	},
 })
 
-// helper function to add an element to a list, if it does not already exist
-func appendIfMissing(slice []cty.Value, element cty.Value) ([]cty.Value, error) {
-	for _, ele := range slice {
+// helper function to add an element to a list, if it does not already exist in a sublist
+func appendIfMissing(slice []cty.Value, subslice []cty.Value, element cty.Value) ([]cty.Value, []cty.Value, error) {
+	for _, ele := range subslice {
 		eq, err := Equal(ele, element)
 		if err != nil {
-			return slice, err
+			return slice, subslice, err
 		}
 		if eq.True() {
-			return slice, nil
+			return slice, subslice, nil
 		}
 	}
-	return append(slice, element), nil
+	return append(slice, element), append(subslice, element), nil
 }
 
 // HasIndex determines whether the given collection can be indexed with the
