@@ -27,13 +27,13 @@ var stringType = reflect.TypeOf("")
 //
 // This function will panic if two fields within the struct are tagged with
 // the same cty attribute name.
-func structTagIndices(st reflect.Type) map[string]int {
+func structTagIndices(st reflect.Type, tag string) map[string]int {
 	ct := st.NumField()
 	ret := make(map[string]int, ct)
 
 	for i := 0; i < ct; i++ {
 		field := st.Field(i)
-		attrName := field.Tag.Get("cty")
+		attrName := field.Tag.Get(tag)
 		if attrName != "" {
 			ret[attrName] = i
 		}
