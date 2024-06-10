@@ -1157,6 +1157,30 @@ func TestElement(t *testing.T) {
 			cty.StringVal("quick"),
 			false,
 		},
+		{ // negative index counts from the end of the list
+			listOfStrings,
+			cty.NumberIntVal(-1),
+			cty.StringVal("fox"),
+			false,
+		},
+		{ // negative index can be out of bounds too
+			listOfStrings,
+			cty.NumberIntVal(-6),
+			cty.StringVal("brown"),
+			false,
+		},
+		{ // minimum valid index
+			listOfStrings,
+			cty.NumberIntVal(-9223372036854775808),
+			cty.StringVal("the"),
+			false,
+		},
+		{ // maximum valid index
+			listOfStrings,
+			cty.NumberIntVal(9223372036854775807),
+			cty.StringVal("fox"),
+			false,
+		},
 		{ // list of lists
 			cty.ListVal([]cty.Value{listOfStrings, listOfStrings}),
 			cty.NumberIntVal(0),
@@ -1207,14 +1231,26 @@ func TestElement(t *testing.T) {
 		},
 		{
 			listOfStrings,
-			cty.NumberIntVal(-1),
+			cty.StringVal("brown"), // definitely not an index
 			cty.DynamicVal,
-			true, // index cannot be a negative number
+			true,
 		},
 		{
 			listOfStrings,
-			cty.StringVal("brown"), // definitely not an index
+			cty.NumberFloatVal(0.5),
 			cty.DynamicVal,
+			true,
+		},
+		{ // index out of bounds of int64
+			listOfStrings,
+			cty.MustParseNumberVal("-9223372036854775809"),
+			cty.StringVal("the"),
+			true,
+		},
+		{ // index out of bounds of int64
+			listOfStrings,
+			cty.MustParseNumberVal("9223372036854775808"),
+			cty.StringVal("fox"),
 			true,
 		},
 	}

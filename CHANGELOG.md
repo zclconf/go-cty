@@ -1,5 +1,6 @@
 # 1.14.5 (Unreleased)
 
+* `function/stdlib`: The `element` function now accepts negative indices, extending the illusion of an infinitely-long list into the negative direction too.
 
 # 1.14.4 (March 20, 2024)
 
