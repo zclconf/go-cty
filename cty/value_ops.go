@@ -1021,10 +1021,24 @@ func (val Value) HasIndex(key Value) Value {
 //
 // This method will panic if the receiver is not a set, or if it is a null set.
 func (val Value) HasElement(elem Value) Value {
+	return val.findElement(elem).hasElement
+}
+
+type findElementResult struct {
+	hasElement      Value
+	matchingElement Value
+}
+
+// Like HasElement but also returns the matching set element found.
+func (val Value) findElement(elem Value) findElementResult {
 	if val.IsMarked() || elem.IsMarked() {
 		val, valMarks := val.Unmark()
 		elem, elemMarks := elem.Unmark()
-		return val.HasElement(elem).WithMarks(valMarks, elemMarks)
+		r := val.findElement(elem)
+		return findElementResult{
+			hasElement:      r.hasElement.WithMarks(valMarks, elemMarks),
+			matchingElement: r.matchingElement,
+		}
 	}
 
 	ty := val.Type()
@@ -1033,17 +1047,22 @@ func (val Value) HasElement(elem Value) Value {
 		panic("not a set type")
 	}
 	if !val.IsKnown() || !elem.IsKnown() {
-		return UnknownVal(Bool).RefineNotNull()
+		return findElementResult{hasElement: UnknownVal(Bool).RefineNotNull()}
 	}
 	if val.IsNull() {
 		panic("can't call HasElement on a null value")
 	}
 	if !ty.ElementType().Equals(elem.Type()) {
-		return False
+		return findElementResult{hasElement: False}
 	}
-
 	s := val.v.(set.Set[interface{}])
-	return BoolVal(s.Has(elem.v))
+	if !s.Has(elem.v) {
+		return findElementResult{hasElement: False}
+	}
+	return findElementResult{
+		hasElement:      True,
+		matchingElement: elem,
+	}
 }
 
 // Length returns the length of the receiver, which must be a collection type
