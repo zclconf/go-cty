@@ -261,3 +261,26 @@ func TestTransform(t *testing.T) {
 		t.Fatalf("wrong value\n got: %#v\nwant: %#v", gotVal, wantVal)
 	}
 }
+
+func TestTransformMarked(t *testing.T) {
+	val := ObjectVal(map[string]Value{
+		"list": ListVal([]Value{True, True, False}).Mark("mark"),
+		"set":  SetVal([]Value{True, False}).Mark("mark"),
+		"map":  MapVal(map[string]Value{"a": True, "b": False}).Mark("mark"),
+		"object": ObjectVal(map[string]Value{
+			"a": True,
+			"b": ListVal([]Value{False, False, False}),
+		}).Mark("mark"),
+	})
+
+	// This noop transform should not change any values or marks.
+	gotVal, err := Transform(val, func(p Path, v Value) (Value, error) {
+		return v, nil
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+	if !gotVal.RawEquals(val) {
+		t.Fatalf("wrong value\n got: %#v\nwant: %#v", gotVal, val)
+	}
+}

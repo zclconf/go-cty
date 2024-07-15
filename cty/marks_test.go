@@ -489,3 +489,21 @@ func TestPathValueMarks(t *testing.T) {
 		})
 	}
 }
+
+func TestReapplyMarks(t *testing.T) {
+	// Re-applying the same marks to an object value should not change the result.
+	obj := ObjectVal(map[string]Value{
+		"nested": ObjectVal(map[string]Value{
+			"attr": StringVal("not directly marked"),
+		}),
+	})
+
+	pvm := []PathValueMarks{{Path: GetAttrPath("nested"), Marks: NewValueMarks("mark")}}
+
+	first := obj.MarkWithPaths(pvm)
+	second := first.MarkWithPaths(pvm)
+
+	if !first.RawEquals(second) {
+		t.Fatalf("Value changed re-applying marks\n1st: %#v\n2nd: %#v\n", first, second)
+	}
+}
