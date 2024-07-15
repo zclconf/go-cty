@@ -1,6 +1,7 @@
 # 1.14.5 (Unreleased)
 
 * `function/stdlib`: The `element` function now accepts negative indices, extending the illusion of an infinitely-long list into the negative direction too.
+* `cty`: The various "transform" functions were previously incorrectly propagating marks from a parent object down to attribute values when calling the caller-provided transform functions. The marks will now no longer be propagated downwards, which is consistent with the treatment of collection and tuple elements. If your transform function needs to take into account context about marks of upstream containers then you can maintain a stack of active marks in your `Transformer` implementation, pushing in `Enter` and popping in `Exit`. ([#185](https://github.com/zclconf/go-cty/pull/185))
 
 # 1.14.4 (March 20, 2024)
 
