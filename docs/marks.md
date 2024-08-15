@@ -19,7 +19,7 @@ different way in a UI.
 ```go
 // Use a named type for all marks, for namespacing purposes.
 type fromConfigType int
-val fromConfig fromConfigType
+var fromConfig fromConfigType
 
 return val.Mark(fromConfig)
 ```
