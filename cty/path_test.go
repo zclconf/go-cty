@@ -160,6 +160,30 @@ func TestPathApply(t *testing.T) {
 			cty.StringVal("there").Mark(1),
 			``,
 		},
+		{
+			cty.SetVal([]cty.Value{
+				cty.ObjectVal(map[string]cty.Value{"x": cty.StringVal("X1")}),
+				cty.ObjectVal(map[string]cty.Value{"x": cty.StringVal("X2")}),
+			}),
+			cty.IndexPath(cty.ObjectVal(map[string]cty.Value{"x": cty.StringVal("X1")})).GetAttr("x"),
+			cty.StringVal("X1"),
+			``,
+		},
+		{
+			cty.SetVal([]cty.Value{
+				cty.ObjectVal(map[string]cty.Value{"x": cty.StringVal("X1")}),
+				cty.ObjectVal(map[string]cty.Value{"x": cty.StringVal("X2")}),
+			}),
+			cty.IndexPath(cty.ObjectVal(map[string]cty.Value{"x": cty.StringVal("X3")})).GetAttr("x"),
+			cty.NilVal,
+			`at step 0: value does not have given element`,
+		},
+		{
+			cty.UnknownVal(cty.Set(cty.Object(map[string]cty.Type{"x": cty.String}))),
+			cty.IndexPath(cty.ObjectVal(map[string]cty.Value{"x": cty.StringVal("X3")})).GetAttr("x"),
+			cty.UnknownVal(cty.String),
+			``,
+		},
 	}
 
 	for _, test := range tests {
