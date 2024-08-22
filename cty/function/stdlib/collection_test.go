@@ -2836,3 +2836,43 @@ func TestSlice(t *testing.T) {
 		})
 	}
 }
+
+func TestDistinct(t *testing.T) {
+	tests := []struct {
+		Key   string
+		Input cty.Value
+		Want  cty.Value
+	}{
+		{
+			"first",
+			cty.ListVal([]cty.Value{
+				cty.StringVal("a"),
+				cty.StringVal("b"),
+				cty.StringVal("c"),
+				cty.StringVal("b"),
+				cty.StringVal("c"),
+				cty.StringVal("d"),
+			}),
+			cty.ListVal([]cty.Value{
+				cty.StringVal("a"),
+				cty.StringVal("b"),
+				cty.StringVal("c"),
+				cty.StringVal("d"),
+			}),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.Key, func(t *testing.T) {
+			got, err := Distinct(test.Input)
+
+			if err != nil {
+				t.Fatalf("unexpected error: %s", err)
+			}
+
+			if !got.RawEquals(test.Want) {
+				t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, test.Want)
+			}
+		})
+	}
+}
