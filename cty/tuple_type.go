@@ -78,7 +78,7 @@ func init() {
 	}
 }
 
-// IsTupleType returns true if the given type is an object type, regardless
+// IsTupleType returns true if the given type is a tuple type, regardless
 // of its element type.
 func (t Type) IsTupleType() bool {
 	_, ok := t.typeImpl.(typeTuple)
