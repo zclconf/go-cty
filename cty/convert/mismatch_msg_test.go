@@ -69,7 +69,7 @@ func TestMismatchMessage(t *testing.T) {
 			cty.List(cty.Object(map[string]cty.Type{
 				"foo": cty.String,
 			})),
-			`element 0: attribute "foo" is required`,
+			`element 1: attribute "foo" is required`,
 		},
 		{
 			cty.List(cty.EmptyObject),
@@ -83,7 +83,7 @@ func TestMismatchMessage(t *testing.T) {
 			cty.Set(cty.Object(map[string]cty.Type{
 				"foo": cty.String,
 			})),
-			`element 0: attribute "foo" is required`,
+			`element 1: attribute "foo" is required`,
 		},
 		{
 			cty.Map(cty.EmptyObject),
