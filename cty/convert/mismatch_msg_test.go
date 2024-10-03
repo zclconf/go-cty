@@ -79,6 +79,11 @@ func TestMismatchMessage(t *testing.T) {
 			`incorrect set element type: attribute "foo" is required`,
 		},
 		{
+			cty.Tuple([]cty.Type{cty.String, cty.EmptyObject}),
+			cty.List(cty.String),
+			`element 2: string required`,
+		},
+		{
 			cty.Tuple([]cty.Type{cty.EmptyObject}),
 			cty.Set(cty.Object(map[string]cty.Type{
 				"foo": cty.String,
