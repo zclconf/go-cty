@@ -170,8 +170,7 @@ func mismatchMessageCollectionsFromStructural(got, want cty.Type) string {
 			if conv := getConversion(gotEty, wantEty, true); conv != nil {
 				continue // conversion is available, so no problem
 			}
-			// since we receive an index, we add 1 to reference the element number
-			return fmt.Sprintf("element %d: %s", i+1, MismatchMessage(gotEty, wantEty))
+			return fmt.Sprintf("element at index %d: %s", i, MismatchMessage(gotEty, wantEty))
 		}
 
 		// If we get down here then something weird is going on but we'll

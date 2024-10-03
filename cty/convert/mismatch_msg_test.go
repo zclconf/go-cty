@@ -69,7 +69,7 @@ func TestMismatchMessage(t *testing.T) {
 			cty.List(cty.Object(map[string]cty.Type{
 				"foo": cty.String,
 			})),
-			`element 1: attribute "foo" is required`,
+			`element at index 0: attribute "foo" is required`,
 		},
 		{
 			cty.List(cty.EmptyObject),
@@ -81,14 +81,14 @@ func TestMismatchMessage(t *testing.T) {
 		{
 			cty.Tuple([]cty.Type{cty.String, cty.EmptyObject}),
 			cty.List(cty.String),
-			`element 2: string required`,
+			`element at index 1: string required`,
 		},
 		{
 			cty.Tuple([]cty.Type{cty.EmptyObject}),
 			cty.Set(cty.Object(map[string]cty.Type{
 				"foo": cty.String,
 			})),
-			`element 1: attribute "foo" is required`,
+			`element at index 0: attribute "foo" is required`,
 		},
 		{
 			cty.Map(cty.EmptyObject),
