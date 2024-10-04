@@ -16,17 +16,42 @@ documentation:
         - COMPATIBILITY.md
         - 'docs/**'
 
-changelog:
-  - changed-files:
-      - any-glob-to-any-file:
-        - CHANGELOG.md
-
-license:
-  - changed-files:
-      - any-glob-to-any-file:
-        - 'LICENSE'
-
 tests:
   - changed-files:
       - any-glob-to-any-file:
         - '**/*_test.go'
+
+convert:
+  - changed-files:
+      - any-glob-to-any-file:
+        - 'cty/convert/*'
+
+functions:
+  - changed-files:
+      - any-glob-to-any-file:
+        - 'cty/function/*.go'
+
+functions/stdlib:
+  - changed-files:
+      - any-glob-to-any-file:
+        - 'cty/function/stdlib/*.go'
+
+gocty:
+  - changed-files:
+      - any-glob-to-any-file:
+        - 'cty/gocty/*.go'
+
+json:
+  - changed-files:
+      - any-glob-to-any-file:
+        - 'cty/json/*.go'
+
+msgpack:
+  - changed-files:
+      - any-glob-to-any-file:
+        - 'cty/msgpack/*.go'
+
+set-internals:
+  - changed-files:
+      - any-glob-to-any-file:
+        - 'cty/set/*.go'
