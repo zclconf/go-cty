@@ -1,0 +1,32 @@
+github-actions:
+  - changed-files:
+      - any-glob-to-any-file:
+        - '.github/**'
+
+dependencies:
+  - changed-files:
+      - any-glob-to-any-file:
+        - 'go.mod'
+        - 'go.sum'
+
+documentation:
+  - changed-files:
+      - any-glob-to-any-file:
+        - 'README.md'
+        - COMPATIBILITY.md
+        - 'docs/**'
+
+changelog:
+  - changed-files:
+      - any-glob-to-any-file:
+        - CHANGELOG.md
+
+license:
+  - changed-files:
+      - any-glob-to-any-file:
+        - 'LICENSE'
+
+tests:
+  - changed-files:
+      - any-glob-to-any-file:
+        - '**/*_test.go'
