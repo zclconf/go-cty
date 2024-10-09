@@ -2836,3 +2836,133 @@ func TestSlice(t *testing.T) {
 		})
 	}
 }
+
+func TestDistinct(t *testing.T) {
+	tests := []struct {
+		List cty.Value
+		Want cty.Value
+		Err  string
+	}{
+		// Empty list (string type)
+		{
+			cty.ListValEmpty(cty.String),
+			cty.ListValEmpty(cty.String),
+			"",
+		},
+		// Empty list (number type)
+		{
+			cty.ListValEmpty(cty.Number),
+			cty.ListValEmpty(cty.Number),
+			"",
+		},
+		// List with single element
+		{
+			cty.ListVal([]cty.Value{
+				cty.StringVal("single"),
+			}),
+			cty.ListVal([]cty.Value{
+				cty.StringVal("single"),
+			}),
+			"",
+		},
+		// List where all elements are identical
+		{
+			cty.ListVal([]cty.Value{
+				cty.NumberIntVal(42),
+				cty.NumberIntVal(42),
+				cty.NumberIntVal(42),
+			}),
+			cty.ListVal([]cty.Value{
+				cty.NumberIntVal(42),
+			}),
+			"",
+		},
+		// List that is already distinct
+		{
+			cty.ListVal([]cty.Value{
+				cty.StringVal("a"),
+				cty.StringVal("b"),
+				cty.StringVal("c"),
+			}),
+			cty.ListVal([]cty.Value{
+				cty.StringVal("a"),
+				cty.StringVal("b"),
+				cty.StringVal("c"),
+			}),
+			"",
+		},
+		// List with nested lists
+		{
+			cty.ListVal([]cty.Value{
+				cty.ListVal([]cty.Value{
+					cty.StringVal("a"),
+					cty.StringVal("a"),
+				}),
+				cty.ListVal([]cty.Value{
+					cty.StringVal("b"),
+				}),
+				cty.ListVal([]cty.Value{
+					cty.StringVal("a"),
+					cty.StringVal("a"),
+				}),
+			}),
+			cty.ListVal([]cty.Value{
+				cty.ListVal([]cty.Value{
+					cty.StringVal("a"),
+					cty.StringVal("a"),
+				}),
+				cty.ListVal([]cty.Value{
+					cty.StringVal("b"),
+				}),
+			}),
+			"",
+		},
+		// List with unknown values
+		{
+			cty.ListVal([]cty.Value{
+				cty.UnknownVal(cty.String),
+				cty.StringVal("a"),
+				cty.StringVal("b"),
+				cty.UnknownVal(cty.String),
+			}),
+			cty.UnknownVal(cty.List(cty.String)).RefineNotNull(),
+			"",
+		},
+		// List with null values
+		{
+			cty.ListVal([]cty.Value{
+				cty.NullVal(cty.String),
+				cty.StringVal("a"),
+				cty.NullVal(cty.String),
+				cty.StringVal("b"),
+			}),
+			cty.ListVal([]cty.Value{
+				cty.NullVal(cty.String),
+				cty.StringVal("a"),
+				cty.StringVal("b"),
+			}),
+			"",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("Distinct(%#v)", test.List), func(t *testing.T) {
+			got, err := Distinct(test.List)
+			if test.Err != "" {
+				if err == nil {
+					t.Fatal("succeeded; want error")
+				}
+				if got, want := err.Error(), test.Err; got != want {
+					t.Fatalf("wrong error\ngot:  %s\nwant: %s", got, want)
+				}
+				return
+			} else if err != nil {
+				t.Fatalf("unexpected error: %s", err)
+			}
+
+			if !got.RawEquals(test.Want) {
+				t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, test.Want)
+			}
+		})
+	}
+}
