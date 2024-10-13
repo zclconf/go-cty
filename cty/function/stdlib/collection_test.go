@@ -2855,6 +2855,12 @@ func TestDistinct(t *testing.T) {
 			cty.ListValEmpty(cty.Number),
 			"",
 		},
+		// Empty list (unknown element type)
+		{
+			cty.ListValEmpty(cty.DynamicPseudoType),
+			cty.ListValEmpty(cty.DynamicPseudoType),
+			"",
+		},
 		// List with single element
 		{
 			cty.ListVal([]cty.Value{
@@ -2917,6 +2923,12 @@ func TestDistinct(t *testing.T) {
 			}),
 			"",
 		},
+		// Wholly-unknown list
+		{
+			cty.UnknownVal(cty.List(cty.String)),
+			cty.UnknownVal(cty.List(cty.String)).RefineNotNull(),
+			"",
+		},
 		// List with unknown values
 		{
 			cty.ListVal([]cty.Value{
@@ -2927,6 +2939,12 @@ func TestDistinct(t *testing.T) {
 			}),
 			cty.UnknownVal(cty.List(cty.String)).RefineNotNull(),
 			"",
+		},
+		// null list
+		{
+			cty.NullVal(cty.List(cty.String)),
+			cty.NilVal,
+			"argument must not be null",
 		},
 		// List with null values
 		{
