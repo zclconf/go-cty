@@ -127,6 +127,26 @@ func ObjectVal(attrs map[string]Value) Value {
 	}
 }
 
+// UnionVal returns a Value of a union type.
+//
+// The first argument must be a union type, the second argument must name
+// one of its variants, and the third argument must be of the same type
+// as the selected variant. If any of those invariants are violated then
+// this function will panic.
+func UnionVal(ty Type, variantName string, val Value) Value {
+	variantTy := ty.UnionVariantType(variantName)
+	if !val.Type().Equals(variantTy) {
+		panic("given value does not match the type of the selected union variant")
+	}
+	return Value{
+		ty: ty,
+		v: unionVal{
+			variant: variantName,
+			value:   val.v,
+		},
+	}
+}
+
 // TupleVal returns a Value of a tuple type whose element types are
 // defined by the value types in the given slice.
 func TupleVal(elems []Value) Value {

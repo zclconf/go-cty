@@ -7,17 +7,17 @@ This page covers in detail all of the primitive types and compound type kinds su
 
 The following methods apply to all values:
 
-* `Type` returns the type of the value, as a `cty.Type` instance.
-* `Equals` returns a `cty.Bool` that is `cty.True` if the receiver and the
+- `Type` returns the type of the value, as a `cty.Type` instance.
+- `Equals` returns a `cty.Bool` that is `cty.True` if the receiver and the
   given other value are equal. This is an operation method, so its result
   will be unknown if either argument is unknown.
-* `RawEquals` is similar to `Equals` except that it doesn't implement the
+- `RawEquals` is similar to `Equals` except that it doesn't implement the
   usual special behavior for unknowns and dynamic values, and it returns a
   native Go `bool` as its result. This method is intended for use in tests;
   `Equals` should be preferred for most uses.
-* `IsKnown` returns `true` if the receiver is a known value, or `false`
+- `IsKnown` returns `true` if the receiver is a known value, or `false`
   if it is an unknown value.
-* `IsNull` returns `true` if the receiver is a null value, or `false`
+- `IsNull` returns `true` if the receiver is a null value, or `false`
   otherwise.
 
 All values except capsule-typed values can be serialized with the builtin
@@ -50,35 +50,35 @@ as long as it value is within the required range.
 
 The following additional operations are supported on numbers:
 
-* `Absolute` converts a negative value to a positive value of the same
+- `Absolute` converts a negative value to a positive value of the same
   magnitude.
-* `Add` computes the sum of two numbers.
-* `Divide` divides the receiver by another number.
-* `GreaterThan` returns `cty.True` if the receiver is greater than the other
+- `Add` computes the sum of two numbers.
+- `Divide` divides the receiver by another number.
+- `GreaterThan` returns `cty.True` if the receiver is greater than the other
   given number.
-* `GreaterThanOrEqualTo` returns `cty.True` if the receiver is greater than or
+- `GreaterThanOrEqualTo` returns `cty.True` if the receiver is greater than or
   equal to the other given number.
-* `LessThan` returns `cty.True` if the receiver is less than the other given
+- `LessThan` returns `cty.True` if the receiver is less than the other given
   number.
-* `LessThanOrEqualTo` returns `cty.True` if the receiver is less than or
+- `LessThanOrEqualTo` returns `cty.True` if the receiver is less than or
   equal to the other given number.
-* `Modulo` computes the remainder from integer division of the receiver by
+- `Modulo` computes the remainder from integer division of the receiver by
   the other given number.
-* `Multiply` computes the product of two numbers.
-* `Negate` inverts the sign of the number.
-* `Subtract` computes the difference between two numbers.
+- `Multiply` computes the product of two numbers.
+- `Negate` inverts the sign of the number.
+- `Subtract` computes the difference between two numbers.
 
 `cty.Number` values can be constructed using several different factory
 functions:
 
-* `ParseNumberVal` creates a number value by parsing a decimal representation
+- `ParseNumberVal` creates a number value by parsing a decimal representation
   of it given as a string. This is the constructor that most properly
   represents the full documented range of number values; the others below
   care convenient for many cases, but have a more limited range.
-* `NumberIntVal` creates a number value from a native `int64` value.
-* `NumberUIntVal` creates a number value from a native `uint64` value.
-* `NumberFloatVal` creates a number value from a native `float64` value.
-* `NumberVal` creates a number value from a `*big.Float`, from the `math/big` package.
+- `NumberIntVal` creates a number value from a native `int64` value.
+- `NumberUIntVal` creates a number value from a native `uint64` value.
+- `NumberFloatVal` creates a number value from a native `float64` value.
+- `NumberVal` creates a number value from a `*big.Float`, from the `math/big` package.
   This can preserve arbitrary big floats without modification, but comes
   at the risk of introducing precision inconsisistencies. Prefer the other
   constructors for most uses.
@@ -91,10 +91,10 @@ that the value fits into the target type.
 
 The following numbers are provided as package variables for convenience:
 
-* `cty.Zero` is the number zero.
-* `cty.PositiveInfinity` represents positive infinity as a number. All other
+- `cty.Zero` is the number zero.
+- `cty.PositiveInfinity` represents positive infinity as a number. All other
   numbers are less than this value.
-* `cty.NegativeInfinity` represents negative infinity as a number. All other
+- `cty.NegativeInfinity` represents negative infinity as a number. All other
   numbers are greater than this value.
 
 Note that the two infinity values are always out of range for a conversion to
@@ -122,9 +122,9 @@ The bool type represents boolean (true or false) values.
 
 The following additional operations are supported on bool values:
 
-* `And` computes the logical AND operation for two boolean values.
-* `Not` returns the boolean opposite of the receiver.
-* `Or` computes the logical OR operation for two boolean values.
+- `And` computes the logical AND operation for two boolean values.
+- `Not` returns the boolean opposite of the receiver.
+- `Or` computes the logical OR operation for two boolean values.
 
 Calling applications may either work directly with the predefined `cty.True`
 and `cty.False` variables, or dynamically create a boolean value using
@@ -147,11 +147,11 @@ integers starting at zero.
 
 The following operations apply to values of a list type:
 
-* `Index` can be passed an integer number less than the list's length to
+- `Index` can be passed an integer number less than the list's length to
   retrieve one of the list elements.
-* `HasIndex` can be used to determine if a particular call to `Index` would
+- `HasIndex` can be used to determine if a particular call to `Index` would
   succeed.
-* `Length` returns a number representing the number of elements in the list.
+- `Length` returns a number representing the number of elements in the list.
   The highest integer that can be passed to `Index` is one less than this
   number.
 
@@ -161,10 +161,10 @@ to `cty.ListVal`, or by passing an element type to `cty.ListValEmpty`.
 
 The following integration methods can be used with known list-typed values:
 
-* `LengthInt` returns the length of the list as a native Go `int`.
-* `ElementIterator` returns an object that can be used to iterate over the
+- `LengthInt` returns the length of the list as a native Go `int`.
+- `ElementIterator` returns an object that can be used to iterate over the
   list elements.
-* `ForEachElement` runs a given callback function for each element.
+- `ForEachElement` runs a given callback function for each element.
 
 ### `cty.Map` types
 
@@ -172,11 +172,11 @@ Map types are collection values that are each assigned a unique string key.
 
 The following operations apply to values of a map type:
 
-* `Index` can be passed a string value to retrieve the corresponding
+- `Index` can be passed a string value to retrieve the corresponding
   element.
-* `HasIndex` can be used to determine if a particular call to `Index` would
+- `HasIndex` can be used to determine if a particular call to `Index` would
   succeed.
-* `Length` returns a number representing the number of elements in the map.
+- `Length` returns a number representing the number of elements in the map.
 
 Map types are created by passing an element type to the function `cty.Map`.
 Map _values_ can be created by passing a type-homogenous `map[string]cty.Value`
@@ -184,10 +184,10 @@ to `cty.MapVal`, or by passing an element type to `cty.MapValEmpty`.
 
 The following integration methods can be used with known map-typed values:
 
-* `LengthInt` returns the number of elements as a native Go `int`.
-* `ElementIterator` returns an object that can be used to iterate over the
+- `LengthInt` returns the number of elements as a native Go `int`.
+- `ElementIterator` returns an object that can be used to iterate over the
   map elements in lexicographical order by key.
-* `ForEachElement` runs a given callback function for each element in the
+- `ForEachElement` runs a given callback function for each element in the
   same order as the `ElementIterator`.
 
 ### `cty.Set` types
@@ -199,10 +199,10 @@ set.
 
 The following operations apply to values of a set type:
 
-* `HasIndex` can be used to determine whether a particular value is in the
+- `HasIndex` can be used to determine whether a particular value is in the
   receiving set..
-* `Length` returns a number representing the number of elements in the set.
-* `Index` is not particularly useful for sets, but for symmetry with the
+- `Length` returns a number representing the number of elements in the set.
+- `Index` is not particularly useful for sets, but for symmetry with the
   other collection types it may be passed a value that is in the set and it
   will then return that same value.
 
@@ -213,10 +213,10 @@ equal. Alternatively, an empty set can be constructed using `cty.SetValEmpty`.
 
 The following integration methods can be used with known set-typed values:
 
-* `LengthInt` returns the number of elements as a native Go `int`.
-* `ElementIterator` returns an object that can be used to iterate over the
+- `LengthInt` returns the number of elements as a native Go `int`.
+- `ElementIterator` returns an object that can be used to iterate over the
   set elements in an undefined (but consistent) order.
-* `ForEachElement` runs a given callback function for each element in the
+- `ForEachElement` runs a given callback function for each element in the
   same order as the `ElementIterator`.
 
 Set membership is determined by equality, which has an interesting consequence
@@ -245,15 +245,15 @@ their own type.
 
 The following operation applies to values of an object type:
 
-* `GetAttr` returns the value of an attribute given its name.
+- `GetAttr` returns the value of an attribute given its name.
 
 The set of valid attributes for an object type can be inspected using the
 following methods on the type itself:
 
-* `AttributeTypes` returns a `map[string]Type` describing the types of all of
+- `AttributeTypes` returns a `map[string]Type` describing the types of all of
   the attributes.
-* `AttributeType` returns the type of a single attribute given its name.
-* `HasAttribute` returns `true` if the type has an attribute with the given
+- `AttributeType` returns the type of a single attribute given its name.
+- `HasAttribute` returns `true` if the type has an attribute with the given
   name.
 
 Object types are constructed by passing a `map[string]Type` to `cty.Object`.
@@ -264,13 +264,43 @@ that is implicitly created for that value.
 The variable `cty.EmptyObject` contains the object type with no attributes,
 and `cty.EmptyObjectVal` is the only non-null, known value of that type.
 
-There is **currently-experimental** support for creating object types where
-one or more attributes is annotated as being "optional", using the alternative
-constructor `cty.ObjectWithOptionalAttrs`. The behavior of that function or
-of any other function working with its result is subject to change even in
-future minor versions of `cty`. The optional-attribute annotations are
-considered only during type conversion, so for more information refer to
-the guide [Converting between `cty` types](convert.md).
+Object types can potentially have one or more attributes annotated as being
+"optional", using the alternative constructor `cty.ObjectWithOptionalAttrs`.
+The optional-attribute annotations are considered only during type conversion,
+so for more information refer to the guide
+[Converting between `cty` types](convert.md).
+
+### `cty.Union` types
+
+Union types each have one or more named variants that eacn in turn have their
+own type. A value of a union type selects a single variant of that type and
+carries a value of that variant's type.
+
+The following operation applies to values of an object type:
+
+- `GetAttr` returns the value of a variant given its name. If the given name
+  is the selected variant then the result is the inner value, while all
+  other valid variant names return a null value of the variant type.
+
+The set of variants of a union type can be inspected using the following methods
+on the type itself:
+
+- `UnionVariants` returns a `map[string]Type` describing the types of all of
+  the variants.
+- `UnionVariantType` returns the type of a single variant given its name.
+- `HasUnionVariant` returns `true` if the type has a variant with the given
+  name.
+
+Union types are constructed by passing a `map[string]Type` to `cty.Union`.
+Union _values_ can be created by passing a previously-constructed type to
+`cty.UnionVal`, along with the name of the variant to select and a valid
+value for that variant.
+
+A union type is mechanically similar to an object type where only one attribute
+can have a non-null value at a time. Therefore the type conversion package
+supports conversion from an object type to a tuple type if the attributes are
+compatible and if only one of them is not null. For more information
+refer to [Converting between `cty` types](convert.md).
 
 ### `cty.Tuple` types
 
@@ -283,11 +313,11 @@ fixed number of values that may have _different_ types.
 
 The following operations apply to values of a tuple type:
 
-* `Index` can be passed an integer number less than the tuple's length to
+- `Index` can be passed an integer number less than the tuple's length to
   retrieve one of the tuple elements.
-* `HasIndex` can be used to determine if a particular call to `Index` would
+- `HasIndex` can be used to determine if a particular call to `Index` would
   succeed.
-* `Length` returns a number representing the number of elements in the tuple.
+- `Length` returns a number representing the number of elements in the tuple.
   The highest integer that can be passed to `Index` is one less than this
   number.
 
@@ -301,10 +331,10 @@ and `cty.EmptyTupleVal` is the only non-null, known value of that type.
 
 The following integration methods can be used with known tuple-typed values:
 
-* `LengthInt` returns the length of the tuple as a native Go `int`.
-* `ElementIterator` returns an object that can be used to iterate over the
+- `LengthInt` returns the length of the tuple as a native Go `int`.
+- `ElementIterator` returns an object that can be used to iterate over the
   tuple elements.
-* `ForEachElement` runs a given callback function for each element.
+- `ForEachElement` runs a given callback function for each element.
 
 ## The Dynamic Pseudo-Type
 
@@ -318,13 +348,13 @@ this type, and a null value without a known type can be represented by
 
 This pseudo-type serves two similar purposes as a placeholder type:
 
-* When `cty.DynamicVal` is used in an operation with another value, the
+- When `cty.DynamicVal` is used in an operation with another value, the
   result is either itself `cty.DynamicVal` or it is an unknown value of
   some suitable type. This allows the dynamic pseudo-type to be used as
   a placeholder during type checking, optimistically assuming that the
   eventually-determined type will be compatible and failing at that
   later point if not.
-* `cty.DynamicPseudoType` can be used with the type `TestConformance` method
+- `cty.DynamicPseudoType` can be used with the type `TestConformance` method
   to declare that any type is permitted in the type being tested for
   conformance.
 

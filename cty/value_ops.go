@@ -258,6 +258,25 @@ func (val Value) Equals(other Value) Value {
 				break
 			}
 		}
+	case ty.IsUnionType():
+		if val.v.(unionVal).variant == other.v.(unionVal).variant {
+			vty := ty.UnionVariantType(val.v.(unionVal).variant)
+			lhs := Value{
+				ty: vty,
+				v:  val.v.(unionVal).variant,
+			}
+			rhs := Value{
+				ty: vty,
+				v:  other.v.(unionVal).variant,
+			}
+			eq := lhs.Equals(rhs)
+			if !eq.IsKnown() {
+				return unknownResult()
+			}
+			result = eq.True()
+		} else {
+			result = false
+		}
 	case ty.IsTupleType():
 		tty := ty.typeImpl.(typeTuple)
 		result = true
@@ -474,6 +493,20 @@ func (val Value) RawEquals(other Value) bool {
 			}
 		}
 		return true
+	case ty.IsUnionType():
+		if val.v.(unionVal).variant == other.v.(unionVal).variant {
+			vty := ty.UnionVariantType(val.v.(unionVal).variant)
+			lhs := Value{
+				ty: vty,
+				v:  val.v.(unionVal).variant,
+			}
+			rhs := Value{
+				ty: vty,
+				v:  other.v.(unionVal).variant,
+			}
+			return lhs.RawEquals(rhs)
+		}
+		return false
 	case ty.IsTupleType():
 		tty := ty.typeImpl.(typeTuple)
 		for i, ety := range tty.ElemTypes {
@@ -780,12 +813,13 @@ func (val Value) Absolute() Value {
 }
 
 // GetAttr returns the value of the given attribute of the receiver, which
-// must be of an object type that has an attribute of the given name.
+// must either be an object type with an attribute of the given name or
+// a union type with a variant of the given name.
 // This method will panic if the receiver type is not compatible.
 //
-// The method will also panic if the given attribute name is not defined
-// for the value's type. Use the attribute-related methods on Type to
-// check for the validity of an attribute before trying to use it.
+// The method will also panic if the given attribute/variant name is not defined
+// for the value's type. Use the attribute-related or union-related methods on
+// Type to check for the validity of a name before trying to use it.
 //
 // This method may be called on a value whose type is DynamicPseudoType,
 // in which case the result will also be DynamicVal.
@@ -799,25 +833,52 @@ func (val Value) GetAttr(name string) Value {
 		return DynamicVal
 	}
 
-	if !val.ty.IsObjectType() {
-		panic("value is not an object")
-	}
-
 	name = NormalizeString(name)
-	if !val.ty.HasAttribute(name) {
-		panic("value has no attribute of that name")
+
+	switch {
+	case val.ty.IsObjectType():
+		if !val.ty.HasAttribute(name) {
+			panic("value has no attribute of that name")
+		}
+		attrType := val.ty.AttributeType(name)
+
+		if !val.IsKnown() {
+			return UnknownVal(attrType)
+		}
+
+		return Value{
+			ty: attrType,
+			v:  val.v.(map[string]interface{})[name],
+		}
+
+	case val.ty.IsUnionType():
+		if !val.ty.HasUnionVariant(name) {
+			panic("value has no variant of that name")
+		}
+		variantType := val.ty.UnionVariantType(name)
+
+		if !val.IsKnown() {
+			return UnknownVal(variantType)
+		}
+
+		inner := val.v.(unionVal)
+		if inner.variant == name {
+			return Value{
+				ty: variantType,
+				v:  inner.value,
+			}
+		} else {
+			// Any unselected variant is null
+			return Value{
+				ty: variantType,
+				v:  nil,
+			}
+		}
+
+	default:
+		panic("value is not of a object or union type")
 	}
 
-	attrType := val.ty.AttributeType(name)
-
-	if !val.IsKnown() {
-		return UnknownVal(attrType)
-	}
-
-	return Value{
-		ty: attrType,
-		v:  val.v.(map[string]interface{})[name],
-	}
 }
 
 // Index returns the value of an element of the receiver, which must have

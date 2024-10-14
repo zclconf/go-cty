@@ -50,13 +50,13 @@ As usual, `cty.DynamicPseudoType` serves as a special-case placeholder. It is
 used in two ways, depending on whether it appears in the source or the
 destination type:
 
-* When a source type is dynamic, a special unsafe conversion is available that
+- When a source type is dynamic, a special unsafe conversion is available that
   takes any value and passes it through verbatim if it matches the destination
   type, or returns an error if it does not. This can be used as part of handling
   dynamic values during a type-checking procedure, with the generated
   conversion serving as a run-time type check.
 
-* When a _destination_ type is dynamic, a simple passthrough conversion is
+- When a _destination_ type is dynamic, a simple passthrough conversion is
   generated that does not transform the source value at all. This is supported
   so that a destination type can behave similarly to a type description used
   for a conformance check, thus allowing this package to be used to attempt
@@ -110,9 +110,9 @@ other two primitive types have safe conversions to string. The full
 matrix for primitive types is as follows:
 
 |         | string | number | boolean |
-|---------|:------:|:------:|:-------:|
-| string  |   n/a  | unsafe |  unsafe |
-| number  |  safe  |   n/a  |   none  |
+| ------- | :----: | :----: | :-----: |
+| string  |  n/a   | unsafe | unsafe  |
+| number  |  safe  |  n/a   |  none   |
 | boolean |  safe  |  none  |   n/a   |
 
 The conversions for compound types are then derived from the above foundation.
@@ -121,13 +121,14 @@ because a number can convert to a string.
 
 The compound type kinds themselves have some available conversions, though:
 
-|        |  tuple | object | list |   map  |     set    |
-|--------|:------:|:------:|:----:|:------:|:----------:|
-| tuple  |   n/a  |  none  | safe |  none  | safe+lossy |
-| object |  none  |   n/a  | none |  safe  |    none    |
-| list   | unsafe |  none  |  n/a |  none  | safe+lossy |
-| map    |  none  | unsafe | none |   n/a  |    none    |
-| set    | unsafe |  none  | safe |  none  |     n/a    |
+|        | tuple  | object | union  | list | map  |    set     |
+| ------ | :----: | :----: | :----: | :--: | :--: | :--------: |
+| tuple  |  n/a   |  none  |  none  | safe | none | safe+lossy |
+| object |  none  |  n/a   | unsafe | none | safe |    none    |
+| union  |  none  |  none  |  n/a   | none | none |    none    |
+| list   | unsafe |  none  |  none  | n/a  | none | safe+lossy |
+| map    |  none  | unsafe |  none  | none | n/a  |    none    |
+| set    | unsafe |  none  |  none  | safe | none |    n/a     |
 
 Conversions between compound kinds, as shown above, are possible only
 if their respective elements/attributes also have conversions available.
@@ -146,20 +147,45 @@ the target type is considered to be a description of a set of attributes the
 final result should have. There are two important additional concerns that
 result from this design intent:
 
-* If the input type has additional attributes that are not mentioned at all
+- If the input type has additional attributes that are not mentioned at all
   in the target type, those additional attributes are silently discarded
   during conversion, leading to a new object value that has a subset of the
   attributes of the input value, and whose type therefore conforms to the
   target type constraint.
 
-* If any of the attributes of the target type are marked as optional using
+- If any of the attributes of the target type are marked as optional using
   the **currently-experimental** `cty.ObjectWithOptionalAttrs` constructor,
   type conversion will tolerate those attributes being absent in the given
   type, and the resulting value will include appropriately-typed null value
   placeholders as the values of those omitted attributes.
 
-    This behavior is subject to change even in future minor versions of the
-    `cty` module, so that we can try it out with experimental versions of
-    calling applications and adjust the details of the behavior if needed.
-    Hopefully this mechanism will be stabilized in a future release, if those
-    downstream experiments are successful.
+  This behavior is subject to change even in future minor versions of the
+  `cty` module, so that we can try it out with experimental versions of
+  calling applications and adjust the details of the behavior if needed.
+  Hopefully this mechanism will be stabilized in a future release, if those
+  downstream experiments are successful.
+
+## Conversion from Object Types to Union Types
+
+A union type is mechanically similar to an object type which requires exactly
+one of its attributes to have a non-null value, and so there are unsafe
+conversions available from object types to union types with that concept in
+mind.
+
+An object value can convert to a union type if and only if:
+
+- All of the attributes in the source type which match with variant
+  names in the destination type have convertable types.
+- At least one attribute of the object type has a name that matches a variant
+  of the union type.
+- Exactly one attribute of the source object has a non-null value.
+- The one non-null attribute of the source object has a name that matches
+  one of the union variants.
+
+The resulting union value's selected variant is the name of the one non-null
+attribute in the source object, and that variant's value is the result of
+converting the object attribute's value to the tuple variant's type.
+
+If the source object is an unknown value then the type-related constraints above
+must hold but the value-related constraints will be deferred, and the resulting
+union value will also be unknown.

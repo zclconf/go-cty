@@ -142,6 +142,20 @@ func TestWithoutOptionalAttributesDeep(t *testing.T) {
 				}),
 			}),
 		},
+		{
+			Union(map[string]Type{
+				"variant": ObjectWithOptionalAttrs(map[string]Type{
+					"a":       String,
+					"unknown": DynamicPseudoType,
+				}, []string{"a"}),
+			}),
+			Union(map[string]Type{
+				"variant": Object(map[string]Type{
+					"a":       String,
+					"unknown": DynamicPseudoType,
+				}),
+			}),
+		},
 	}
 
 	for _, test := range tests {

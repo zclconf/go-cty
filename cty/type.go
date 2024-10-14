@@ -147,6 +147,13 @@ func (t Type) WithoutOptionalAttributesDeep() Type {
 		// the list of optional attributes (if present). This results in a
 		// concrete Object type which requires all of the original attributes.
 		return Object(attrTypes)
+	case t.IsUnionType():
+		originalVariants := t.UnionVariants()
+		variants := make(map[string]Type, len(originalVariants))
+		for k, t := range originalVariants {
+			variants[k] = t.WithoutOptionalAttributesDeep()
+		}
+		return Union(variants)
 	default:
 		// Should never happen, since above should be exhaustive
 		panic("WithoutOptionalAttributesDeep does not support the given type")
