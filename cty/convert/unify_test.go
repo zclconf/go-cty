@@ -104,6 +104,49 @@ func TestUnify(t *testing.T) {
 		},
 		{
 			[]cty.Type{
+				cty.Union(map[string]cty.Type{"foo": cty.Bool}),
+				cty.Union(map[string]cty.Type{"bar": cty.Number}),
+			},
+			cty.Union(map[string]cty.Type{
+				"foo": cty.Bool,
+				"bar": cty.Number,
+			}),
+			[]bool{true, true},
+		},
+		{
+			[]cty.Type{
+				cty.Union(map[string]cty.Type{
+					"foo": cty.Bool,
+					"bar": cty.Number,
+				}),
+				cty.Union(map[string]cty.Type{
+					"bar": cty.Number,
+				}),
+			},
+			cty.Union(map[string]cty.Type{
+				"foo": cty.Bool,
+				"bar": cty.Number,
+			}),
+			[]bool{false, true},
+		},
+		{
+			[]cty.Type{
+				cty.Union(map[string]cty.Type{"foo": cty.Bool}),
+				cty.Union(map[string]cty.Type{"foo": cty.String}),
+			},
+			cty.Union(map[string]cty.Type{"foo": cty.String}),
+			[]bool{true, false},
+		},
+		{
+			[]cty.Type{
+				cty.Union(map[string]cty.Type{"foo": cty.Bool}),
+				cty.Union(map[string]cty.Type{"foo": cty.Number}),
+			},
+			cty.NilType,
+			nil,
+		},
+		{
+			[]cty.Type{
 				cty.Tuple([]cty.Type{cty.String}),
 				cty.Tuple([]cty.Type{cty.String}),
 			},

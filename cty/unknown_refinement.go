@@ -66,7 +66,7 @@ func (v Value) Refine() *RefinementBuilder {
 			minLen: 0,
 			maxLen: math.MaxInt,
 		}
-	case ty == Bool || ty.IsObjectType() || ty.IsTupleType() || ty.IsCapsuleType():
+	case ty == Bool || ty.IsObjectType() || ty.IsUnionType() || ty.IsTupleType() || ty.IsCapsuleType():
 		// For other known types we'll just track nullability
 		wip = &refinementNullable{}
 	case ty == DynamicPseudoType && v.IsNull():

@@ -1,6 +1,8 @@
 package convert
 
 import (
+	"fmt"
+
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -32,6 +34,7 @@ func unify(types []cty.Type, unsafe bool) (cty.Type, []Conversion) {
 		listCt := 0
 		setCt := 0
 		objectCt := 0
+		unionCt := 0
 		tupleCt := 0
 		dynamicCt := 0
 		for _, ty := range types {
@@ -44,12 +47,12 @@ func unify(types []cty.Type, unsafe bool) (cty.Type, []Conversion) {
 				setCt++
 			case ty.IsObjectType():
 				objectCt++
+			case ty.IsUnionType():
+				unionCt++
 			case ty.IsTupleType():
 				tupleCt++
 			case ty == cty.DynamicPseudoType:
 				dynamicCt++
-			default:
-				break
 			}
 		}
 		switch {
@@ -83,6 +86,8 @@ func unify(types []cty.Type, unsafe bool) (cty.Type, []Conversion) {
 			return unifyObjectTypes(types, unsafe, dynamicCt > 0)
 		case tupleCt > 0 && (tupleCt+dynamicCt) == len(types):
 			return unifyTupleTypes(types, unsafe, dynamicCt > 0)
+		case unionCt > 0 && (unionCt+dynamicCt) == len(types):
+			return unifyUnionTypes(types, unsafe, dynamicCt > 0)
 		case objectCt > 0 && tupleCt > 0:
 			// Can never unify object and tuple types since they have incompatible kinds
 			return cty.NilType, nil
@@ -357,6 +362,71 @@ func unifyObjectTypes(types []cty.Type, unsafe bool, hasDynamic bool) (cty.Type,
 	}
 
 	return retTy, conversions
+}
+
+func unifyUnionTypes(types []cty.Type, unsafe bool, hasDynamic bool) (cty.Type, []Conversion) {
+	// If we had any dynamic types in the input here then we can't predict
+	// what path we'll take through here once these become known types, so
+	// we'll conservatively produce DynamicVal for these.
+	if hasDynamic {
+		return unifyAllAsDynamic(types)
+	}
+
+	// Our goal for union unification is to find a single union type that has
+	// a superset of the variant names from all of the given unions, where
+	// all variants of the same name across all unions can unify to a
+	// single type themselves.
+	//
+	// We'll start then by collecting all of the variant names that we
+	// expect to include in the result union, and all of the source types
+	// that could potentially be assigned to each one.
+	inputVariants := make(map[string][]cty.Type)
+	for _, ty := range types {
+		for name, vty := range ty.UnionVariants() {
+			inputVariants[name] = append(inputVariants[name], vty)
+		}
+	}
+
+	// We now know all of the types that are associated with each variant name
+	// in the given unions, and so we'll try to unify each set so that we
+	// can reduce this to one type per distinct variant.
+	newVariants := make(map[string]cty.Type, len(inputVariants))
+	for variantName, inTys := range inputVariants {
+		outTy, _ := unify(inTys, unsafe)
+		if outTy == cty.NilType {
+			// This variant cannot be unified, so therefore our set of
+			// input union types cannot be unified either.
+			return cty.NilType, nil
+		}
+		newVariants[variantName] = outTy
+	}
+
+	// If we get here then we've successfully found a suitable superset
+	// union type, which we'll construct now.
+	fmt.Printf("new variants are %#v\n", newVariants)
+	retTy := cty.Union(newVariants)
+
+	// We also need to provide conversions from each of the input unions,
+	// or nil for any that happen to already match.
+	retConvs := make([]Conversion, len(types))
+	for i, inTy := range types {
+		if inTy.Equals(retTy) {
+			continue
+		}
+		if unsafe {
+			retConvs[i] = GetConversionUnsafe(inTy, retTy)
+		} else {
+			retConvs[i] = GetConversion(inTy, retTy)
+		}
+		if retConvs[i] == nil {
+			// If our construction logic above was sound then we should always
+			// be able to find a conversion to the constructed union type.
+			// A panic here represents a bug in the code above.
+			panic(fmt.Sprintf("incorrect union unification: %#v cannot convert to unified type %#v", inTy, retTy))
+		}
+	}
+
+	return retTy, retConvs
 }
 
 func unifyObjectTypesToMap(types []cty.Type, unsafe bool) (cty.Type, []Conversion) {

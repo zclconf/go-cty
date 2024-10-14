@@ -592,6 +592,65 @@ func TestConvert(t *testing.T) {
 			})),
 		},
 		{
+			Value: cty.ObjectVal(map[string]cty.Value{
+				"a": cty.NumberIntVal(5),
+				"b": cty.NullVal(cty.String),
+			}),
+			Type: cty.Union(map[string]cty.Type{
+				"a": cty.String,
+				"b": cty.String,
+			}),
+			Want: cty.UnionVal(
+				cty.Union(map[string]cty.Type{
+					"a": cty.String,
+					"b": cty.String,
+				}),
+				"a",
+				cty.StringVal("5"),
+			),
+		},
+		{
+			Value: cty.ObjectVal(map[string]cty.Value{
+				"a": cty.NullVal(cty.Number),
+				"b": cty.True,
+			}),
+			Type: cty.Union(map[string]cty.Type{
+				"a": cty.String,
+				"b": cty.String,
+			}),
+			Want: cty.UnionVal(
+				cty.Union(map[string]cty.Type{
+					"a": cty.String,
+					"b": cty.String,
+				}),
+				"b",
+				cty.StringVal("true"),
+			),
+		},
+		{
+			Value: cty.UnionVal(
+				cty.Union(map[string]cty.Type{
+					"a": cty.Number,
+					"b": cty.Bool,
+				}),
+				"b", cty.True,
+			),
+			Type: cty.Union(map[string]cty.Type{
+				"a": cty.String,
+				"b": cty.String,
+				"c": cty.String,
+			}),
+			Want: cty.UnionVal(
+				cty.Union(map[string]cty.Type{
+					"a": cty.String,
+					"b": cty.String,
+					"c": cty.String,
+				}),
+				"b",
+				cty.StringVal("true"),
+			),
+		},
+		{
 			Value: cty.ListVal([]cty.Value{
 				cty.NullVal(cty.DynamicPseudoType),
 				cty.ObjectVal(map[string]cty.Value{

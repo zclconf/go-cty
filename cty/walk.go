@@ -40,7 +40,7 @@ func walk(path Path, val Value, cb func(Path, Value) (bool, error)) error {
 
 	ty := val.Type()
 	switch {
-	case ty.IsObjectType():
+	case ty.IsObjectType() || ty.IsUnionType():
 		for it := rawVal.ElementIterator(); it.Next(); {
 			nameVal, av := it.Element()
 			path := append(path, GetAttrStep{
@@ -108,7 +108,8 @@ func (t *postorderTransformer) Exit(p Path, v Value) (Value, error) {
 // element types in collections; this function can panic if such invariants
 // are violated, just as if new values were constructed directly using the
 // value constructor functions. An easy way to preserve invariants is to
-// ensure that the transform function never changes the value type.
+// ensure that the transform function never changes the value type, and in
+// a union value always preserves the "nullness" of each of the variants.
 //
 // The callback function may halt the walk altogether by
 // returning a non-nil error. If the returned error is about the element
@@ -225,6 +226,32 @@ func transform(path Path, val Value, t Transformer) (Value, error) {
 			}
 			newVal = ObjectVal(newAVs).WithMarks(marks)
 		}
+
+	case ty.IsUnionType():
+		variants := ty.UnionVariants()
+		var newValVariant string
+		var newValVal Value
+		for name := range variants {
+			v := rawVal.GetAttr(name)
+			path := append(path, GetAttrStep{
+				Name: name,
+			})
+			newV, err := transform(path, v, t)
+			if err != nil {
+				return DynamicVal, err
+			}
+			if !newV.IsNull() {
+				if newValVal != NilVal {
+					panic("more than one union variant selected")
+				}
+				newValVariant = name
+				newValVal = newV
+			}
+		}
+		if newValVal == NilVal {
+			panic("no union variant selected")
+		}
+		newVal = UnionVal(ty, newValVariant, newValVal)
 
 	default:
 		newVal = val

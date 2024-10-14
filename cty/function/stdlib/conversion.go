@@ -2,6 +2,9 @@ package stdlib
 
 import (
 	"fmt"
+	"maps"
+	"slices"
+	"sort"
 	"strconv"
 
 	"github.com/zclconf/go-cty/cty"
@@ -87,6 +90,101 @@ func MakeToFunc(wantTy cty.Type) function.Function {
 			return ret, nil
 		},
 	})
+}
+
+// ToUnionFunc is a function which takes an object-typed value and returns
+// a union-typed value based on it.
+//
+// The given object may have any number of attributes of arbitrary types
+// but exactly one of them must be non-null and all others must be null.
+// The one that is not null then becomes the selected variant of the resulting
+// union value.
+//
+// This function automatically infers a union type based on the given object
+// type. To convert an object type to a specific, predefined union type use
+// [MakeToFunc] with that union type instead of using this function.
+var ToUnionFunc = function.New(&function.Spec{
+	Description: "Constructs a union-typed value based on an example object-typed value.",
+	Params: []function.Parameter{
+		{
+			Name: "variants",
+			Type: cty.DynamicPseudoType,
+		},
+	},
+	Type: func(args []cty.Value) (cty.Type, error) {
+		arg := args[0]
+		objTy := arg.Type()
+		if objTy.HasDynamicTypes() {
+			if arg.IsWhollyKnown() {
+				// If there are no unknown values but still unknown types
+				// then we must have some unknown-typed nulls or empty
+				// collections with unknown element types, in which case
+				// we cannot proceed.
+				return cty.NilType, function.NewArgErrorf(0, "object contains null values of unknown type and/or collections of unknown element type")
+			}
+			// If we have some unknown values then we'll optimistically assume
+			// that we'll get more type information once those unknown values
+			// are resolved, but we cannot predict our result type yet.
+			return cty.DynamicPseudoType, nil
+		}
+		if !objTy.IsObjectType() {
+			return cty.NilType, function.NewArgErrorf(0, "must be of an object type")
+		}
+		// If all of the preconditions hold then we can just directly
+		// translate our object attributes into union variants. We'll
+		// check whether the attribute _values_ are suitable in the Impl
+		// function.
+		atys := objTy.AttributeTypes()
+		if len(atys) == 0 {
+			return cty.NilType, function.NewArgErrorf(0, "object must have at least one attribute")
+		}
+		return cty.Union(atys), nil
+	},
+	RefineResult: refineNonNull,
+	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
+		if retType == cty.DynamicPseudoType {
+			// Our Type function decided it doesn't have enough information
+			// yet, so we don't either.
+			return cty.DynamicVal, nil
+		}
+		// Otherwise, we should definitely now have a union type and
+		// so our goal is to decide which variant to set based on which
+		// single attribute is set in the given object.
+		arg := args[0]
+		allVariants := slices.Collect(maps.Keys(retType.UnionVariants()))
+		sort.Strings(allVariants)
+
+		var variantName string
+		var variantVal cty.Value
+		for _, attrName := range allVariants {
+			attrVal := arg.GetAttr(attrName)
+			rng := attrVal.Range()
+			if rng.DefinitelyNotNull() {
+				if variantVal != cty.NilVal {
+					return cty.NilVal, function.NewArgErrorf(0, "cannot set both %q and %q variants in union", variantName, attrName)
+				}
+				variantName = attrName
+				variantVal = attrVal
+				continue
+			}
+			if !attrVal.IsKnown() {
+				// We don't yet have enough information to decide whether
+				// this attribute is or is not null, so we cannot return
+				// a known result yet.
+				return cty.UnknownVal(retType), nil
+			}
+		}
+		if variantVal == cty.NilVal {
+			// We didn't find any non-null attribute value, so we can't
+			// produce a valid union value.
+			return cty.NilVal, function.NewArgErrorf(0, "must set exactly one attribute to a non-null value")
+		}
+		return cty.UnionVal(retType, variantName, variantVal), nil
+	},
+})
+
+func ToUnion(variants cty.Value) (cty.Value, error) {
+	return ToUnionFunc.Call([]cty.Value{variants})
 }
 
 // AssertNotNullFunc is a function which does nothing except return an error

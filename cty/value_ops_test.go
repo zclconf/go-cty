@@ -2429,6 +2429,7 @@ func TestValueGetAttr(t *testing.T) {
 		AttrName string
 		Expected Value
 	}{
+		// Object tests
 		{
 			ObjectVal(map[string]Value{
 				"greeting": StringVal("hello"),
@@ -2451,16 +2452,111 @@ func TestValueGetAttr(t *testing.T) {
 			UnknownVal(String),
 		},
 		{
-			DynamicVal,
-			"hello",
-			DynamicVal,
-		},
-		{
 			ObjectVal(map[string]Value{
 				"greeting": StringVal("hello"),
 			}).Mark(1),
 			"greeting",
 			StringVal("hello").Mark(1),
+		},
+
+		// Union tests
+		{
+			UnionVal(
+				Union(map[string]Type{
+					"name":   String,
+					"number": Number,
+				}),
+				"name",
+				StringVal("Olive"),
+			),
+			"name",
+			StringVal("Olive"),
+		},
+		{
+			UnionVal(
+				Union(map[string]Type{
+					"name":   String,
+					"number": Number,
+				}),
+				"number",
+				Zero,
+			),
+			"number",
+			Zero,
+		},
+		{
+			UnionVal(
+				Union(map[string]Type{
+					"name":   String,
+					"number": Number,
+				}),
+				"name",
+				StringVal("Olive"),
+			),
+			"number",
+			NullVal(Number),
+		},
+		{
+			UnionVal(
+				Union(map[string]Type{
+					"name":   String,
+					"number": Number,
+				}),
+				"number",
+				Zero,
+			),
+			"name",
+			NullVal(String),
+		},
+		{
+			UnionVal(
+				Union(map[string]Type{
+					"name":   String,
+					"number": Number,
+				}),
+				"name",
+				StringVal("Alex"),
+			).Mark(1),
+			"name",
+			StringVal("Alex").Mark(1),
+		},
+		{
+			UnknownVal(
+				Union(map[string]Type{
+					"name":   String,
+					"number": Number,
+				}),
+			),
+			"name",
+			UnknownVal(String),
+		},
+		{
+			UnknownVal(
+				Union(map[string]Type{
+					"name":   String,
+					"number": Number,
+				}),
+			),
+			"number",
+			UnknownVal(Number),
+		},
+		{
+			UnionVal(
+				Union(map[string]Type{
+					"gr\u00e9eting": String, // precombined é
+				}),
+				"gr\u00e9eting",
+				StringVal("hello"),
+			),
+			"gre\u0301eting", // e with combining acute accent,
+			StringVal("hello"),
+		},
+
+		// Misc
+		{
+			DynamicVal,
+			"hello",
+			DynamicVal,
 		},
 	}
 

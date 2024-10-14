@@ -105,6 +105,9 @@ func (val Value) GoString() string {
 		}
 		vals := val.AsValueMap()
 		return fmt.Sprintf("cty.ObjectVal(%#v)", vals)
+	case val.ty.IsUnionType():
+		variantName, variantValue := unionVariantVal(val)
+		return fmt.Sprintf("cty.UnionVal(%#v, %q, %#v)", val.ty, variantName, variantValue)
 	case val.ty.IsCapsuleType():
 		impl := val.ty.CapsuleOps().GoString
 		if impl == nil {
@@ -257,6 +260,20 @@ func (val Value) Equals(other Value) Value {
 				result = false
 				break
 			}
+		}
+	case ty.IsUnionType():
+		aVariant, aVal := unionVariantVal(val)
+		bVariant, bVal := unionVariantVal(other)
+		if aVariant != bVariant {
+			result = false
+		} else {
+			// aVal and bVal are definitely the same variant and therefore
+			// the same type.
+			eq := aVal.Equals(bVal)
+			if !eq.IsKnown() {
+				return unknownResult()
+			}
+			result = eq.True()
 		}
 	case ty.IsTupleType():
 		tty := ty.typeImpl.(typeTuple)
@@ -474,6 +491,13 @@ func (val Value) RawEquals(other Value) bool {
 			}
 		}
 		return true
+	case ty.IsUnionType():
+		aVariant, aVal := unionVariantVal(val)
+		bVariant, bVal := unionVariantVal(other)
+		if aVariant != bVariant {
+			return false
+		}
+		return aVal.RawEquals(bVal)
 	case ty.IsTupleType():
 		tty := ty.typeImpl.(typeTuple)
 		for i, ety := range tty.ElemTypes {
@@ -780,12 +804,13 @@ func (val Value) Absolute() Value {
 }
 
 // GetAttr returns the value of the given attribute of the receiver, which
-// must be of an object type that has an attribute of the given name.
+// must either be an object type with an attribute of the given name or
+// a union type with a variant of the given name.
 // This method will panic if the receiver type is not compatible.
 //
-// The method will also panic if the given attribute name is not defined
-// for the value's type. Use the attribute-related methods on Type to
-// check for the validity of an attribute before trying to use it.
+// The method will also panic if the given attribute/variant name is not defined
+// for the value's type. Use the attribute-related or union-related methods on
+// Type to check for the validity of a name before trying to use it.
 //
 // This method may be called on a value whose type is DynamicPseudoType,
 // in which case the result will also be DynamicVal.
@@ -799,25 +824,67 @@ func (val Value) GetAttr(name string) Value {
 		return DynamicVal
 	}
 
-	if !val.ty.IsObjectType() {
-		panic("value is not an object")
-	}
-
 	name = NormalizeString(name)
-	if !val.ty.HasAttribute(name) {
-		panic("value has no attribute of that name")
+
+	switch {
+	case val.ty.IsObjectType():
+		if !val.ty.HasAttribute(name) {
+			panic("value has no attribute of that name")
+		}
+		attrType := val.ty.AttributeType(name)
+
+		if !val.IsKnown() {
+			return UnknownVal(attrType)
+		}
+
+		return Value{
+			ty: attrType,
+			v:  val.v.(map[string]interface{})[name],
+		}
+
+	case val.ty.IsUnionType():
+		if !val.ty.HasUnionVariant(name) {
+			panic("value has no variant of that name")
+		}
+		variantType := val.ty.UnionVariantType(name)
+
+		if !val.IsKnown() {
+			return UnknownVal(variantType)
+		}
+
+		inner := val.v.(unionVal)
+		if inner.variant == name {
+			return Value{
+				ty: variantType,
+				v:  inner.value,
+			}
+		} else {
+			// Any unselected variant is null
+			return Value{
+				ty: variantType,
+				v:  nil,
+			}
+		}
+
+	default:
+		panic("value is not of a object or union type")
 	}
 
-	attrType := val.ty.AttributeType(name)
+}
 
-	if !val.IsKnown() {
-		return UnknownVal(attrType)
+// UnionVariant returns the name of the selected variant of the union value,
+// and the value currently associated with that variant.
+//
+// Panics if the value is not of a union type, is unknown, or is null.
+//
+// If the union value is marked then the resulting value has the same marks.
+func (val Value) UnionVariant() (string, Value) {
+	if val.IsMarked() {
+		val, valMarks := val.Unmark()
+		retVariant, retValue := val.UnionVariant()
+		return retVariant, retValue.WithMarks(valMarks)
 	}
-
-	return Value{
-		ty: attrType,
-		v:  val.v.(map[string]interface{})[name],
-	}
+	return unionVariantVal(val)
 }
 
 // Index returns the value of an element of the receiver, which must have

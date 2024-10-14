@@ -92,6 +92,12 @@ func getConversionKnown(in cty.Type, out cty.Type, unsafe bool) conversion {
 	case out.IsTupleType() && in.IsTupleType():
 		return conversionTupleToTuple(in, out, unsafe)
 
+	case out.IsUnionType() && in.IsUnionType():
+		return conversionUnionToUnion(in, out, unsafe)
+
+	case out.IsUnionType() && in.IsObjectType():
+		return conversionObjectToUnion(in, out, unsafe)
+
 	case out.IsListType() && (in.IsListType() || in.IsSetType()):
 		inEty := in.ElementType()
 		outEty := out.ElementType()

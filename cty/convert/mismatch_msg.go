@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/zclconf/go-cty/cty"
 )
@@ -31,6 +32,16 @@ func MismatchMessage(got, want cty.Type) string {
 		// If both types are object types then we may be able to say something
 		// about their respective attributes.
 		return mismatchMessageObjects(got, want)
+
+	case got.IsUnionType() && want.IsUnionType():
+		// If both types are union types then we can hopefully say something
+		// about their respective variants.
+		return mismatchMessageUnions(got, want)
+
+	case got.IsObjectType() && want.IsUnionType():
+		// If we were attempting an object-to-union conversion then we
+		// can hopefully say something useful about why it failed.
+		return mismatchMessageObjectToUnion(got, want)
 
 	case got.IsTupleType() && want.IsListType() && want.ElementType() == cty.DynamicPseudoType:
 		// If conversion from tuple to list failed then it's because we couldn't
@@ -144,6 +155,110 @@ func mismatchMessageObjects(got, want cty.Type) string {
 		// We should never get here, but if we do then we'll return
 		// just a generic message.
 		return "incorrect object attributes"
+	}
+}
+
+func mismatchMessageUnions(got, want cty.Type) string {
+	var missingVariants []string
+	var incompatibleVariantsSafe []string
+	var incompatibleVariantsUnsafe []string
+
+	givenVtys := got.UnionVariants()
+	allowedVtys := got.UnionVariants()
+	for name, givenVty := range givenVtys {
+		allowedVty, ok := allowedVtys[name]
+		if !ok {
+			missingVariants = append(missingVariants, name)
+			continue
+		}
+		if givenVty.Equals(allowedVty) {
+			continue // definitely okay
+		}
+		if conv := GetConversion(givenVty, allowedVty); conv == nil {
+			incompatibleVariantsSafe = append(incompatibleVariantsSafe, fmt.Sprintf(
+				"%s: %s",
+				name, MismatchMessage(givenVty, allowedVty),
+			))
+			continue
+		}
+		if conv := GetConversionUnsafe(givenVty, allowedVty); conv == nil {
+			incompatibleVariantsUnsafe = append(incompatibleVariantsUnsafe, fmt.Sprintf(
+				"%s: %s",
+				name, MismatchMessage(givenVty, allowedVty),
+			))
+		}
+	}
+
+	// We return a message about the most severe of the violations, to
+	// avoid returning a horrendously-long error message.
+	switch {
+	case len(missingVariants) != 0:
+		sort.Strings(missingVariants)
+		switch len(missingVariants) {
+		case 1:
+			return fmt.Sprintf("unexpected union variant %q", missingVariants[0])
+		default:
+			return fmt.Sprintf("unexpected union variants: %s", strings.Join(missingVariants, ", "))
+		}
+	case len(incompatibleVariantsSafe) != 0:
+		sort.Strings(incompatibleVariantsSafe)
+		// To keep the message relatively concise, we'll return just the first
+		// incompatibility.
+		return "incompatible type for variant " + incompatibleVariantsSafe[0]
+	case len(incompatibleVariantsUnsafe) != 0:
+		sort.Strings(incompatibleVariantsUnsafe)
+		// To keep the message relatively concise, we'll return just the first
+		// incompatibility.
+		return "incompatible type for variant " + incompatibleVariantsUnsafe[0]
+	default:
+		// Generic (but rather useless) error message just in case something
+		// else is wrong that we didn't handle properly.
+		return "incompatible union type"
+	}
+}
+
+func mismatchMessageObjectToUnion(got, want cty.Type) string {
+	if len(got.AttributeTypes()) == 0 {
+		return "empty object cannot convert to union type"
+	}
+
+	var unwantedAttrs []string
+	var incompatibleAttrs []string
+	atys := got.AttributeTypes()
+	vtys := want.UnionVariants()
+	for name, aty := range atys {
+		vty, ok := vtys[name]
+		if !ok {
+			unwantedAttrs = append(unwantedAttrs, name)
+			continue
+		}
+		if !aty.Equals(vty) {
+			if conv := GetConversionUnsafe(aty, vty); conv == nil {
+				mismatch := MismatchMessage(aty, vty)
+				incompatibleAttrs = append(incompatibleAttrs, fmt.Sprintf("%q: %s", name, mismatch))
+			}
+		}
+	}
+	switch {
+	case len(unwantedAttrs) != 0:
+		sort.Strings(unwantedAttrs)
+		switch len(unwantedAttrs) {
+		case 1:
+			return fmt.Sprintf("tuple type has no variant named %q", unwantedAttrs[0])
+		case 2:
+			return fmt.Sprintf("tuple type has no variants named %q or %q", unwantedAttrs[0], unwantedAttrs[1])
+		default:
+			return fmt.Sprintf("tuple type does not have any of the following variant names: %s", strings.Join(unwantedAttrs, ","))
+		}
+	case len(incompatibleAttrs) != 0:
+		sort.Strings(incompatibleAttrs)
+		// There isn't really any compact way for us to report more than one
+		// incompatible error message, so we'll just report whichever one
+		// sorts lexically first.
+		return "incompatible type for tuple variant " + incompatibleAttrs[0]
+	default:
+		// If all else fails, a generic (and rather useless) error message
+		return "incompatible object type for union conversion"
 	}
 }
 

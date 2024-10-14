@@ -142,6 +142,20 @@ func TestWithoutOptionalAttributesDeep(t *testing.T) {
 				}),
 			}),
 		},
+		{
+			Union(map[string]Type{
+				"variant": ObjectWithOptionalAttrs(map[string]Type{
+					"a": String,
+					"b": Bool,
+				}, []string{"a"}),
+			}),
+			Union(map[string]Type{
+				"variant": Object(map[string]Type{
+					"a": String,
+					"b": Bool,
+				}),
+			}),
+		},
 	}
 
 	for _, test := range tests {

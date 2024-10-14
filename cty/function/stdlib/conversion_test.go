@@ -135,3 +135,146 @@ func TestTo(t *testing.T) {
 		})
 	}
 }
+
+func TestToUnion(t *testing.T) {
+	tests := []struct {
+		Object cty.Value
+		Want   cty.Value
+		Err    string
+	}{
+		{
+			cty.EmptyObjectVal,
+			cty.DynamicVal,
+			`object must have at least one attribute`,
+		},
+		{
+			cty.ObjectVal(map[string]cty.Value{
+				"a": cty.StringVal("b"),
+			}),
+			cty.UnionVal(
+				cty.Union(map[string]cty.Type{
+					"a": cty.String,
+				}),
+				"a", cty.StringVal("b"),
+			),
+			``,
+		},
+		{
+			cty.ObjectVal(map[string]cty.Value{
+				"a": cty.StringVal("b"),
+				"c": cty.NullVal(cty.Bool),
+			}),
+			cty.UnionVal(
+				cty.Union(map[string]cty.Type{
+					"a": cty.String,
+					"c": cty.Bool,
+				}),
+				"a", cty.StringVal("b"),
+			),
+			``,
+		},
+		{
+			cty.ObjectVal(map[string]cty.Value{
+				"a": cty.StringVal("b"),
+				"c": cty.True,
+			}),
+			cty.DynamicVal,
+			`cannot set both "a" and "c" variants in union`,
+		},
+		{
+			cty.ObjectVal(map[string]cty.Value{
+				"a": cty.UnknownVal(cty.Number),
+				"c": cty.True,
+			}),
+			cty.UnknownVal(cty.Union(map[string]cty.Type{
+				"a": cty.Number,
+				"c": cty.Bool,
+			})).RefineNotNull(),
+			``,
+		},
+		{
+			cty.ObjectVal(map[string]cty.Value{
+				"a": cty.UnknownVal(cty.Number).RefineNotNull(),
+				"c": cty.NullVal(cty.Bool),
+			}),
+			cty.UnionVal(
+				cty.Union(map[string]cty.Type{
+					"a": cty.Number,
+					"c": cty.Bool,
+				}),
+				"a", cty.UnknownVal(cty.Number).RefineNotNull(),
+			),
+			``,
+		},
+		{
+			cty.ObjectVal(map[string]cty.Value{
+				"a": cty.UnknownVal(cty.Number).RefineNotNull(),
+				"c": cty.UnknownVal(cty.Bool).RefineNotNull(),
+			}),
+			cty.DynamicVal,
+			`cannot set both "a" and "c" variants in union`,
+		},
+		{
+			cty.DynamicVal,
+			cty.DynamicVal,
+			``,
+		},
+		{
+			cty.UnknownVal(cty.EmptyObject),
+			cty.DynamicVal,
+			`object must have at least one attribute`,
+		},
+		{
+			cty.UnknownVal(cty.Object(map[string]cty.Type{
+				"a": cty.String,
+			})),
+			cty.UnknownVal(cty.Union(map[string]cty.Type{
+				"a": cty.String,
+			})).RefineNotNull(),
+			``,
+		},
+		{
+			cty.ObjectVal(map[string]cty.Value{
+				"a": cty.UnknownVal(cty.DynamicPseudoType),
+			}),
+			cty.DynamicVal,
+			``,
+		},
+		{
+			cty.ObjectVal(map[string]cty.Value{
+				"a": cty.NullVal(cty.DynamicPseudoType),
+			}),
+			cty.DynamicVal,
+			`object contains null values of unknown type and/or collections of unknown element type`,
+		},
+		{
+			cty.ObjectVal(map[string]cty.Value{
+				"a": cty.ListValEmpty(cty.DynamicPseudoType),
+			}),
+			cty.DynamicVal,
+			`object contains null values of unknown type and/or collections of unknown element type`,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("ToUnion(%#v)", test.Object), func(t *testing.T) {
+			got, err := ToUnion(test.Object)
+
+			if test.Err != "" {
+				if err == nil {
+					t.Fatal("succeeded; want error")
+				}
+				if got, want := err.Error(), test.Err; got != want {
+					t.Fatalf("wrong error\ngot:  %s\nwant: %s", got, want)
+				}
+				return
+			} else if err != nil {
+				t.Fatalf("unexpected error: %s", err)
+			}
+
+			if !got.RawEquals(test.Want) {
+				t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, test.Want)
+			}
+		})
+	}
+}

@@ -14,13 +14,13 @@ Along with the primitive types, `cty` supports _compound_ types, which are
 types that are constructed by assembling together other types in a particular
 way. The _compound_ types are further subdivided into two categories:
 
-* **Collection Types** represent collections of values that all have the same
+- **Collection Types** represent collections of values that all have the same
   type (the _element type_) and permit access to those values in different
   ways. The collection type kinds are _list_, _set_, and _map_.
 
-* **Structural Types** represent collections of values that may all have
+- **Structural Types** represent collections of values that may all have
   _different_ types, organized either by name or by position in a sequence.
-  The structural type kinds are _object_ and _tuple_.
+  The structural type kinds are _object_, _union_, and _tuple_.
 
 For example, "list of string" is a collection type that represents a
 collection of string values (_elements_) that are each assigned a sequential
@@ -125,12 +125,12 @@ in a run-time panic.
 
 The `cty.Value` object has two classes of methods:
 
-* **Operation Methods** stay within the `cty` type system, dealing entirely
+- **Operation Methods** stay within the `cty` type system, dealing entirely
   with `cty.Value` instances. These methods fully deal with concerns such as
   unknown values, so the caller just needs to be sure to apply only operations
   that are valid for the receiving value's type.
 
-* **Integration Methods** live on the boundary between `cty` and the native
+- **Integration Methods** live on the boundary between `cty` and the native
   Go type system, and can be used by the calling application to integrate
   with non-`cty`-aware code. These methods often have constraints such as not
   supporting unknown values, which are covered in their documentation.

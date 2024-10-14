@@ -11,11 +11,11 @@ import (
 //
 // Its usage pattern is as follows:
 //
-//     it := val.ElementIterator()
-//     for it.Next() {
-//         key, val := it.Element()
-//         // ...
-//     }
+//	it := val.ElementIterator()
+//	for it.Next() {
+//	    key, val := it.Element()
+//	    // ...
+//	}
 type ElementIterator interface {
 	Next() bool
 	Element() (key Value, value Value)
@@ -34,6 +34,8 @@ func canElementIterator(val Value) bool {
 	case val.ty.IsTupleType():
 		return true
 	case val.ty.IsObjectType():
+		return true
+	case val.ty.IsUnionType():
 		return true
 	default:
 		return false
@@ -92,6 +94,23 @@ func elementIterator(val Value) ElementIterator {
 			vals:      val.v.(map[string]interface{}),
 			attrNames: keys,
 			idx:       -1,
+		}
+	case val.ty.IsUnionType():
+		// Iterating a union type is similar to iterating an object type
+		// except that we guarantee that exactly one "attribute" will
+		// have a non-null value.
+		variants := val.ty.UnionVariants()
+		keys := make([]string, 0, len(variants))
+		for key := range variants {
+			keys = append(keys, key)
+		}
+		sort.Strings(keys)
+
+		return &unionElementIterator{
+			inner:        val.v.(unionVal),
+			variants:     variants,
+			variantNames: keys,
+			idx:          -1,
 		}
 	default:
 		panic("attempt to iterate on non-collection, non-tuple type")
@@ -191,4 +210,29 @@ func (it *objectElementIterator) Element() (Value, Value) {
 func (it *objectElementIterator) Next() bool {
 	it.idx++
 	return it.idx < len(it.attrNames)
+}
+
+type unionElementIterator struct {
+	inner        unionVal
+	variants     map[string]Type
+	variantNames []string
+	idx          int
+}
+
+func (it *unionElementIterator) Element() (Value, Value) {
+	key := it.variantNames[it.idx]
+	ty := it.variants[key]
+	var v any
+	if key == it.inner.variant {
+		v = it.inner.value
+	}
+	return StringVal(key), Value{
+		ty: ty,
+		v:  v,
+	}
+}
+
+func (it *unionElementIterator) Next() bool {
+	it.idx++
+	return it.idx < len(it.variantNames)
 }
