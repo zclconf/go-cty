@@ -78,6 +78,30 @@ var ReverseFunc = function.New(&function.Spec{
 	},
 })
 
+var StrContainsFunc = function.New(&function.Spec{
+	Params: []function.Parameter{
+		{
+			Name: "str",
+			Type: cty.String,
+		},
+		{
+			Name: "substr",
+			Type: cty.String,
+		},
+	},
+	Type: function.StaticReturnType(cty.Bool),
+	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
+		str := args[0].AsString()
+		substr := args[1].AsString()
+
+		if strings.Contains(str, substr) {
+			return cty.True, nil
+		}
+
+		return cty.False, nil
+	},
+})
+
 var StrlenFunc = function.New(&function.Spec{
 	Description: "Returns the number of Unicode characters (technically: grapheme clusters) in the given string.",
 	Params: []function.Parameter{
@@ -538,6 +562,12 @@ func Lower(str cty.Value) (cty.Value, error) {
 // single character.
 func Reverse(str cty.Value) (cty.Value, error) {
 	return ReverseFunc.Call([]cty.Value{str})
+}
+
+// StrContains searches a given string for another given substring,
+// if found the function returns true, otherwise returns false.
+func StrContains(str, substr cty.Value) (cty.Value, error) {
+	return StrContainsFunc.Call([]cty.Value{str, substr})
 }
 
 // Strlen is a Function that returns the length of the given string in
