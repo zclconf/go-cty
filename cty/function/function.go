@@ -286,7 +286,7 @@ func (f Function) Call(args []cty.Value) (val cty.Value, err error) {
 		val := posArgs[i]
 
 		if !val.IsKnown() && !spec.AllowUnknown {
-			return cty.UnknownVal(expectedType), nil
+			return cty.UnknownVal(expectedType).WithMarks(val.Marks()), nil
 		}
 
 		if !spec.AllowMarked {
@@ -311,7 +311,7 @@ func (f Function) Call(args []cty.Value) (val cty.Value, err error) {
 		spec := f.spec.VarParam
 		for i, val := range varArgs {
 			if !val.IsKnown() && !spec.AllowUnknown {
-				return cty.UnknownVal(expectedType), nil
+				return cty.UnknownVal(expectedType).WithMarks(val.Marks()), nil
 			}
 			if !spec.AllowMarked {
 				unwrappedVal, marks := val.UnmarkDeep()

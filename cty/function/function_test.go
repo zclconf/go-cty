@@ -486,6 +486,49 @@ func TestFunctionWithNewDescriptions(t *testing.T) {
 	})
 }
 
+func TestFunctionCallWithUnknownVals(t *testing.T) {
+	t.Run("params", func(t *testing.T) {
+		f := New(&Spec{
+			Params: []Parameter{
+				{
+					Name: "foo",
+					Type: cty.String,
+				},
+			},
+			Type: StaticReturnType(cty.String),
+			Impl: stubImpl,
+		})
+		marks := cty.NewValueMarks("special", "extra")
+		unknownWithMarks := cty.UnknownVal(cty.String).WithMarks(marks)
+		got, err := f.Call([]cty.Value{unknownWithMarks})
+		if err != nil {
+			t.Error(err)
+		}
+		if !marks.Equal(got.Marks()) {
+			t.Errorf("unexpected marks\ngot:  %s\nwant: %s", got.Marks(), marks)
+		}
+	})
+	t.Run("varparam", func(t *testing.T) {
+		f := New(&Spec{
+			VarParam: &Parameter{
+				Name: "foo",
+				Type: cty.String,
+			},
+			Type: StaticReturnType(cty.String),
+			Impl: stubImpl,
+		})
+		marks := cty.NewValueMarks("special", "extra")
+		unknownWithMarks := cty.UnknownVal(cty.String).WithMarks(marks)
+		got, err := f.Call([]cty.Value{unknownWithMarks})
+		if err != nil {
+			t.Error(err)
+		}
+		if !marks.Equal(got.Marks()) {
+			t.Errorf("unexpected marks\ngot:  %s\nwant: %s", got.Marks(), marks)
+		}
+	})
+}
+
 func stubType([]cty.Value) (cty.Type, error) {
 	return cty.NilType, fmt.Errorf("should not be called")
 }
