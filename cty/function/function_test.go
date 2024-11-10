@@ -493,3 +493,80 @@ func stubType([]cty.Value) (cty.Type, error) {
 func stubImpl([]cty.Value, cty.Type) (cty.Value, error) {
 	return cty.NilVal, fmt.Errorf("should not be called")
 }
+
+func TestFunctionCallWithUnknownVals(t *testing.T) {
+	t.Run("params", func(t *testing.T) {
+		f := New(&Spec{
+			Params: []Parameter{
+				{
+					Name: "foo",
+					Type: cty.String,
+				},
+				{
+					Name: "bar",
+					Type: cty.String,
+				},
+			},
+			Type: StaticReturnType(cty.String),
+			Impl: stubImpl,
+		})
+		marks := cty.NewValueMarks("special", "extra")
+		unknownWithMarks := cty.UnknownVal(cty.String).WithMarks(marks)
+		knownWithMarks := cty.StringVal("ok").WithMarks(marks)
+		got, err := f.Call([]cty.Value{unknownWithMarks, knownWithMarks})
+		if err != nil {
+			t.Error(err)
+		}
+		if !marks.Equal(got.Marks()) {
+			t.Errorf("unexpected marks\ngot:  %s\nwant: %s", got.Marks(), marks)
+		}
+	})
+	t.Run("params-partial-marks", func(t *testing.T) {
+		f := New(&Spec{
+			Params: []Parameter{
+				{
+					Name: "foo",
+					Type: cty.String,
+				},
+				{
+					Name: "bar",
+					Type: cty.String,
+					// AllowMarked means we can't include this value's marks in
+					// the early return unknown value.
+					AllowMarked: true,
+				},
+			},
+			Type: StaticReturnType(cty.String),
+			Impl: stubImpl,
+		})
+		marks := cty.NewValueMarks("special")
+		unknownWithMarks := cty.UnknownVal(cty.String).WithMarks(marks)
+		knownWithMarks := cty.StringVal("ok").Mark("allow_marked")
+		got, err := f.Call([]cty.Value{unknownWithMarks, knownWithMarks})
+		if err != nil {
+			t.Error(err)
+		}
+		if !marks.Equal(got.Marks()) {
+			t.Errorf("unexpected marks\ngot:  %s\nwant: %s", got.Marks(), marks)
+		}
+	})
+	t.Run("varparam", func(t *testing.T) {
+		f := New(&Spec{
+			VarParam: &Parameter{
+				Name: "foo",
+				Type: cty.String,
+			},
+			Type: StaticReturnType(cty.String),
+			Impl: stubImpl,
+		})
+		marks := cty.NewValueMarks("special", "extra")
+		unknownWithMarks := cty.UnknownVal(cty.String).WithMarks(marks)
+		got, err := f.Call([]cty.Value{unknownWithMarks})
+		if err != nil {
+			t.Error(err)
+		}
+		if !marks.Equal(got.Marks()) {
+			t.Errorf("unexpected marks\ngot:  %s\nwant: %s", got.Marks(), marks)
+		}
+	})
+}
