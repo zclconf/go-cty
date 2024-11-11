@@ -1,5 +1,6 @@
 # 1.15.1 (Unreleased)
 
+* `function`: Function calls can now return more mark-related information when called with unknown values when neither `AllowMarks` nor `AllowUnknown` are set for a particular parameter. ([#196](https://github.com/zclconf/go-cty/pull/196))
 
 # 1.15.0 (July 15, 2024)
 
