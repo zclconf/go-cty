@@ -569,4 +569,78 @@ func TestFunctionCallWithUnknownVals(t *testing.T) {
 			t.Errorf("unexpected marks\ngot:  %s\nwant: %s", got.Marks(), marks)
 		}
 	})
+
+	t.Run("refined-marked", func(t *testing.T) {
+		f := New(&Spec{
+			Params: []Parameter{
+				{
+					Name: "first",
+					Type: cty.String,
+				},
+				{
+					Name:         "second",
+					Type:         cty.String,
+					AllowMarked:  true,
+					AllowUnknown: true,
+				},
+			},
+			Type: StaticReturnType(cty.String),
+			RefineResult: func(b *cty.RefinementBuilder) *cty.RefinementBuilder {
+				return b.NotNull()
+			},
+			Impl: stubImpl,
+		})
+		got, err := f.Call([]cty.Value{
+			cty.UnknownVal(cty.String).Mark("first"),
+			cty.UnknownVal(cty.String).Mark("second"),
+		})
+		if err != nil {
+			t.Error(err)
+		}
+		// since the second parameter allows marked values, we should only
+		// expect the fist mark when given unknown arguments.
+		expected := cty.UnknownVal(cty.String).RefineNotNull().Mark("first")
+		if !got.RawEquals(expected) {
+			t.Errorf("expected %#v\ngot: %#v", expected, got)
+		}
+	})
+
+	t.Run("marked-dynamic-not-refined", func(t *testing.T) {
+		f := New(&Spec{
+			Params: []Parameter{
+				{
+					Name: "first",
+					Type: cty.String,
+				},
+				{
+					Name:         "second",
+					Type:         cty.String,
+					AllowMarked:  true,
+					AllowUnknown: true,
+				},
+			},
+			Type: func([]cty.Value) (cty.Type, error) {
+				// this isn't called with known args, so a static dynamic type is OK
+				return cty.DynamicPseudoType, nil
+			},
+			RefineResult: func(b *cty.RefinementBuilder) *cty.RefinementBuilder {
+				return b.NotNull()
+			},
+			Impl: stubImpl,
+		})
+		got, err := f.Call([]cty.Value{
+			cty.DynamicVal.Mark("first"),
+			cty.DynamicVal.Mark("second"),
+		})
+		if err != nil {
+			t.Error(err)
+		}
+		// Since the second parameter allows marked values, we should only
+		// expect the fist mark when given unknown arguments.
+		// Because the type is unknown, the result should not be refined.
+		expected := cty.DynamicVal.Mark("first")
+		if !got.RawEquals(expected) {
+			t.Errorf("expected %#v\ngot: %#v", expected, got)
+		}
+	})
 }
