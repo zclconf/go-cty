@@ -1,0 +1,57 @@
+github-actions:
+  - changed-files:
+      - any-glob-to-any-file:
+        - '.github/**'
+
+dependencies:
+  - changed-files:
+      - any-glob-to-any-file:
+        - 'go.mod'
+        - 'go.sum'
+
+documentation:
+  - changed-files:
+      - any-glob-to-any-file:
+        - 'README.md'
+        - COMPATIBILITY.md
+        - 'docs/**'
+
+tests:
+  - changed-files:
+      - any-glob-to-any-file:
+        - '**/*_test.go'
+
+convert:
+  - changed-files:
+      - any-glob-to-any-file:
+        - 'cty/convert/*'
+
+functions:
+  - changed-files:
+      - any-glob-to-any-file:
+        - 'cty/function/*.go'
+
+functions/stdlib:
+  - changed-files:
+      - any-glob-to-any-file:
+        - 'cty/function/stdlib/*.go'
+
+gocty:
+  - changed-files:
+      - any-glob-to-any-file:
+        - 'cty/gocty/*.go'
+
+json:
+  - changed-files:
+      - any-glob-to-any-file:
+        - 'cty/json/*.go'
+
+msgpack:
+  - changed-files:
+      - any-glob-to-any-file:
+        - 'cty/msgpack/*.go'
+
+set-internals:
+  - changed-files:
+      - any-glob-to-any-file:
+        - 'cty/set/*.go'
