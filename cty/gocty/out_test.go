@@ -374,6 +374,31 @@ func TestOut(t *testing.T) {
 	}
 }
 
+func TestOutOtherTags(t *testing.T) {
+	taggedCty, taggedOther := new(testStructManyTag), new(testStructManyTag)
+	err := FromCtyValueTagged(cty.ObjectVal(map[string]cty.Value{
+		"name": cty.StringVal("Eva"),
+	}), taggedCty, "cty")
+	if err != nil {
+		t.Fatalf("FromCtyValueTagged returned error: %s", err)
+	}
+
+	err = FromCtyValueTagged(cty.ObjectVal(map[string]cty.Value{
+		"another_name": cty.StringVal("Alice"),
+	}), taggedOther, "other")
+	if err != nil {
+		t.Fatalf("FromCtyValueTagged returned error: %s", err)
+	}
+
+	if taggedCty.Name != "Eva" {
+		t.Fatalf("taggedCty name mismatch: %s != Eva!", taggedCty.Name)
+	}
+
+	if taggedOther.Name != "Alice" {
+		t.Fatalf("taggedCty name mismatch: %s != Alice!", taggedOther.Name)
+	}
+}
+
 type testOutAssertFunc func(cty.Value, reflect.Type, interface{}, *testing.T)
 
 func testOutAssertPtrVal(want interface{}) testOutAssertFunc {
@@ -407,6 +432,10 @@ func testOutWrongResult(ctyValue cty.Value, targetType reflect.Type, got interfa
 type testStruct struct {
 	Name   string `cty:"name"`
 	Number *int   `cty:"number"`
+}
+
+type testStructManyTag struct {
+	Name string `cty:"name" other:"another_name"`
 }
 
 type testTupleStruct struct {
