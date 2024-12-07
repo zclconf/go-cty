@@ -46,6 +46,20 @@ func TestConvertCapsuleType(t *testing.T) {
 		return cty.CapsuleVal(capTy, &s)
 	}
 
+	capIntTy := cty.CapsuleWithOps("int test thingy", reflect.TypeOf(0), &cty.CapsuleOps{
+		ConversionFrom: func(src cty.Type) func(interface{}, cty.Path) (cty.Value, error) {
+			if src.Equals(capTy) {
+				return func(v interface{}, p cty.Path) (cty.Value, error) {
+					return capVal(fmt.Sprintf("%d", *(v.(*int)))), nil
+				}
+			}
+			return nil
+		},
+	})
+	capIntVal := func(i int) cty.Value {
+		return cty.CapsuleVal(capIntTy, &i)
+	}
+
 	tests := []struct {
 		From    cty.Value
 		To      cty.Type
@@ -101,6 +115,11 @@ func TestConvertCapsuleType(t *testing.T) {
 			From:    cty.NullVal(capTy),
 			To:      cty.Bool,
 			WantErr: `bool required`,
+		},
+		{
+			From: capIntVal(42),
+			To:   capTy,
+			Want: capVal("42"),
 		},
 	}
 
