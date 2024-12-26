@@ -212,6 +212,19 @@ func (s IndexStep) Apply(val Value) (Value, error) {
 		return NilVal, errors.New("cannot index a null value")
 	}
 
+	// For sets, IndexStep.Key is the value itself.
+	if val.Type().IsSetType() {
+		findElementResult := val.findElement(s.Key)
+		has, _ := findElementResult.hasElement.Unmark()
+		if !has.IsKnown() {
+			return UnknownVal(val.Type().ElementType()), nil
+		}
+		if !has.True() {
+			return NilVal, errors.New("value does not have given element")
+		}
+		return findElementResult.matchingElement, nil
+	}
+
 	switch s.Key.Type() {
 	case Number:
 		if !(val.Type().IsListType() || val.Type().IsTupleType()) {
