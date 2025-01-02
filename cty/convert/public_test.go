@@ -1794,6 +1794,36 @@ func TestConvert(t *testing.T) {
 				})),
 			}),
 		},
+
+		{
+			Value: cty.TupleVal([]cty.Value{
+				cty.ObjectVal(map[string]cty.Value{
+					"optional_map": cty.EmptyObjectVal,
+				}),
+				cty.ObjectVal(map[string]cty.Value{
+					"optional_map": cty.MapValEmpty(cty.Object(map[string]cty.Type{
+						"asdf": cty.String,
+					})),
+				}),
+			}),
+			Type: cty.Set(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+				"optional_map": cty.Map(cty.ObjectWithOptionalAttrs(map[string]cty.Type{
+					"asdf": cty.String,
+				}, []string{"asdf"})),
+			}, []string{"optional_map"})),
+			Want: cty.SetVal([]cty.Value{
+				cty.ObjectVal(map[string]cty.Value{
+					"optional_map": cty.MapValEmpty(cty.Object(map[string]cty.Type{
+						"asdf": cty.String,
+					})),
+				}),
+				cty.ObjectVal(map[string]cty.Value{
+					"optional_map": cty.MapValEmpty(cty.Object(map[string]cty.Type{
+						"asdf": cty.String,
+					})),
+				}),
+			}),
+		},
 	}
 
 	for _, test := range tests {
