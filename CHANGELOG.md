@@ -1,6 +1,7 @@
 # 1.16.0 (Unreleased)
 
 * `convert`: When converting between two different capsule types, will now try to use the "conversion _from_" implementation from the target type if the source type doesn't have a suitable "conversion _to_" implementation. ([#194](https://github.com/zclconf/go-cty/pull/194))
+* `convert`: When converting to a map whose element type is an object type with optional attributes, will no longer construct a broken result when a final map is empty. ([#198](https://github.com/zclconf/go-cty/pull/198))
 
 # 1.15.1 (November 26, 2024)
 
