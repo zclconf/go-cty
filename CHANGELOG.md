@@ -1,5 +1,6 @@
 # 1.16.1 (Unreleased)
 
+* `function/stdlib`: `FormatFunc` and `FormatListFunc` now handle unknown and null values of unknown type as arguments, rather than letting the function system's short-circuit behavior take care of it. This allows `cty.DynamicVal` and `cty.NullVal(cty.DynamicPseudoType)` to be treated consistently with other values, returning results consistent with the documented behavior, rather than forcing the function to immediately return `cty.DynamicVal`.
 
 # 1.16.0 (January 3, 2025)
 

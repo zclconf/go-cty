@@ -114,6 +114,12 @@ func TestFormat(t *testing.T) {
 			cty.StringVal("null"),
 			``,
 		},
+		{
+			cty.StringVal("%v"),
+			[]cty.Value{cty.NullVal(cty.DynamicPseudoType)},
+			cty.StringVal("null"),
+			``,
+		},
 
 		// Strings
 		{
@@ -149,6 +155,12 @@ func TestFormat(t *testing.T) {
 		{
 			cty.StringVal("%s"),
 			[]cty.Value{cty.NullVal(cty.String)},
+			cty.NilVal,
+			`unsupported value for "%s" at 0: null value cannot be formatted`,
+		},
+		{
+			cty.StringVal("%s"),
+			[]cty.Value{cty.NullVal(cty.DynamicPseudoType)},
 			cty.NilVal,
 			`unsupported value for "%s" at 0: null value cannot be formatted`,
 		},
@@ -274,6 +286,18 @@ func TestFormat(t *testing.T) {
 			cty.StringVal("This statement is false"),
 			``,
 		},
+		{
+			cty.StringVal("This statement is %t"),
+			[]cty.Value{cty.NullVal(cty.Bool)},
+			cty.NilVal,
+			`unsupported value for "%t" at 18: null value cannot be formatted`,
+		},
+		{
+			cty.StringVal("This statement is %t"),
+			[]cty.Value{cty.NullVal(cty.DynamicPseudoType)},
+			cty.NilVal,
+			`unsupported value for "%t" at 18: null value cannot be formatted`,
+		},
 
 		// Integer Numbers
 		{
@@ -317,6 +341,24 @@ func TestFormat(t *testing.T) {
 			[]cty.Value{cty.True},
 			cty.NilVal,
 			`unsupported value for "%d" at 0: number required`,
+		},
+		{
+			cty.StringVal("%d green bottles standing on the wall"),
+			[]cty.Value{cty.NullVal(cty.Number)},
+			cty.NilVal,
+			`unsupported value for "%d" at 0: null value cannot be formatted`,
+		},
+		{
+			cty.StringVal("%d green bottles standing on the wall"),
+			[]cty.Value{cty.NullVal(cty.EmptyTuple)},
+			cty.NilVal,
+			`unsupported value for "%d" at 0: null value cannot be formatted`,
+		},
+		{
+			cty.StringVal("%d green bottles standing on the wall"),
+			[]cty.Value{cty.NullVal(cty.DynamicPseudoType)},
+			cty.NilVal,
+			`unsupported value for "%d" at 0: null value cannot be formatted`,
 		},
 		{
 			cty.StringVal("%b"),
@@ -481,6 +523,12 @@ func TestFormat(t *testing.T) {
 			cty.UnknownVal(cty.String).RefineNotNull(),
 			``,
 		},
+		{
+			cty.StringVal("%v"),
+			[]cty.Value{cty.DynamicVal},
+			cty.UnknownVal(cty.String).RefineNotNull(),
+			``,
+		},
 
 		// Invalids
 		{
@@ -556,6 +604,7 @@ func TestFormat(t *testing.T) {
 			`too many arguments; only 1 used by format string`,
 		},
 
+		// Marked values
 		{
 			cty.StringVal("hello %s").Mark(1),
 			[]cty.Value{cty.StringVal("world")},
@@ -854,10 +903,47 @@ func TestFormatList(t *testing.T) {
 		23: {
 			cty.StringVal("%v"),
 			[]cty.Value{cty.DynamicVal},
-			// The current Function implementation will default to DynamicVal
-			// if AllowUnknown is true, even though this function has a static
-			// return type
-			cty.DynamicVal,
+			cty.UnknownVal(cty.List(cty.String)).RefineNotNull(),
+			``,
+		},
+		24: {
+			cty.StringVal("%v"),
+			[]cty.Value{cty.NullVal(cty.DynamicPseudoType)},
+			cty.ListVal([]cty.Value{
+				cty.StringVal("null"),
+			}),
+			``,
+		},
+		25: {
+			cty.StringVal("%v %v"),
+			[]cty.Value{
+				cty.NullVal(cty.DynamicPseudoType),
+				cty.ListVal([]cty.Value{
+					cty.StringVal("a"),
+					cty.NullVal(cty.String),
+					cty.StringVal("c"),
+				}),
+			},
+			cty.ListVal([]cty.Value{
+				cty.StringVal("null a"),
+				cty.StringVal("null null"),
+				cty.StringVal("null c"),
+			}),
+			``,
+		},
+		26: {
+			cty.StringVal("%v %v"),
+			[]cty.Value{
+				cty.NullVal(cty.DynamicPseudoType),
+				cty.ListVal([]cty.Value{
+					cty.NullVal(cty.DynamicPseudoType),
+					cty.NullVal(cty.DynamicPseudoType),
+				}),
+			},
+			cty.ListVal([]cty.Value{
+				cty.StringVal("null null"),
+				cty.StringVal("null null"),
+			}),
 			``,
 		},
 	}
