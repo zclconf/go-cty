@@ -1,4 +1,4 @@
-# 1.16.1 (Unreleased)
+# 1.16.1 (January 13, 2025)
 
 * `cty`: `Value.HasElement` now treats unknown set elements consistently with how much of the rest of `cty` treats them.
 * `function/stdlib`: `FormatFunc` and `FormatListFunc` now handle unknown and null values of unknown type as arguments, rather than letting the function system's short-circuit behavior take care of it. This allows `cty.DynamicVal` and `cty.NullVal(cty.DynamicPseudoType)` to be treated consistently with other values, returning results consistent with the documented behavior, rather than forcing the function to immediately return `cty.DynamicVal`.
