@@ -3886,6 +3886,146 @@ func TestHasWhollyKnownType(t *testing.T) {
 	}
 }
 
+func TestHasElement(t *testing.T) {
+	tests := []struct {
+		Set  Value
+		Elem Value
+		Want Value
+	}{
+		{
+			SetValEmpty(String),
+			StringVal("hello"),
+			False,
+		},
+		{
+			SetVal([]Value{
+				StringVal("hello"),
+			}),
+			StringVal("hello"),
+			True,
+		},
+		{
+			SetVal([]Value{
+				StringVal("hello"),
+				StringVal("world"),
+			}),
+			StringVal("hello"),
+			True,
+		},
+		{
+			SetVal([]Value{
+				StringVal("hello"),
+				StringVal("world"),
+			}),
+			StringVal("hi"),
+			False,
+		},
+		{
+			SetVal([]Value{
+				StringVal("hello"),
+				UnknownVal(String),
+			}),
+			StringVal("hello"),
+			True, // "hello" is definitely present regardless of what the unknown value is
+		},
+		{
+			SetVal([]Value{
+				StringVal("hello"),
+				UnknownVal(String),
+			}),
+			StringVal("world"),
+			UnknownVal(Bool).RefineNotNull(), // The unknown value might turn out to be "world"
+		},
+		{
+			SetVal([]Value{
+				UnknownVal(String),
+			}),
+			StringVal("world"),
+			UnknownVal(Bool).RefineNotNull(), // The unknown value might turn out to be "world"
+		},
+		{
+			SetVal([]Value{
+				UnknownVal(String),
+				UnknownVal(String),
+			}),
+			StringVal("world"),
+			UnknownVal(Bool).RefineNotNull(), // One of the unknown values might turn out to be "world"
+		},
+		{
+			SetVal([]Value{
+				StringVal("hello"),
+				UnknownVal(String),
+			}),
+			True,
+			False, // A set of string cannot possibly contain a bool
+		},
+		{
+			SetVal([]Value{
+				StringVal("hello"),
+				UnknownVal(String),
+			}),
+			UnknownVal(String),
+			// The unknowns are placeholders for values, not values themselves, so the presence of an unknown
+			// in the set doesn't cause this to return true: there's no guarantee that both of the unknowns
+			// above will be equal once finalized.
+			UnknownVal(Bool).RefineNotNull(),
+		},
+		{
+			SetVal([]Value{
+				StringVal("hello"),
+				StringVal("world"),
+			}),
+			UnknownVal(String),
+			UnknownVal(Bool).RefineNotNull(),
+		},
+		{
+			SetVal([]Value{
+				StringVal("hello"),
+				StringVal("world"),
+			}),
+			DynamicVal,
+			UnknownVal(Bool).RefineNotNull(),
+		},
+		{
+			DynamicVal,
+			StringVal("hello"),
+			UnknownVal(Bool).RefineNotNull(),
+		},
+		{
+			SetVal([]Value{
+				NullVal(DynamicPseudoType),
+			}),
+			NullVal(DynamicPseudoType),
+			True,
+		},
+		{
+			SetVal([]Value{
+				DynamicVal,
+			}),
+			NullVal(DynamicPseudoType),
+			UnknownVal(Bool).RefineNotNull(),
+		},
+		{
+			SetVal([]Value{
+				DynamicVal,
+			}),
+			DynamicVal,
+			UnknownVal(Bool).RefineNotNull(),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%#v has %#v", test.Set, test.Elem), func(t *testing.T) {
+			t.Logf("%#v.HasElement(%#v)", test.Set, test.Elem)
+
+			got := test.Set.HasElement(test.Elem)
+			if !test.Want.RawEquals(got) {
+				t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, test.Want)
+			}
+		})
+	}
+}
+
 func TestFloatCopy(t *testing.T) {
 	// ensure manipulating floats does not modify the cty.Value
 	v := NumberFloatVal(1.9)
