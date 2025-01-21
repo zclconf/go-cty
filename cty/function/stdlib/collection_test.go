@@ -1138,6 +1138,12 @@ func TestElement(t *testing.T) {
 		cty.StringVal("brown").Mark("fox"),
 		cty.UnknownVal(cty.String),
 	})
+	tupleOfStrings := cty.TupleVal([]cty.Value{
+		cty.StringVal("the"),
+		cty.StringVal("quick"),
+		cty.StringVal("brown"),
+		cty.StringVal("fox"),
+	})
 
 	tests := []struct {
 		List  cty.Value
@@ -1252,6 +1258,18 @@ func TestElement(t *testing.T) {
 			cty.MustParseNumberVal("9223372036854775808"),
 			cty.StringVal("fox"),
 			true,
+		},
+		{
+			tupleOfStrings,
+			cty.NumberIntVal(2),
+			cty.StringVal("brown"),
+			false,
+		},
+		{
+			tupleOfStrings,
+			cty.NumberIntVal(-1),
+			cty.StringVal("fox"),
+			false,
 		},
 	}
 
