@@ -1,5 +1,6 @@
 # 1.16.2 (Unreleased)
 
+* `json`: `ImpliedType` now returns an error if a JSON object contains two properties of the same name. As a compatibility concession it allows duplicates whose values have the same implied type, since it was unintentionally possible to combine `ImpliedType` and `Unmarshal` successfully in that case before, but this is not an endorsement of using duplicate property names since that makes the input ambiguous in any case. ([#199](https://github.com/zclconf/go-cty/issues/199))
 * `function/stdlib`: `ElementFunc` no longer crashes when asked for a negative index into a tuple. This fixes a miss in the negative index support added back in v1.15.0. ([#200](https://github.com/zclconf/go-cty/pull/200))
 
 # 1.16.1 (January 13, 2025)

@@ -91,6 +91,12 @@ func TestImpliedType(t *testing.T) {
 				}),
 			}),
 		},
+		{
+			`{"a": "hello", "a": "world"}`,
+			cty.Object(map[string]cty.Type{
+				"a": cty.String,
+			}),
+		},
 	}
 
 	for _, test := range tests {
@@ -106,6 +112,47 @@ func TestImpliedType(t *testing.T) {
 					"wrong type\ninput: %s\ngot:   %#v\nwant:  %#v",
 					test.Input, got, test.Want,
 				)
+			}
+		})
+	}
+}
+
+func TestImpliedTypeErrors(t *testing.T) {
+	tests := []struct {
+		Input     string
+		WantError string
+	}{
+		{
+			`{"a": "hello", "a": true}`,
+			`duplicate "a" property in JSON object`,
+		},
+		{
+			`{}boop`,
+			`extraneous data after JSON object`,
+		},
+		{
+			`[!]`,
+			`invalid character '!' looking for beginning of value`,
+		},
+		{
+			`[}`,
+			`invalid character '}' looking for beginning of value`,
+		},
+		{
+			`{true: null}`,
+			`invalid character 't'`,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.Input, func(t *testing.T) {
+			_, err := ImpliedType([]byte(test.Input))
+			if err == nil {
+				t.Fatalf("unexpected success\nwant error: %s", err)
+			}
+
+			if got, want := err.Error(), test.WantError; got != want {
+				t.Errorf("wrong error\ngot:  %s\nwant: %s", got, want)
 			}
 		})
 	}
