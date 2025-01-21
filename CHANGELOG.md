@@ -1,3 +1,6 @@
+# 1.16.3 (Unreleased)
+
+
 # 1.16.2 (January 21, 2025)
 
 * `json`: `ImpliedType` now returns an error if a JSON object contains two properties of the same name. As a compatibility concession it allows duplicates whose values have the same implied type, since it was unintentionally possible to combine `ImpliedType` and `Unmarshal` successfully in that case before, but this is not an endorsement of using duplicate property names since that makes the input ambiguous in any case. ([#199](https://github.com/zclconf/go-cty/issues/199))
