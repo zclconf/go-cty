@@ -1,5 +1,6 @@
 # 1.16.2 (Unreleased)
 
+* `function/stdlib`: `ElementFunc` no longer crashes when asked for a negative index into a tuple. This fixes a miss in the negative index support added back in v1.15.0. ([#200](https://github.com/zclconf/go-cty/pull/200))
 
 # 1.16.1 (January 13, 2025)
 

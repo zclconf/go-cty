@@ -1138,6 +1138,18 @@ func TestElement(t *testing.T) {
 		cty.StringVal("brown").Mark("fox"),
 		cty.UnknownVal(cty.String),
 	})
+	tuple := cty.TupleVal([]cty.Value{
+		cty.StringVal("the"),
+		cty.UnknownVal(cty.String),
+		cty.StringVal("brown"),
+		cty.False,
+	})
+	unknownTuple := cty.UnknownVal(cty.Tuple([]cty.Type{
+		cty.String,
+		cty.String,
+		cty.String,
+		cty.Bool,
+	}))
 
 	tests := []struct {
 		List  cty.Value
@@ -1252,6 +1264,92 @@ func TestElement(t *testing.T) {
 			cty.MustParseNumberVal("9223372036854775808"),
 			cty.StringVal("fox"),
 			true,
+		},
+
+		{
+			tuple,
+			cty.NumberIntVal(0),
+			cty.StringVal("the"),
+			false,
+		},
+		{
+			tuple,
+			cty.NumberIntVal(1),
+			cty.UnknownVal(cty.String),
+			false,
+		},
+		{
+			tuple,
+			cty.NumberIntVal(3),
+			cty.False,
+			false,
+		},
+		{
+			tuple,
+			cty.NumberIntVal(4),
+			cty.StringVal("the"),
+			false,
+		},
+		{
+			tuple,
+			cty.NumberIntVal(10),
+			cty.StringVal("brown"),
+			false,
+		},
+		{
+			tuple,
+			cty.NumberIntVal(-1),
+			cty.False,
+			false,
+		},
+		{
+			tuple,
+			cty.NumberIntVal(-6),
+			cty.StringVal("brown"),
+			false,
+		},
+
+		{
+			unknownTuple,
+			cty.NumberIntVal(0),
+			cty.UnknownVal(cty.String),
+			false,
+		},
+		{
+			unknownTuple,
+			cty.NumberIntVal(1),
+			cty.UnknownVal(cty.String),
+			false,
+		},
+		{
+			unknownTuple,
+			cty.NumberIntVal(3),
+			cty.UnknownVal(cty.Bool),
+			false,
+		},
+		{
+			unknownTuple,
+			cty.NumberIntVal(4),
+			cty.UnknownVal(cty.String),
+			false,
+		},
+		{
+			unknownTuple,
+			cty.NumberIntVal(10),
+			cty.UnknownVal(cty.String),
+			false,
+		},
+		{
+			unknownTuple,
+			cty.NumberIntVal(-1),
+			cty.UnknownVal(cty.Bool),
+			false,
+		},
+		{
+			unknownTuple,
+			cty.NumberIntVal(-6),
+			cty.UnknownVal(cty.String),
+			false,
 		},
 	}
 
