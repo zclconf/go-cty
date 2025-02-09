@@ -27,6 +27,10 @@ import (
 // The function will panic if given a non-pointer as the Go value target,
 // since that is considered to be a bug in the calling program.
 func FromCtyValue(val cty.Value, target interface{}) error {
+	return FromCtyValueTagged(val, target, "cty")
+}
+
+func FromCtyValueTagged(val cty.Value, target interface{}, tag string) error {
 	tVal := reflect.ValueOf(target)
 	if tVal.Kind() != reflect.Ptr {
 		panic("target value is not a pointer")
@@ -40,10 +44,10 @@ func FromCtyValue(val cty.Value, target interface{}) error {
 	// unused capacity on the end of it, depending on how deeply-recursive
 	// the given cty.Value is.
 	path := make(cty.Path, 0)
-	return fromCtyValue(val, tVal, path)
+	return fromCtyValue(val, tVal, path, tag)
 }
 
-func fromCtyValue(val cty.Value, target reflect.Value, path cty.Path) error {
+func fromCtyValue(val cty.Value, target reflect.Value, path cty.Path, tag string) error {
 	ty := val.Type()
 
 	deepTarget := fromCtyPopulatePtr(target, false)
@@ -89,17 +93,17 @@ func fromCtyValue(val cty.Value, target reflect.Value, path cty.Path) error {
 
 	switch {
 	case ty.IsListType():
-		return fromCtyList(val, target, path)
+		return fromCtyList(val, target, path, tag)
 	case ty.IsMapType():
-		return fromCtyMap(val, target, path)
+		return fromCtyMap(val, target, path, tag)
 	case ty.IsSetType():
-		return fromCtySet(val, target, path)
+		return fromCtySet(val, target, path, tag)
 	case ty.IsObjectType():
-		return fromCtyObject(val, target, path)
+		return fromCtyObject(val, target, path, tag)
 	case ty.IsTupleType():
-		return fromCtyTuple(val, target, path)
+		return fromCtyTuple(val, target, path, tag)
 	case ty.IsCapsuleType():
-		return fromCtyCapsule(val, target, path)
+		return fromCtyCapsule(val, target, path, tag)
 	}
 
 	// We should never fall out here; reaching here indicates a bug in this
@@ -251,7 +255,7 @@ func fromCtyString(val cty.Value, target reflect.Value, path cty.Path) error {
 	}
 }
 
-func fromCtyList(val cty.Value, target reflect.Value, path cty.Path) error {
+func fromCtyList(val cty.Value, target reflect.Value, path cty.Path, tag string) error {
 	switch target.Kind() {
 
 	case reflect.Slice:
@@ -273,7 +277,7 @@ func fromCtyList(val cty.Value, target reflect.Value, path cty.Path) error {
 			}
 
 			targetElem := tv.Index(i)
-			err = fromCtyValue(val, targetElem, path)
+			err = fromCtyValue(val, targetElem, path, tag)
 			if err != nil {
 				return true
 			}
@@ -310,7 +314,7 @@ func fromCtyList(val cty.Value, target reflect.Value, path cty.Path) error {
 			}
 
 			targetElem := target.Index(i)
-			err = fromCtyValue(val, targetElem, path)
+			err = fromCtyValue(val, targetElem, path, tag)
 			if err != nil {
 				return true
 			}
@@ -332,7 +336,7 @@ func fromCtyList(val cty.Value, target reflect.Value, path cty.Path) error {
 	}
 }
 
-func fromCtyMap(val cty.Value, target reflect.Value, path cty.Path) error {
+func fromCtyMap(val cty.Value, target reflect.Value, path cty.Path, tag string) error {
 
 	switch target.Kind() {
 
@@ -356,7 +360,7 @@ func fromCtyMap(val cty.Value, target reflect.Value, path cty.Path) error {
 			ks := key.AsString()
 
 			targetElem := reflect.New(et)
-			err = fromCtyValue(val, targetElem, path)
+			err = fromCtyValue(val, targetElem, path, tag)
 
 			tv.SetMapIndex(reflect.ValueOf(ks), targetElem.Elem())
 
@@ -377,7 +381,7 @@ func fromCtyMap(val cty.Value, target reflect.Value, path cty.Path) error {
 	}
 }
 
-func fromCtySet(val cty.Value, target reflect.Value, path cty.Path) error {
+func fromCtySet(val cty.Value, target reflect.Value, path cty.Path, tag string) error {
 	switch target.Kind() {
 
 	case reflect.Slice:
@@ -393,7 +397,7 @@ func fromCtySet(val cty.Value, target reflect.Value, path cty.Path) error {
 		var err error
 		val.ForEachElement(func(key cty.Value, val cty.Value) bool {
 			targetElem := tv.Index(i)
-			err = fromCtyValue(val, targetElem, path)
+			err = fromCtyValue(val, targetElem, path, tag)
 			if err != nil {
 				return true
 			}
@@ -422,7 +426,7 @@ func fromCtySet(val cty.Value, target reflect.Value, path cty.Path) error {
 		var err error
 		val.ForEachElement(func(key cty.Value, val cty.Value) bool {
 			targetElem := target.Index(i)
-			err = fromCtyValue(val, targetElem, path)
+			err = fromCtyValue(val, targetElem, path, tag)
 			if err != nil {
 				return true
 			}
@@ -444,14 +448,14 @@ func fromCtySet(val cty.Value, target reflect.Value, path cty.Path) error {
 	}
 }
 
-func fromCtyObject(val cty.Value, target reflect.Value, path cty.Path) error {
+func fromCtyObject(val cty.Value, target reflect.Value, path cty.Path, tag string) error {
 
 	switch target.Kind() {
 
 	case reflect.Struct:
 
 		attrTypes := val.Type().AttributeTypes()
-		targetFields := structTagIndices(target.Type())
+		targetFields := structTagIndices(target.Type(), tag)
 
 		path = append(path, nil)
 
@@ -482,7 +486,7 @@ func fromCtyObject(val cty.Value, target reflect.Value, path cty.Path) error {
 			ev := val.GetAttr(k)
 
 			targetField := target.Field(fieldIdx)
-			err := fromCtyValue(ev, targetField, path)
+			err := fromCtyValue(ev, targetField, path, tag)
 			if err != nil {
 				return err
 			}
@@ -498,7 +502,7 @@ func fromCtyObject(val cty.Value, target reflect.Value, path cty.Path) error {
 	}
 }
 
-func fromCtyTuple(val cty.Value, target reflect.Value, path cty.Path) error {
+func fromCtyTuple(val cty.Value, target reflect.Value, path cty.Path, tag string) error {
 
 	switch target.Kind() {
 
@@ -521,7 +525,7 @@ func fromCtyTuple(val cty.Value, target reflect.Value, path cty.Path) error {
 			ev := val.Index(cty.NumberIntVal(int64(i)))
 
 			targetField := target.Field(i)
-			err := fromCtyValue(ev, targetField, path)
+			err := fromCtyValue(ev, targetField, path, tag)
 			if err != nil {
 				return err
 			}
@@ -537,7 +541,7 @@ func fromCtyTuple(val cty.Value, target reflect.Value, path cty.Path) error {
 	}
 }
 
-func fromCtyCapsule(val cty.Value, target reflect.Value, path cty.Path) error {
+func fromCtyCapsule(val cty.Value, target reflect.Value, path cty.Path, tag string) error {
 
 	if target.Kind() == reflect.Ptr {
 		// Walk through indirection until we get to the last pointer,

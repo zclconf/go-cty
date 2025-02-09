@@ -22,16 +22,20 @@ import (
 // type, because it cannot know the capsule types supported by the calling
 // program.
 func ImpliedType(gv interface{}) (cty.Type, error) {
-	rt := reflect.TypeOf(gv)
-	var path cty.Path
-	return impliedType(rt, path)
+	return ImpliedTypeTagged(gv, "cty")
 }
 
-func impliedType(rt reflect.Type, path cty.Path) (cty.Type, error) {
+func ImpliedTypeTagged(gv interface{}, tag string) (cty.Type, error) {
+	rt := reflect.TypeOf(gv)
+	var path cty.Path
+	return impliedType(rt, path, tag)
+}
+
+func impliedType(rt reflect.Type, path cty.Path, tag string) (cty.Type, error) {
 	switch rt.Kind() {
 
 	case reflect.Ptr:
-		return impliedType(rt.Elem(), path)
+		return impliedType(rt.Elem(), path, tag)
 
 	// Primitive types
 	case reflect.Bool:
@@ -48,7 +52,7 @@ func impliedType(rt reflect.Type, path cty.Path) (cty.Type, error) {
 	// Collection types
 	case reflect.Slice:
 		path := append(path, cty.IndexStep{Key: cty.UnknownVal(cty.Number)})
-		ety, err := impliedType(rt.Elem(), path)
+		ety, err := impliedType(rt.Elem(), path, tag)
 		if err != nil {
 			return cty.NilType, err
 		}
@@ -58,7 +62,7 @@ func impliedType(rt reflect.Type, path cty.Path) (cty.Type, error) {
 			return cty.NilType, path.NewErrorf("no cty.Type for %s (must have string keys)", rt)
 		}
 		path := append(path, cty.IndexStep{Key: cty.UnknownVal(cty.String)})
-		ety, err := impliedType(rt.Elem(), path)
+		ety, err := impliedType(rt.Elem(), path, tag)
 		if err != nil {
 			return cty.NilType, err
 		}
@@ -66,21 +70,21 @@ func impliedType(rt reflect.Type, path cty.Path) (cty.Type, error) {
 
 	// Structural types
 	case reflect.Struct:
-		return impliedStructType(rt, path)
+		return impliedStructType(rt, path, tag)
 
 	default:
 		return cty.NilType, path.NewErrorf("no cty.Type for %s", rt)
 	}
 }
 
-func impliedStructType(rt reflect.Type, path cty.Path) (cty.Type, error) {
+func impliedStructType(rt reflect.Type, path cty.Path, tag string) (cty.Type, error) {
 	if valueType.AssignableTo(rt) {
 		// Special case: cty.Value represents cty.DynamicPseudoType, for
 		// type conformance checking.
 		return cty.DynamicPseudoType, nil
 	}
 
-	fieldIdxs := structTagIndices(rt)
+	fieldIdxs := structTagIndices(rt, tag)
 	if len(fieldIdxs) == 0 {
 		return cty.NilType, path.NewErrorf("no cty.Type for %s (no cty field tags)", rt)
 	}
@@ -95,7 +99,7 @@ func impliedStructType(rt reflect.Type, path cty.Path) (cty.Type, error) {
 			path[len(path)-1] = cty.GetAttrStep{Name: k}
 
 			ft := rt.Field(fi).Type
-			aty, err := impliedType(ft, path)
+			aty, err := impliedType(ft, path, tag)
 			if err != nil {
 				return cty.NilType, err
 			}
