@@ -111,7 +111,7 @@ func (t Type) HasDynamicTypes() bool {
 		return false
 	default:
 		// Should never happen, since above should be exhaustive
-		panic("HasDynamicTypes does not support the given type")
+		panic("HasDynamicTypes does not support the given type: " + t.GoString())
 	}
 }
 
@@ -149,7 +149,7 @@ func (t Type) WithoutOptionalAttributesDeep() Type {
 		return Object(attrTypes)
 	default:
 		// Should never happen, since above should be exhaustive
-		panic("WithoutOptionalAttributesDeep does not support the given type")
+		panic("WithoutOptionalAttributesDeep does not support the given type: " + t.GoString())
 	}
 }
 
