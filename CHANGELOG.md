@@ -1,4 +1,4 @@
-# 1.5.0 (July 23, 2020)
+# 1.5 (July 23, 2020)
 
 * Add option for how to unmarshal dynamic ([#2](https://github.com/hashicorp/go-cty/pull/2))
 
