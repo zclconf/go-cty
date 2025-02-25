@@ -10,7 +10,7 @@ import (
 	"github.com/hashicorp/go-cty/cty/convert"
 )
 
-func unmarshal(buf []byte, t cty.Type, path cty.Path, opt *UnmarshalOptions) (cty.Value, error) {
+func unmarshal(buf []byte, t cty.Type, path cty.Path) (cty.Value, error) {
 	dec := bufDecoder(buf)
 
 	tok, err := dec.Token()
@@ -22,37 +22,35 @@ func unmarshal(buf []byte, t cty.Type, path cty.Path, opt *UnmarshalOptions) (ct
 		return cty.NullVal(t), nil
 	}
 
+	if t == cty.DynamicPseudoType {
+		return unmarshalDynamic(buf, path)
+	}
+
 	switch {
 	case t.IsPrimitiveType():
-		val, err := unmarshalPrimitive(tok, t, path, opt)
+		val, err := unmarshalPrimitive(tok, t, path)
 		if err != nil {
 			return cty.NilVal, err
 		}
 		return val, nil
 	case t.IsListType():
-		return unmarshalList(buf, t.ElementType(), path, opt)
+		return unmarshalList(buf, t.ElementType(), path)
 	case t.IsSetType():
-		return unmarshalSet(buf, t.ElementType(), path, opt)
+		return unmarshalSet(buf, t.ElementType(), path)
 	case t.IsMapType():
-		return unmarshalMap(buf, t.ElementType(), path, opt)
+		return unmarshalMap(buf, t.ElementType(), path)
 	case t.IsTupleType():
-		return unmarshalTuple(buf, t.TupleElementTypes(), path, opt)
+		return unmarshalTuple(buf, t.TupleElementTypes(), path)
 	case t.IsObjectType():
-		return unmarshalObject(buf, t.AttributeTypes(), path, opt)
+		return unmarshalObject(buf, t.AttributeTypes(), path)
 	case t.IsCapsuleType():
-		return unmarshalCapsule(buf, t, path, opt)
-	case t.Equals(cty.DynamicPseudoType):
-		if opt.ImpliedDynamic {
-			return unmarshalIntoDynamic(buf, path, opt)
-		} else {
-			return unmarshalDynamic(buf, path, opt)
-		}
+		return unmarshalCapsule(buf, t, path)
 	default:
 		return cty.NilVal, path.NewErrorf("unsupported type %s", t.FriendlyName())
 	}
 }
 
-func unmarshalPrimitive(tok json.Token, t cty.Type, path cty.Path, opt *UnmarshalOptions) (cty.Value, error) {
+func unmarshalPrimitive(tok json.Token, t cty.Type, path cty.Path) (cty.Value, error) {
 
 	switch t {
 	case cty.Bool:
@@ -103,7 +101,7 @@ func unmarshalPrimitive(tok json.Token, t cty.Type, path cty.Path, opt *Unmarsha
 	}
 }
 
-func unmarshalList(buf []byte, ety cty.Type, path cty.Path, opt *UnmarshalOptions) (cty.Value, error) {
+func unmarshalList(buf []byte, ety cty.Type, path cty.Path) (cty.Value, error) {
 	dec := bufDecoder(buf)
 	if err := requireDelim(dec, '['); err != nil {
 		return cty.NilVal, path.NewError(err)
@@ -126,7 +124,7 @@ func unmarshalList(buf []byte, ety cty.Type, path cty.Path, opt *UnmarshalOption
 				return cty.NilVal, path.NewErrorf("failed to read list value: %s", err)
 			}
 
-			el, err := unmarshal(rawVal, ety, path, opt)
+			el, err := unmarshal(rawVal, ety, path)
 			if err != nil {
 				return cty.NilVal, err
 			}
@@ -146,7 +144,7 @@ func unmarshalList(buf []byte, ety cty.Type, path cty.Path, opt *UnmarshalOption
 	return cty.ListVal(vals), nil
 }
 
-func unmarshalSet(buf []byte, ety cty.Type, path cty.Path, opt *UnmarshalOptions) (cty.Value, error) {
+func unmarshalSet(buf []byte, ety cty.Type, path cty.Path) (cty.Value, error) {
 	dec := bufDecoder(buf)
 	if err := requireDelim(dec, '['); err != nil {
 		return cty.NilVal, path.NewError(err)
@@ -167,7 +165,7 @@ func unmarshalSet(buf []byte, ety cty.Type, path cty.Path, opt *UnmarshalOptions
 				return cty.NilVal, path.NewErrorf("failed to read set value: %s", err)
 			}
 
-			el, err := unmarshal(rawVal, ety, path, opt)
+			el, err := unmarshal(rawVal, ety, path)
 			if err != nil {
 				return cty.NilVal, err
 			}
@@ -187,7 +185,7 @@ func unmarshalSet(buf []byte, ety cty.Type, path cty.Path, opt *UnmarshalOptions
 	return cty.SetVal(vals), nil
 }
 
-func unmarshalMap(buf []byte, ety cty.Type, path cty.Path, opt *UnmarshalOptions) (cty.Value, error) {
+func unmarshalMap(buf []byte, ety cty.Type, path cty.Path) (cty.Value, error) {
 	dec := bufDecoder(buf)
 	if err := requireDelim(dec, '{'); err != nil {
 		return cty.NilVal, path.NewError(err)
@@ -219,7 +217,7 @@ func unmarshalMap(buf []byte, ety cty.Type, path cty.Path, opt *UnmarshalOptions
 				return cty.NilVal, path.NewErrorf("failed to read map value: %s", err)
 			}
 
-			el, err := unmarshal(rawVal, ety, path, opt)
+			el, err := unmarshal(rawVal, ety, path)
 			if err != nil {
 				return cty.NilVal, err
 			}
@@ -239,7 +237,7 @@ func unmarshalMap(buf []byte, ety cty.Type, path cty.Path, opt *UnmarshalOptions
 	return cty.MapVal(vals), nil
 }
 
-func unmarshalTuple(buf []byte, etys []cty.Type, path cty.Path, opt *UnmarshalOptions) (cty.Value, error) {
+func unmarshalTuple(buf []byte, etys []cty.Type, path cty.Path) (cty.Value, error) {
 	dec := bufDecoder(buf)
 	if err := requireDelim(dec, '['); err != nil {
 		return cty.NilVal, path.NewError(err)
@@ -267,7 +265,7 @@ func unmarshalTuple(buf []byte, etys []cty.Type, path cty.Path, opt *UnmarshalOp
 				return cty.NilVal, path.NewErrorf("failed to read tuple value: %s", err)
 			}
 
-			el, err := unmarshal(rawVal, ety, path, opt)
+			el, err := unmarshal(rawVal, ety, path)
 			if err != nil {
 				return cty.NilVal, err
 			}
@@ -291,7 +289,7 @@ func unmarshalTuple(buf []byte, etys []cty.Type, path cty.Path, opt *UnmarshalOp
 	return cty.TupleVal(vals), nil
 }
 
-func unmarshalObject(buf []byte, atys map[string]cty.Type, path cty.Path, opt *UnmarshalOptions) (cty.Value, error) {
+func unmarshalObject(buf []byte, atys map[string]cty.Type, path cty.Path) (cty.Value, error) {
 	dec := bufDecoder(buf)
 	if err := requireDelim(dec, '{'); err != nil {
 		return cty.NilVal, path.NewError(err)
@@ -326,7 +324,7 @@ func unmarshalObject(buf []byte, atys map[string]cty.Type, path cty.Path, opt *U
 				return cty.NilVal, path.NewErrorf("failed to read object value: %s", err)
 			}
 
-			el, err := unmarshal(rawVal, aty, path, opt)
+			el, err := unmarshal(rawVal, aty, path)
 			if err != nil {
 				return cty.NilVal, err
 			}
@@ -353,7 +351,7 @@ func unmarshalObject(buf []byte, atys map[string]cty.Type, path cty.Path, opt *U
 	return cty.ObjectVal(vals), nil
 }
 
-func unmarshalCapsule(buf []byte, t cty.Type, path cty.Path, opt *UnmarshalOptions) (cty.Value, error) {
+func unmarshalCapsule(buf []byte, t cty.Type, path cty.Path) (cty.Value, error) {
 	rawType := t.EncapsulatedType()
 	ptrPtr := reflect.New(reflect.PtrTo(rawType))
 	ptrPtr.Elem().Set(reflect.New(rawType))
@@ -366,7 +364,7 @@ func unmarshalCapsule(buf []byte, t cty.Type, path cty.Path, opt *UnmarshalOptio
 	return cty.CapsuleVal(t, ptr), nil
 }
 
-func unmarshalDynamic(buf []byte, path cty.Path, opt *UnmarshalOptions) (cty.Value, error) {
+func unmarshalDynamic(buf []byte, path cty.Path) (cty.Value, error) {
 	dec := bufDecoder(buf)
 	if err := requireDelim(dec, '{'); err != nil {
 		return cty.NilVal, path.NewError(err)
@@ -413,7 +411,7 @@ func unmarshalDynamic(buf []byte, path cty.Path, opt *UnmarshalOptions) (cty.Val
 		return cty.NilVal, path.NewErrorf("missing value in dynamically-typed value")
 	}
 
-	val, err := UnmarshalOpt([]byte(valBody), t, opt)
+	val, err := Unmarshal([]byte(valBody), t)
 	if err != nil {
 		return cty.NilVal, path.NewError(err)
 	}
@@ -458,28 +456,4 @@ func bufDecoder(buf []byte) *json.Decoder {
 	dec := json.NewDecoder(r)
 	dec.UseNumber()
 	return dec
-}
-
-func unmarshalIntoDynamic(buf []byte, path cty.Path, opt *UnmarshalOptions) (cty.Value, error) {
-	var t cty.Type
-	var err error
-
-	if buf == nil {
-		return cty.NilVal, path.NewErrorf("missing value in dynamically-typed value")
-	}
-
-	t, err = ImpliedType(buf)
-	if err != nil {
-		return cty.NilVal, path.NewErrorf("failed to imply dynamic type: %s", err)
-	}
-
-	if t == cty.NilType {
-		return cty.NilVal, path.NewErrorf("missing type in dynamically-typed value")
-	}
-
-	val, err := unmarshal(buf, t, path, opt)
-	if err != nil {
-		return cty.NilVal, path.NewError(err)
-	}
-	return val, nil
 }
