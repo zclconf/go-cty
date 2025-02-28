@@ -178,6 +178,104 @@ func TestReturnTypeForValues(t *testing.T) {
 			},
 			WantType: cty.Number,
 		},
+		{
+			Spec: &Spec{
+				Params: []Parameter{
+					{
+						Type: cty.String,
+					},
+				},
+				Type: StaticReturnType(cty.String),
+				Impl: stubImpl,
+			},
+			Args: []cty.Value{
+				cty.NilVal,
+			},
+			WantType: cty.String,
+			WantErr:  true,
+		},
+		{
+			Spec: &Spec{
+				Params: []Parameter{
+					{
+						Type: cty.List(cty.String),
+					},
+				},
+				Type: StaticReturnType(cty.List(cty.String)),
+				Impl: stubImpl,
+			},
+			Args: []cty.Value{
+				cty.ListVal([]cty.Value{cty.NilVal}),
+			},
+			WantType: cty.List(cty.String),
+			WantErr:  true,
+		},
+		{
+			Spec: &Spec{
+				Params: []Parameter{
+					{
+						Type: cty.List(cty.String),
+					},
+				},
+				Type: StaticReturnType(cty.List(cty.String)),
+				Impl: stubImpl,
+			},
+			Args: []cty.Value{
+				cty.UnknownAsNull(cty.ListVal([]cty.Value{cty.NilVal})),
+			},
+			WantType: cty.List(cty.String),
+			WantErr:  true,
+		},
+		{
+			Spec: &Spec{
+				Params: []Parameter{
+					{
+						Type: cty.Set(cty.String),
+					},
+				},
+				Type: StaticReturnType(cty.Set(cty.String)),
+				Impl: stubImpl,
+			},
+			Args: []cty.Value{
+				cty.SetVal([]cty.Value{cty.NilVal}),
+			},
+			WantType: cty.Set(cty.String),
+			WantErr:  true,
+		},
+		{
+			Spec: &Spec{
+				Params: []Parameter{
+					{
+						Type: cty.Tuple([]cty.Type{cty.String}),
+					},
+				},
+				Type: StaticReturnType(cty.Tuple([]cty.Type{cty.String})),
+				Impl: stubImpl,
+			},
+			Args: []cty.Value{
+				cty.TupleVal([]cty.Value{cty.NilVal}),
+			},
+			WantType: cty.Tuple([]cty.Type{cty.String}),
+			WantErr:  true,
+		},
+		{
+			Spec: &Spec{
+				Params: []Parameter{
+					{
+						Type: cty.Map(cty.String),
+					},
+				},
+				Type: StaticReturnType(cty.Map(cty.String)),
+				Impl: stubImpl,
+			},
+			Args: []cty.Value{
+				cty.MapVal(map[string]cty.Value{
+					"test": cty.NilVal,
+				}),
+			},
+			WantType: cty.Map(cty.String),
+			WantErr:  true,
+		},
 	}
 
 	for i, test := range tests {

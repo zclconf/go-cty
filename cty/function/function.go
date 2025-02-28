@@ -166,7 +166,7 @@ func (f Function) returnTypeForValues(args []cty.Value) (ty cty.Type, dynTypedAr
 			args = newArgs
 		}
 
-		if val.IsNull() && !spec.AllowNull {
+		if containsNull(val) && !spec.AllowNull {
 			return cty.Type{}, false, NewArgErrorf(i, "argument must not be null")
 		}
 
@@ -201,7 +201,7 @@ func (f Function) returnTypeForValues(args []cty.Value) (ty cty.Type, dynTypedAr
 				args = newArgs
 			}
 
-			if val.IsNull() && !spec.AllowNull {
+			if containsNull(val) && !spec.AllowNull {
 				return cty.Type{}, false, NewArgErrorf(realI, "argument must not be null")
 			}
 
@@ -229,6 +229,23 @@ func (f Function) returnTypeForValues(args []cty.Value) (ty cty.Type, dynTypedAr
 
 	ty, err = f.spec.Type(args)
 	return ty, false, err
+}
+
+func containsNull(val cty.Value) bool {
+	if val.IsNull() {
+		return true
+	}
+
+	if val.CanIterateElements() {
+		for it := val.ElementIterator(); it.Next(); {
+			k, v := it.Element()
+			if containsNull(k) || containsNull(v) {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 // ReturnTypeForValues is similar to ReturnType but can be used if the caller
