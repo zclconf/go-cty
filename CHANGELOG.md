@@ -1,5 +1,6 @@
 # 1.4.1 (Unreleased)
 
+
 # 1.4.0 (April 7, 2020)
 
 * `function/stdlib`: The string functions that partition strings into individual characters (grapheme clusters) now use the appropriate segmentation rules from Unicode 12.0.0, while previous versions used Unicode 9.0.0.
