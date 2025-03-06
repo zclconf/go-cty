@@ -633,6 +633,80 @@ func TestValueEquals(t *testing.T) {
 			NumberIntVal(1),
 			False, // because no string value -- even null -- can be equal to a non-null number
 		},
+		{
+			ObjectVal(map[string]Value{
+				"a": StringVal("a"),
+			}),
+			// A null value is always known
+			ObjectVal(map[string]Value{
+				"a": NullVal(DynamicPseudoType),
+			}),
+			BoolVal(false),
+		},
+		{
+			ObjectVal(map[string]Value{
+				"a": NullVal(DynamicPseudoType),
+			}),
+			ObjectVal(map[string]Value{
+				"a": NullVal(DynamicPseudoType),
+			}),
+			BoolVal(true),
+		},
+		{
+			ObjectVal(map[string]Value{
+				"a": StringVal("a"),
+				"b": UnknownVal(Number),
+			}),
+			// While we have a dynamic type, the different object types should
+			// still compare false
+			ObjectVal(map[string]Value{
+				"a": NullVal(DynamicPseudoType),
+				"c": UnknownVal(Number),
+			}),
+			BoolVal(false),
+		},
+		{
+			ObjectVal(map[string]Value{
+				"a": StringVal("a"),
+				"b": UnknownVal(Number),
+			}),
+			// While we have a dynamic type, the different object types should
+			// still compare false
+			ObjectVal(map[string]Value{
+				"a": DynamicVal,
+				"c": UnknownVal(Number),
+			}),
+			BoolVal(false),
+		},
+		{
+			ObjectVal(map[string]Value{
+				"a": NullVal(DynamicPseudoType),
+			}),
+			ObjectVal(map[string]Value{
+				"a": DynamicVal,
+			}),
+			UnknownVal(Bool),
+		},
+		{
+			ObjectVal(map[string]Value{
+				"a": NullVal(List(String)),
+			}),
+			// While the unknown val does contain dynamic types, the overall
+			// container types can't conform.
+			ObjectVal(map[string]Value{
+				"a": UnknownVal(List(List(DynamicPseudoType))),
+			}),
+			BoolVal(false),
+		},
+		{
+			ObjectVal(map[string]Value{
+				"a": NullVal(List(List(String))),
+			}),
+			ObjectVal(map[string]Value{
+				"a": UnknownVal(List(List(DynamicPseudoType))),
+			}),
+			UnknownVal(Bool),
+		},
 
 		// Marks
 		{
@@ -2431,6 +2505,81 @@ func TestValueGoString(t *testing.T) {
 			want := test.Want
 			if got != want {
 				t.Errorf("wrong result\ngot:  %s\nwant: %s", got, want)
+			}
+		})
+	}
+}
+
+func TestHasWhollyKnownType(t *testing.T) {
+	tests := []struct {
+		Value Value
+		Want  bool
+	}{
+		{
+			Value: DynamicVal,
+			Want:  false,
+		},
+		{
+			Value: ObjectVal(map[string]Value{
+				"dyn": DynamicVal,
+			}),
+			Want: false,
+		},
+		{
+			Value: NullVal(Object(map[string]Type{
+				"dyn": DynamicPseudoType,
+			})),
+			Want: true,
+		},
+		{
+			Value: TupleVal([]Value{
+				StringVal("a"),
+				NullVal(DynamicPseudoType),
+			}),
+			Want: true,
+		},
+		{
+			Value: ListVal([]Value{
+				ObjectVal(map[string]Value{
+					"null": NullVal(DynamicPseudoType),
+				}),
+			}),
+			Want: true,
+		},
+		{
+			Value: ListVal([]Value{
+				NullVal(Object(map[string]Type{
+					"dyn": DynamicPseudoType,
+				})),
+			}),
+			Want: true,
+		},
+		{
+			Value: ObjectVal(map[string]Value{
+				"tuple": TupleVal([]Value{
+					StringVal("a"),
+					NullVal(DynamicPseudoType),
+				}),
+			}),
+			Want: true,
+		},
+		{
+			Value: ObjectVal(map[string]Value{
+				"tuple": TupleVal([]Value{
+					ObjectVal(map[string]Value{
+						"dyn": DynamicVal,
+					}),
+				}),
+			}),
+			Want: false,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.Value.GoString(), func(t *testing.T) {
+			got := test.Value.HasWhollyKnownType()
+			want := test.Want
+			if got != want {
+				t.Errorf("wrong result\ngot:  %v\nwant: %v", got, want)
 			}
 		})
 	}

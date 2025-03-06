@@ -677,6 +677,95 @@ func TestConvert(t *testing.T) {
 			}),
 			WantError: false,
 		},
+		// https://github.com/hashicorp/terraform/issues/24377:
+		{
+			Value: cty.TupleVal([]cty.Value{
+				cty.ListVal([]cty.Value{cty.StringVal("a")}),
+				cty.StringVal("b"),
+				cty.NullVal(cty.DynamicPseudoType),
+			}),
+			Type:      cty.Set(cty.DynamicPseudoType),
+			WantError: true,
+		},
+		{
+			Value: cty.TupleVal([]cty.Value{
+				cty.ListVal([]cty.Value{cty.StringVal("a")}),
+				cty.StringVal("b"),
+				cty.NullVal(cty.DynamicPseudoType),
+			}),
+			Type:      cty.List(cty.DynamicPseudoType),
+			WantError: true,
+		},
+		{
+			Value: cty.TupleVal([]cty.Value{
+				cty.ListVal([]cty.Value{cty.StringVal("a")}),
+				cty.StringVal("b"),
+			}),
+			Type:      cty.Set(cty.DynamicPseudoType),
+			WantError: true,
+		},
+		{
+			Value: cty.TupleVal([]cty.Value{
+				cty.ListVal([]cty.Value{cty.StringVal("a")}),
+				cty.StringVal("b"),
+			}),
+			Type:      cty.List(cty.DynamicPseudoType),
+			WantError: true,
+		},
+		{
+			Value: cty.TupleVal([]cty.Value{
+				cty.StringVal("a"),
+				cty.NumberIntVal(9),
+				cty.NullVal(cty.DynamicPseudoType),
+			}),
+			Type: cty.Set(cty.DynamicPseudoType),
+			Want: cty.SetVal([]cty.Value{
+				cty.StringVal("a"),
+				cty.StringVal("9"),
+				cty.NullVal(cty.DynamicPseudoType),
+			}),
+			WantError: false,
+		},
+		{
+			Value: cty.TupleVal([]cty.Value{
+				cty.StringVal("a"),
+				cty.NumberIntVal(9),
+				cty.NullVal(cty.DynamicPseudoType),
+			}),
+			Type: cty.List(cty.DynamicPseudoType),
+			Want: cty.ListVal([]cty.Value{
+				cty.StringVal("a"),
+				cty.StringVal("9"),
+				cty.NullVal(cty.DynamicPseudoType),
+			}),
+			WantError: false,
+		},
+		{
+			Value: cty.TupleVal([]cty.Value{
+				cty.NullVal(cty.DynamicPseudoType),
+				cty.NullVal(cty.DynamicPseudoType),
+				cty.NullVal(cty.DynamicPseudoType),
+			}),
+			Type: cty.Set(cty.DynamicPseudoType),
+			Want: cty.SetVal([]cty.Value{
+				cty.NullVal(cty.DynamicPseudoType),
+			}),
+			WantError: false,
+		},
+		{
+			Value: cty.TupleVal([]cty.Value{
+				cty.NullVal(cty.DynamicPseudoType),
+				cty.NullVal(cty.DynamicPseudoType),
+				cty.NullVal(cty.DynamicPseudoType),
+			}),
+			Type: cty.List(cty.DynamicPseudoType),
+			Want: cty.ListVal([]cty.Value{
+				cty.NullVal(cty.DynamicPseudoType),
+				cty.NullVal(cty.DynamicPseudoType),
+				cty.NullVal(cty.DynamicPseudoType),
+			}),
+			WantError: false,
+		},
 	}
 
 	for _, test := range tests {
