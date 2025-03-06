@@ -5,7 +5,7 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/zclconf/go-cty/cty/set"
+	"github.com/hashicorp/go-cty/cty/set"
 )
 
 func TestSetHashBytes(t *testing.T) {

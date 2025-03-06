@@ -649,6 +649,34 @@ func TestConvert(t *testing.T) {
 				"b": cty.MapValEmpty(cty.String),
 			}),
 		},
+		// https://github.com/hashicorp/terraform/issues/21588:
+		{
+			Value: cty.TupleVal([]cty.Value{
+				cty.ObjectVal(map[string]cty.Value{
+					"a": cty.EmptyObjectVal,
+					"b": cty.NumberIntVal(2),
+				}),
+				cty.ObjectVal(map[string]cty.Value{
+					"a": cty.ObjectVal(map[string]cty.Value{"var1": cty.StringVal("val1")}),
+					"b": cty.StringVal("2"),
+				}),
+			}),
+			Type: cty.List(cty.Object(map[string]cty.Type{
+				"a": cty.DynamicPseudoType,
+				"b": cty.String,
+			})),
+			Want: cty.ListVal([]cty.Value{
+				cty.ObjectVal(map[string]cty.Value{
+					"a": cty.MapValEmpty(cty.String),
+					"b": cty.StringVal("2"),
+				}),
+				cty.ObjectVal(map[string]cty.Value{
+					"a": cty.MapVal(map[string]cty.Value{"var1": cty.StringVal("val1")}),
+					"b": cty.StringVal("2"),
+				}),
+			}),
+			WantError: false,
+		},
 	}
 
 	for _, test := range tests {
