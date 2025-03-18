@@ -1,9 +1,14 @@
+# 1.5.1 (Unreleased)
+
+* `function/stdlib`: The `merge` function will no longer panic if all given maps are empty. ([#58](https://github.com/zclconf/go-cty/pull/58))
+* `function/stdlib`: The various set-manipulation functions, like `setunion`, will no longer panic if given an unknown set value. ([#59](https://github.com/zclconf/go-cty/pull/59))
+
 # 1.5.0 (March 17, 2025)
 
 * `cty`: New `Value.HasWhollyKnownType` method, for testing whether a value's type could potentially change if any unknown values it was constructed from were to become known. ([#55](https://github.com/zclconf/go-cty/pull/55))
 * `convert`: Fix incorrect panic when converting a tuple with a dynamic-typed null member into a list or set, due to overly-liberal type unification. ([#56](https://github.com/zclconf/go-cty/pull/56))
 
-# 1.4.2 (Unreleased)
+# 1.4.2
 
 * `function/stdlib`: The `jsonencode` function will now correctly accept a null as its argument, and produce the JSON representation `"null"` rather than returning an error. ([#54](https://github.com/zclconf/go-cty/pull/54))
 * `convert`: Don't panic when asked to convert a tuple of objects to a list type constraint containing a nested `cty.DynamicPseudoType`. ([#53](https://github.com/zclconf/go-cty/pull/53))

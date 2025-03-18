@@ -506,6 +506,14 @@ func TestMerge(t *testing.T) {
 			cty.NilVal,
 			true,
 		},
+		{ // Empty maps are allowed in merge
+			[]cty.Value{
+				cty.MapValEmpty(cty.String),
+				cty.MapValEmpty(cty.String),
+			},
+			cty.MapValEmpty(cty.String),
+			false,
+		},
 	}
 
 	for _, test := range tests {

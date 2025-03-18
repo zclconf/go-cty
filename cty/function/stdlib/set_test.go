@@ -76,6 +76,13 @@ func TestSetUnion(t *testing.T) {
 			},
 			cty.SetValEmpty(cty.DynamicPseudoType),
 		},
+		{
+			[]cty.Value{
+				cty.SetVal([]cty.Value{cty.StringVal("5")}),
+				cty.UnknownVal(cty.Set(cty.Number)),
+			},
+			cty.UnknownVal(cty.Set(cty.String)),
+		},
 	}
 
 	for _, test := range tests {
@@ -159,6 +166,13 @@ func TestSetIntersection(t *testing.T) {
 			},
 			cty.SetValEmpty(cty.DynamicPseudoType),
 		},
+		{
+			[]cty.Value{
+				cty.SetVal([]cty.Value{cty.StringVal("5")}),
+				cty.UnknownVal(cty.Set(cty.Number)),
+			},
+			cty.UnknownVal(cty.Set(cty.String)),
+		},
 	}
 
 	for _, test := range tests {
@@ -225,6 +239,11 @@ func TestSetSubtract(t *testing.T) {
 			cty.SetValEmpty(cty.DynamicPseudoType),
 			cty.SetValEmpty(cty.DynamicPseudoType),
 			cty.SetValEmpty(cty.DynamicPseudoType),
+		},
+		{
+			cty.SetVal([]cty.Value{cty.StringVal("5")}),
+			cty.UnknownVal(cty.Set(cty.Number)),
+			cty.UnknownVal(cty.Set(cty.String)),
 		},
 	}
 
