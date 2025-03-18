@@ -6,8 +6,8 @@ import (
 	"io"
 
 	"github.com/hashicorp/go-cty/cty"
-	"github.com/vmihailenco/msgpack"
-	msgpackcodes "github.com/vmihailenco/msgpack/codes"
+	"github.com/vmihailenco/msgpack/v4"
+	msgpackcodes "github.com/vmihailenco/msgpack/v4/codes"
 )
 
 // ImpliedType returns the cty Type implied by the structure of the given

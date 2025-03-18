@@ -146,6 +146,14 @@ func TestConvert(t *testing.T) {
 		{
 			Value: cty.SetVal([]cty.Value{
 				cty.StringVal("5"),
+				cty.UnknownVal(cty.String),
+			}),
+			Type: cty.Set(cty.Number),
+			Want: cty.SetVal([]cty.Value{cty.NumberIntVal(5), cty.UnknownVal(cty.Number)}),
+		},
+		{
+			Value: cty.SetVal([]cty.Value{
+				cty.StringVal("5"),
 				cty.StringVal("10"),
 			}),
 			Type: cty.List(cty.String),
@@ -180,6 +188,27 @@ func TestConvert(t *testing.T) {
 				// set, which may change if the set implementation changes.
 				cty.StringVal("5"),
 				cty.StringVal("10"),
+			}),
+		},
+		{
+			Value: cty.SetVal([]cty.Value{
+				cty.StringVal("5"),
+				cty.UnknownVal(cty.String),
+			}),
+			Type: cty.List(cty.String),
+			Want: cty.UnknownVal(cty.List(cty.String)),
+		},
+		{
+			Value: cty.SetVal([]cty.Value{
+				cty.UnknownVal(cty.String),
+			}),
+			Type: cty.List(cty.String),
+			// We get a known list value this time because even though we
+			// don't know the single value that's in the list, we _do_ know
+			// that there are no other values in the set for it to coalesce
+			// with.
+			Want: cty.ListVal([]cty.Value{
+				cty.UnknownVal(cty.String),
 			}),
 		},
 		{
@@ -383,6 +412,32 @@ func TestConvert(t *testing.T) {
 		},
 		{
 			Value: cty.MapVal(map[string]cty.Value{
+				"name": cty.StringVal("John"),
+			}),
+			Type: cty.Object(map[string]cty.Type{
+				"name":     cty.String,
+				"greeting": cty.String,
+			}),
+			WantError: true, // map has no element for required attribute "greeting"
+		},
+		{
+			Value: cty.MapVal(map[string]cty.Value{
+				"name": cty.StringVal("John"),
+			}),
+			Type: cty.ObjectWithOptionalAttrs(
+				map[string]cty.Type{
+					"name":     cty.String,
+					"greeting": cty.String,
+				},
+				[]string{"greeting"},
+			),
+			Want: cty.ObjectVal(map[string]cty.Value{
+				"greeting": cty.NullVal(cty.String),
+				"name":     cty.StringVal("John"),
+			}),
+		},
+		{
+			Value: cty.MapVal(map[string]cty.Value{
 				"a": cty.NumberIntVal(2),
 				"b": cty.NumberIntVal(5),
 			}),
@@ -475,6 +530,50 @@ func TestConvert(t *testing.T) {
 				"baz": cty.String,
 			}),
 			WantError: true, // given value must have superset object type
+		},
+		{
+			Value: cty.ObjectVal(map[string]cty.Value{
+				"bar": cty.StringVal("bar value"),
+			}),
+			Type: cty.ObjectWithOptionalAttrs(
+				map[string]cty.Type{
+					"foo": cty.String,
+					"bar": cty.String,
+				},
+				[]string{"foo"},
+			),
+			Want: cty.ObjectVal(map[string]cty.Value{
+				"foo": cty.NullVal(cty.String),
+				"bar": cty.StringVal("bar value"),
+			}),
+		},
+		{
+			Value: cty.ObjectVal(map[string]cty.Value{
+				"foo": cty.StringVal("foo value"),
+				"bar": cty.StringVal("bar value"),
+			}),
+			Type: cty.ObjectWithOptionalAttrs(
+				map[string]cty.Type{
+					"foo": cty.String,
+					"bar": cty.String,
+				},
+				[]string{"foo"},
+			),
+			Want: cty.ObjectVal(map[string]cty.Value{
+				"foo": cty.StringVal("foo value"),
+				"bar": cty.StringVal("bar value"),
+			}),
+		},
+		{
+			Value: cty.EmptyObjectVal,
+			Type: cty.ObjectWithOptionalAttrs(
+				map[string]cty.Type{
+					"foo": cty.String,
+					"bar": cty.String,
+				},
+				[]string{"foo"},
+			),
+			WantError: true, // Attribute "bar" is required
 		},
 		{
 			Value: cty.ObjectVal(map[string]cty.Value{

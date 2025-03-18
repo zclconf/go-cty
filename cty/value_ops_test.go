@@ -480,6 +480,35 @@ func TestValueEquals(t *testing.T) {
 			}),
 			BoolVal(false),
 		},
+		{
+			SetVal([]Value{
+				NumberIntVal(1),
+			}),
+			SetVal([]Value{
+				UnknownVal(Number),
+			}),
+			UnknownVal(Bool),
+		},
+		{
+			SetVal([]Value{
+				NumberIntVal(1),
+			}),
+			SetVal([]Value{
+				NumberIntVal(1),
+				UnknownVal(Number),
+			}),
+			UnknownVal(Bool),
+		},
+		{
+			SetVal([]Value{
+				NumberIntVal(1),
+				UnknownVal(Number),
+			}),
+			SetVal([]Value{
+				NumberIntVal(1),
+			}),
+			UnknownVal(Bool),
+		},
 
 		// Capsules
 		{

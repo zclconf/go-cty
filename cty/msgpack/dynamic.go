@@ -4,7 +4,7 @@ import (
 	"bytes"
 
 	"github.com/hashicorp/go-cty/cty"
-	"github.com/vmihailenco/msgpack"
+	"github.com/vmihailenco/msgpack/v4"
 )
 
 type dynamicVal struct {

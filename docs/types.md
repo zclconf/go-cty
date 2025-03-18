@@ -201,8 +201,14 @@ The following integration methods can be used with known set-typed values:
 Set membership is determined by equality, which has an interesting consequence
 for unknown values. Since unknown values are never equal to one another,
 theoretically an infinite number of unknown values can be in a set (constrained
-by available memory) but can never be detected by calls to `HasIndex`. However,
-they _can_ be seen in the set's length and by iterating over its members.
+by available memory) but can never be detected by calls to `HasIndex`.
+
+A set with at least one unknown value in it has an unknown length, because the
+unknown values may or may not match each other (and thus coalesce into a single
+value) once they become known. However, if a set contains a mixture of known
+and unknown values then `HasIndex` will return true for those values because
+they are guaranteed to remain present no matter what final known value each
+of the unknown values takes on.
 
 ## Structural Types
 
@@ -236,6 +242,14 @@ that is implicitly created for that value.
 
 The variable `cty.EmptyObject` contains the object type with no attributes,
 and `cty.EmptyObjectVal` is the only non-null, known value of that type.
+
+There is **currently-experimental** support for creating object types where
+one or more attributes is annotated as being "optional", using the alternative
+constructor `cty.ObjectWithOptionalAttrs`. The behavior of that function or
+of any other function working with its result is subject to change even in
+future minor versions of `cty`. The optional-attribute annotations are
+considered only during type conversion, so for more information refer to
+the guide [Converting between `cty` types](convert.md).
 
 ### `cty.Tuple` types
 
