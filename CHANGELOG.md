@@ -1,10 +1,10 @@
-# 1.7.0 (October 20, 2020)
+# 1.7.0 (Unreleased)
 
 * `cty`: `Value.UnmarkDeepWithPaths` and `Value.MarkWithPaths` are like `Value.UnmarkDeep` and `Value.Mark` but they retain path information for each marked value, so that marks can be re-applied later without all the loss of detail that results from `Value.UnmarkDeep` aggregating together all of the nested marks.
 * `function`: Unless a parameter has `AllowMarks: true` explicitly set, the functions infrastructure will now guarantee that it never sees a marked value even if the mark is deep inside a data structure. Previously that guarantee was only shallow for the top-level value, similar to `AllowUnknown`, but because marks are a relatively new addition to `cty` and numerous existing functions are not written to deal with them this is the more conservative and robust default. ([#72](https://github.com/zclconf/go-cty/pull/72))
 * `function/stdlib`: The `formatdate` function was not correctly handling literal sequences at the end of the format string. It will now handle those as intended. ([#69](https://github.com/zclconf/go-cty/pull/69))
 
-# 1.6.1 (September 2, 2020)
+# 1.6.1 (Unreleased)
 
 * `cty`:: Fix a regression from 1.6.0 where `Value.RawEqual` no longer returned the correct result given a pair of sets containing partially-unknown values. ([#64](https://github.com/zclconf/go-cty/pull/64))
 
