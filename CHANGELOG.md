@@ -1,3 +1,19 @@
+# 1.8.0 (Unreleased)
+
+* `cty`: When running on Go 1.16 or later, the `cty.String` type will now normalize incoming string values using the Unicode 13 normalization rules.
+* `function/stdlib`: The various string functions which split strings into individual characters as part of their work will now use the Unicode 13 version of the text segmentation algorithm to do so.
+
+# 1.7.2 (Unreleased)
+
+* `cty`: The `Type.GoString` implementation for object types with optional attributes was previously producing incorrect results due to an implementation bug. ([#86](https://github.com/zclconf/go-cty/pull/86))
+
+# 1.7.1 (Unreleased)
+
+* `cty`: The `Value.Multiply` and `Value.Modulo` functions now correctly propagate the floating point precision of the arguments, which avoids generating incorrect results for large integer operands. ([#75](https://github.com/zclconf/go-cty/pull/75))
+* `convert`: The `convert.MismatchMessage` function will now correctly identify mismatching attributes in objects, rather than misreporting attributes that are actually present and correct. ([#78](https://github.com/zclconf/go-cty/pull/78))
+* `function/stdlib`: The `merge` function now returns an empty object if all of its arguments are `null`, rather than returning `null` as before. That's more consistent with its usual behavior of ignoring `null` arguments when there is at least one non-null argument. ([#82](https://github.com/zclconf/go-cty/pull/82))
+* `function/stdlib`: The `coalescelist` function now ignores any arguments that are null, rather than panicking as before.. ([#81](https://github.com/zclconf/go-cty/pull/81))
+
 # 1.7.0 (Unreleased)
 
 * `cty`: `Value.UnmarkDeepWithPaths` and `Value.MarkWithPaths` are like `Value.UnmarkDeep` and `Value.Mark` but they retain path information for each marked value, so that marks can be re-applied later without all the loss of detail that results from `Value.UnmarkDeep` aggregating together all of the nested marks.

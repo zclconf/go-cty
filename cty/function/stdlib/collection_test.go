@@ -291,14 +291,21 @@ func TestMerge(t *testing.T) {
 			}),
 			false,
 		},
-		{ // handle null map
+		{ // all inputs are null
 			[]cty.Value{
 				cty.NullVal(cty.Map(cty.String)),
 				cty.NullVal(cty.Object(map[string]cty.Type{
 					"a": cty.List(cty.String),
 				})),
 			},
-			cty.NullVal(cty.EmptyObject),
+			cty.EmptyObjectVal,
+			false,
+		},
+		{ // single null input
+			[]cty.Value{
+				cty.MapValEmpty(cty.String),
+			},
+			cty.MapValEmpty(cty.String),
 			false,
 		},
 		{ // handle null object
@@ -827,6 +834,139 @@ func TestElement(t *testing.T) {
 	for _, test := range tests {
 		t.Run(fmt.Sprintf("Element(%#v,%#v)", test.List, test.Index), func(t *testing.T) {
 			got, err := Element(test.List, test.Index)
+
+			if test.Err {
+				if err == nil {
+					t.Fatal("succeeded; want error")
+				}
+				return
+			} else if err != nil {
+				t.Fatalf("unexpected error: %s", err)
+			}
+
+			if !got.RawEquals(test.Want) {
+				t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, test.Want)
+			}
+		})
+	}
+}
+
+func TestCoalesceList(t *testing.T) {
+	tests := map[string]struct {
+		Values []cty.Value
+		Want   cty.Value
+		Err    bool
+	}{
+		"returns first list if non-empty": {
+			[]cty.Value{
+				cty.ListVal([]cty.Value{
+					cty.StringVal("a"),
+					cty.StringVal("b"),
+				}),
+				cty.ListVal([]cty.Value{
+					cty.StringVal("c"),
+					cty.StringVal("d"),
+				}),
+			},
+			cty.ListVal([]cty.Value{
+				cty.StringVal("a"),
+				cty.StringVal("b"),
+			}),
+			false,
+		},
+		"returns second list if first is empty": {
+			[]cty.Value{
+				cty.ListValEmpty(cty.String),
+				cty.ListVal([]cty.Value{
+					cty.StringVal("c"),
+					cty.StringVal("d"),
+				}),
+			},
+			cty.ListVal([]cty.Value{
+				cty.StringVal("c"),
+				cty.StringVal("d"),
+			}),
+			false,
+		},
+		"return type is dynamic, not unified": {
+			[]cty.Value{
+				cty.ListValEmpty(cty.String),
+				cty.ListVal([]cty.Value{
+					cty.NumberIntVal(3),
+					cty.NumberIntVal(4),
+				}),
+			},
+			cty.ListVal([]cty.Value{
+				cty.NumberIntVal(3),
+				cty.NumberIntVal(4),
+			}),
+			false,
+		},
+		"works with tuples": {
+			[]cty.Value{
+				cty.EmptyTupleVal,
+				cty.TupleVal([]cty.Value{
+					cty.StringVal("c"),
+					cty.StringVal("d"),
+				}),
+			},
+			cty.TupleVal([]cty.Value{
+				cty.StringVal("c"),
+				cty.StringVal("d"),
+			}),
+			false,
+		},
+		"unknown arguments": {
+			[]cty.Value{
+				cty.UnknownVal(cty.List(cty.String)),
+				cty.ListVal([]cty.Value{
+					cty.StringVal("c"),
+					cty.StringVal("d"),
+				}),
+			},
+			cty.DynamicVal,
+			false,
+		},
+		"null arguments": {
+			[]cty.Value{
+				cty.NullVal(cty.List(cty.String)),
+				cty.ListVal([]cty.Value{
+					cty.StringVal("c"),
+					cty.StringVal("d"),
+				}),
+			},
+			cty.ListVal([]cty.Value{
+				cty.StringVal("c"),
+				cty.StringVal("d"),
+			}),
+			false,
+		},
+		"all null arguments": {
+			[]cty.Value{
+				cty.NullVal(cty.List(cty.String)),
+				cty.NullVal(cty.List(cty.String)),
+			},
+			cty.NilVal,
+			true,
+		},
+		"invalid arguments": {
+			[]cty.Value{
+				cty.MapVal(map[string]cty.Value{"a": cty.True}),
+				cty.ObjectVal(map[string]cty.Value{"b": cty.False}),
+			},
+			cty.NilVal,
+			true,
+		},
+		"no arguments": {
+			[]cty.Value{},
+			cty.NilVal,
+			true,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			got, err := CoalesceList(test.Values...)
 
 			if test.Err {
 				if err == nil {

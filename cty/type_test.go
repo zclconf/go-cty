@@ -54,3 +54,98 @@ func TestHasDynamicTypes(t *testing.T) {
 		})
 	}
 }
+
+func TestNilTypeEquals(t *testing.T) {
+	var typ Type
+	if !typ.Equals(NilType) {
+		t.Fatal("expected NilTypes to equal")
+	}
+}
+
+func TestTypeGoString(t *testing.T) {
+	tests := []struct {
+		Type Type
+		Want string
+	}{
+		{
+			DynamicPseudoType,
+			`cty.DynamicPseudoType`,
+		},
+		{
+			String,
+			`cty.String`,
+		},
+		{
+			Tuple([]Type{String, Bool}),
+			`cty.Tuple([]cty.Type{cty.String, cty.Bool})`,
+		},
+
+		{
+			Number,
+			`cty.Number`,
+		},
+		{
+			Bool,
+			`cty.Bool`,
+		},
+		{
+			List(String),
+			`cty.List(cty.String)`,
+		},
+		{
+			List(List(String)),
+			`cty.List(cty.List(cty.String))`,
+		},
+		{
+			List(Bool),
+			`cty.List(cty.Bool)`,
+		},
+		{
+			Set(String),
+			`cty.Set(cty.String)`,
+		},
+		{
+			Set(Map(String)),
+			`cty.Set(cty.Map(cty.String))`,
+		},
+		{
+			Set(Bool),
+			`cty.Set(cty.Bool)`,
+		},
+		{
+			Tuple([]Type{Bool}),
+			`cty.Tuple([]cty.Type{cty.Bool})`,
+		},
+
+		{
+			Map(String),
+			`cty.Map(cty.String)`,
+		},
+		{
+			Map(Set(String)),
+			`cty.Map(cty.Set(cty.String))`,
+		},
+		{
+			Map(Bool),
+			`cty.Map(cty.Bool)`,
+		},
+		{
+			Object(map[string]Type{"foo": Bool}),
+			`cty.Object(map[string]cty.Type{"foo":cty.Bool})`,
+		},
+		{
+			ObjectWithOptionalAttrs(map[string]Type{"foo": Bool, "bar": String}, []string{"bar"}),
+			`cty.ObjectWithOptionalAttrs(map[string]cty.Type{"bar":cty.String, "foo":cty.Bool}, []string{"bar"})`,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.Type.GoString(), func(t *testing.T) {
+			got := test.Type.GoString()
+			want := test.Want
+			if got != want {
+				t.Errorf("wrong result\ngot:  %s\nwant: %s", got, want)
+			}
+		})
+	}
+}
