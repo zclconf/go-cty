@@ -146,7 +146,7 @@ func (t Type) IsObjectType() bool {
 }
 
 // HasAttribute returns true if the receiver has an attribute with the given
-// name, regardless of its type. Will panic if the reciever isn't an object
+// name, regardless of its type. Will panic if the receiver isn't an object
 // type; use IsObjectType to determine whether this operation will succeed.
 func (t Type) HasAttribute(name string) bool {
 	name = NormalizeString(name)

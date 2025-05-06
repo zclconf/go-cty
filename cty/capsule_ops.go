@@ -85,7 +85,7 @@ type CapsuleOps struct {
 	// The key argument is any value that can be compared with Go's ==
 	// operator, but should be of a named type in a package belonging to the
 	// application defining the key. An ExtensionData implementation must
-	// check to see if the given key is familar to it, and if so return a
+	// check to see if the given key is familiar to it, and if so return a
 	// suitable value for the key.
 	//
 	// If the given key is unrecognized, the ExtensionData function must

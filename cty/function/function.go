@@ -416,20 +416,20 @@ func (f Function) Description() string {
 // should be no description at all.
 //
 // The paramDescs argument must match the number of parameters
-// the reciever expects, or this function will panic. If the function has a
+// the receiver expects, or this function will panic. If the function has a
 // VarParam then that counts as one parameter for the sake of this rule. The
 // given descriptions will be assigned in order starting with the positional
 // arguments in their declared order, followed by the variadic parameter if
 // any.
 //
 // As a special case, WithNewDescriptions will accept a paramDescs which
-// does not cover the reciever's variadic parameter (if any), so that it's
+// does not cover the receiver's variadic parameter (if any), so that it's
 // possible to add a variadic parameter to a function which didn't previously
 // have one without that being a breaking change for an existing caller using
 // WithNewDescriptions against that function. In this case the base description
 // of the variadic parameter will be preserved.
 func (f Function) WithNewDescriptions(funcDesc string, paramDescs []string) Function {
-	retSpec := *f.spec // shallow copy of the reciever
+	retSpec := *f.spec // shallow copy of the receiver
 	retSpec.Description = funcDesc
 
 	retSpec.Params = make([]Parameter, len(f.spec.Params))

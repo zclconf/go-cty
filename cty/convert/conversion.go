@@ -221,7 +221,7 @@ func prepareUnknownResult(sourceRange cty.ValueRange, targetTy cty.Type) cty.Val
 		// elements as the source type has attributes.
 		return ret.Refine().CollectionLength(len(sourceTy.AttributeTypes())).NewValue()
 	case sourceTy.IsTupleType() && targetTy.IsListType():
-		// A list built from a typle type always has the same number of
+		// A list built from a tuple type always has the same number of
 		// elements as the source type has elements.
 		return ret.Refine().CollectionLength(sourceTy.Length()).NewValue()
 	case sourceTy.IsTupleType() && targetTy.IsSetType():
