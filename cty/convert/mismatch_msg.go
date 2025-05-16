@@ -55,7 +55,7 @@ func MismatchMessage(got, want cty.Type) string {
 
 	default:
 		// If we have nothing better to say, we'll just state what was required.
-		return want.FriendlyNameForConstraint() + " required"
+		return want.FriendlyNameForConstraint() + " required but " + got.FriendlyName() + " was given"
 	}
 }
 
