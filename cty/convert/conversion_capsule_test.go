@@ -79,12 +79,12 @@ func TestConvertCapsuleType(t *testing.T) {
 		{
 			From:    cty.True,
 			To:      capTy,
-			WantErr: `test thingy required`,
+			WantErr: `test thingy required, but have bool`,
 		},
 		{
 			From:    capVal("hello"),
 			To:      cty.Bool,
-			WantErr: `bool required`,
+			WantErr: `bool required, but have test thingy`,
 		},
 		{
 			From: cty.UnknownVal(capTy),
@@ -99,22 +99,22 @@ func TestConvertCapsuleType(t *testing.T) {
 		{
 			From:    cty.UnknownVal(cty.Bool),
 			To:      capTy,
-			WantErr: `test thingy required`,
+			WantErr: `test thingy required, but have bool`,
 		},
 		{
 			From:    cty.NullVal(cty.Bool),
 			To:      capTy,
-			WantErr: `test thingy required`,
+			WantErr: `test thingy required, but have bool`,
 		},
 		{
 			From:    cty.UnknownVal(capTy),
 			To:      cty.Bool,
-			WantErr: `bool required`,
+			WantErr: `bool required, but have test thingy`,
 		},
 		{
 			From:    cty.NullVal(capTy),
 			To:      cty.Bool,
-			WantErr: `bool required`,
+			WantErr: `bool required, but have test thingy`,
 		},
 		{
 			From: capIntVal(42),

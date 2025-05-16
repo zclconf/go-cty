@@ -340,7 +340,7 @@ func TestFormat(t *testing.T) {
 			cty.StringVal("%d green bottles standing on the wall"),
 			[]cty.Value{cty.True},
 			cty.NilVal,
-			`unsupported value for "%d" at 0: number required`,
+			`unsupported value for "%d" at 0: number required, but have bool`,
 		},
 		{
 			cty.StringVal("%d green bottles standing on the wall"),
@@ -794,7 +794,7 @@ func TestFormatList(t *testing.T) {
 			cty.StringVal("%s"),
 			[]cty.Value{cty.EmptyObjectVal},
 			cty.ListValEmpty(cty.String),
-			`error on format iteration 0: unsupported value for "%s" at 0: string required`,
+			`error on format iteration 0: unsupported value for "%s" at 0: string required, but have object`,
 		},
 		12: {
 			cty.StringVal("%v"),

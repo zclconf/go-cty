@@ -15,7 +15,7 @@ func TestMismatchMessage(t *testing.T) {
 		{
 			cty.Bool,
 			cty.Number,
-			`number required`,
+			`number required, but have bool`,
 		},
 		{
 			cty.EmptyObject,
@@ -55,7 +55,7 @@ func TestMismatchMessage(t *testing.T) {
 			cty.List(cty.Object(map[string]cty.Type{
 				"foo": cty.String,
 			})),
-			`incorrect list element type: object required`,
+			`incorrect list element type: object required, but have string`,
 		},
 		{
 			cty.List(cty.EmptyObject),

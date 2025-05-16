@@ -623,7 +623,7 @@ func TestConvert(t *testing.T) {
 			Type: cty.Object(map[string]cty.Type{
 				"foo": cty.Number,
 			}),
-			WantError: `attribute "foo": number required`,
+			WantError: `attribute "foo": number required, but have bool`,
 		},
 		{
 			Value: cty.ObjectVal(map[string]cty.Value{
@@ -632,7 +632,7 @@ func TestConvert(t *testing.T) {
 			Type: cty.Object(map[string]cty.Type{
 				"foo": cty.Number,
 			}),
-			WantError: `attribute "foo": number required`,
+			WantError: `attribute "foo": number required, but have bool`,
 		},
 		{
 			Value: cty.NullVal(cty.String),
@@ -1064,7 +1064,7 @@ func TestConvert(t *testing.T) {
 					"d": cty.String,
 				}),
 			}, []string{"b", "c"}),
-			WantError: `map element type is incompatible with attribute "c": object required`,
+			WantError: `map element type is incompatible with attribute "c": object required, but have string`,
 		},
 		{
 			Value: cty.TupleVal([]cty.Value{

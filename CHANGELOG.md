@@ -1,5 +1,6 @@
 # 1.16.3 (Unreleased)
 
+* `convert`: Now generates more specific error messages in various cases of type conversion failure, giving additional information about the type that was given as compared to the type that was wanted by the caller.
 
 # 1.16.2 (January 21, 2025)
 
