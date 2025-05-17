@@ -8,7 +8,7 @@ import (
 	"github.com/zclconf/go-cty/cty/ctystrings"
 )
 
-// Refine creates a [RefinementBuilder] with which to annotate the reciever
+// Refine creates a [RefinementBuilder] with which to annotate the receiver
 // with zero or more additional refinements that constrain the range of
 // the value.
 //
@@ -137,7 +137,7 @@ func (v Value) RefineNotNull() Value {
 // using the builder pattern to apply zero or more constraints before
 // constructing a new value with all of those constraints applied.
 //
-// Most of the methods of this type return the same reciever to allow
+// Most of the methods of this type return the same receiver to allow
 // for method call chaining. End call chains with a call to
 // [RefinementBuilder.NewValue] to obtain the newly-refined value.
 type RefinementBuilder struct {

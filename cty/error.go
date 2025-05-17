@@ -5,7 +5,7 @@ import (
 )
 
 // PathError is a specialization of error that represents where in a
-// potentially-deep data structure an error occured, using a Path.
+// potentially-deep data structure an error occurred, using a Path.
 type PathError struct {
 	error
 	Path Path

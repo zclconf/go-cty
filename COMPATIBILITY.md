@@ -29,7 +29,7 @@ be seen as an improvement for end-users, and not require significant changes
 to calling applications to pass on those benefits.
 
 When working with _integration methods_ (those which return results using
-"normal" Go types rather than `cty.Value`) these changes can be more sigificant,
+"normal" Go types rather than `cty.Value`) these changes can be more significant,
 because applications can therefore observe the differences more readily.
 For example, if an unknown value is replaced with a known value of the same
 type then `Value.IsKnown` will begin returning `true` where it previously

@@ -172,7 +172,7 @@ func init() {
 	}
 }
 
-// IsPrimitiveType returns true if and only if the reciever is a primitive
+// IsPrimitiveType returns true if and only if the receiver is a primitive
 // type, which means it's either number, string, or bool. Any two primitive
 // types can be safely compared for equality using the standard == operator
 // without panic, which is not a guarantee that holds for all types. Primitive
