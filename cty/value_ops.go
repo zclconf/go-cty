@@ -1221,8 +1221,9 @@ func (val Value) ElementIterator() ElementIterator {
 	return elementIterator(val)
 }
 
-// CanIterateElements returns true if the receiver can support the
+// CanIterateElements returns true if the receiver type can support the
 // ElementIterator method (and by extension, ForEachElement) without panic.
+// Note this method will panic if the receiver is Unknown or null.
 func (val Value) CanIterateElements() bool {
 	return canElementIterator(val)
 }
