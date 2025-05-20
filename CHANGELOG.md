@@ -176,7 +176,7 @@ This release contains some changes to some aspects of the API that are either le
 * `convert`: Fix for panics and some general misbehavior when converting null values to type constraints containing objects with optional attributes. ([#88](https://github.com/zclconf/go-cty/pull/88))
 * `convert`: Type unification of a mixture of list and tuple types and for a mixture of map and object types will now do the same recursive unification that we previously did for unification of just list types and just map types respectively, to avoid producing a very different and confusing result in situations where callers try to construct collections from a mixture of nested collections and nested structural types. ([#89](https://github.com/zclconf/go-cty/pull/89))
 * `convert`: Conversion will no longer panic if we can't find a suitable single element type to use when converting to a collection type with a dynamically-selected element type. ([#91](https://github.com/zclconf/go-cty/pull/91))
-* `function`: The `ReturnTypeForValues` and `Call` methods on `Function` will now protect functions from having to deal with nested marked values for arguments that don't specifically declare `AllowMarks: true`, as a concession for the fact that many functions were written prior to the introduction of marks as a concept. ([#92](https://github.com/zclconf/go-cty/pull/92))
+* `function`: The `ReturnTypeForValues` and `Call` methods on `Function` will now protect functions from having to deal with nested marked values for arguments that don't specifically declare `AllowMarked: true`, as a concession for the fact that many functions were written prior to the introduction of marks as a concept. ([#92](https://github.com/zclconf/go-cty/pull/92))
 
 # 1.8.0 (February 22, 2021)
 
@@ -197,7 +197,7 @@ This release contains some changes to some aspects of the API that are either le
 # 1.7.0 (October 20, 2020)
 
 * `cty`: `Value.UnmarkDeepWithPaths` and `Value.MarkWithPaths` are like `Value.UnmarkDeep` and `Value.Mark` but they retain path information for each marked value, so that marks can be re-applied later without all the loss of detail that results from `Value.UnmarkDeep` aggregating together all of the nested marks.
-* `function`: Unless a parameter has `AllowMarks: true` explicitly set, the functions infrastructure will now guarantee that it never sees a marked value even if the mark is deep inside a data structure. Previously that guarantee was only shallow for the top-level value, similar to `AllowUnknown`, but because marks are a relatively new addition to `cty` and numerous existing functions are not written to deal with them this is the more conservative and robust default. ([#72](https://github.com/zclconf/go-cty/pull/72))
+* `function`: Unless a parameter has `AllowMarked: true` explicitly set, the functions infrastructure will now guarantee that it never sees a marked value even if the mark is deep inside a data structure. Previously that guarantee was only shallow for the top-level value, similar to `AllowUnknown`, but because marks are a relatively new addition to `cty` and numerous existing functions are not written to deal with them this is the more conservative and robust default. ([#72](https://github.com/zclconf/go-cty/pull/72))
 * `function/stdlib`: The `formatdate` function was not correctly handling literal sequences at the end of the format string. It will now handle those as intended. ([#69](https://github.com/zclconf/go-cty/pull/69))
 
 # 1.6.1 (September 2, 2020)
