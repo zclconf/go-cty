@@ -355,7 +355,7 @@ func toCtyObject(val reflect.Value, attrTypes map[string]cty.Type, path cty.Path
 		// path to give us a place to put our GetAttr step.
 		path = append(path, cty.PathStep(nil))
 
-		attrFields := structTagIndices(val.Type())
+		attrFields := structTagIndices(val.Type(), "cty")
 
 		vals := make(map[string]cty.Value, len(attrTypes))
 		for k, at := range attrTypes {
