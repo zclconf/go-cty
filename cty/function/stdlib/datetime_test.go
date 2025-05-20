@@ -65,6 +65,11 @@ func TestFormatDate(t *testing.T) {
 			``,
 		},
 		{
+			cty.StringVal("WW"),
+			cty.StringVal("01"),
+			``,
+		},
+		{
 			cty.StringVal("aa"),
 			cty.StringVal("pm"),
 			``,
