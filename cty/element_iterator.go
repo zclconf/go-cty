@@ -6,16 +6,34 @@ import (
 	"github.com/zclconf/go-cty/cty/set"
 )
 
+// GoIter returns a [iter.Seq2[cty.Value, cty.Value]] iterator that iterates over
+// the elements of a collection-typed value, yielding each element's key and
+// value in turn.
+// From Go 1.23, this can be used as follows:
+//
+//	for key, val := range cty.GoIter(val) {
+//		// ...
+//	}
+func GoIter(val Value) func(yield func(Value, Value) bool) {
+	return func(yield func(Value, Value) bool) {
+		for it := val.ElementIterator(); it.Next(); {
+			if !yield(it.Element()) {
+				return
+			}
+		}
+	}
+}
+
 // ElementIterator is the interface type returned by Value.ElementIterator to
 // allow the caller to iterate over elements of a collection-typed value.
 //
 // Its usage pattern is as follows:
 //
-//     it := val.ElementIterator()
-//     for it.Next() {
-//         key, val := it.Element()
-//         // ...
-//     }
+//	it := val.ElementIterator()
+//	for it.Next() {
+//		key, val := it.Element()
+//		// ...
+//	}
 type ElementIterator interface {
 	Next() bool
 	Element() (key Value, value Value)
