@@ -1,3 +1,10 @@
+# 1.17.0 (Unreleased)
+
+`cty` now requires Go 1.23 or later.
+
+* `cty.Value.Elements` offers a modern `iter.Seq2`-based equivalent of `cty.Value.ElementIterator`.
+* `cty.DeepValues` offers a modern `iter.Seq2`-based equivalent of `cty.Walk`.
+
 # 1.16.4 (August 20, 2025)
 
 * `cty.UnknownAsNull` now accepts marked values and preserves the given marks in its result. Previously it had no direct support for marks and so would either panic or return incorrect results when given marked values.

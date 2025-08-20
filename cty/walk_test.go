@@ -35,7 +35,8 @@ func TestWalk(t *testing.T) {
 		"marked_map":    MapVal(map[string]Value{"true": True}),
 	})
 
-	gotCalls := map[Call]struct{}{}
+	gotCallsWalk := map[Call]struct{}{}
+	gotCallsDeepValues := map[Call]struct{}{}
 	wantCalls := []Call{
 		{`cty.Path(nil)`, "object"},
 		{`cty.Path{cty.GetAttrStep{Name:"string"}}`, "string"},
@@ -72,7 +73,7 @@ func TestWalk(t *testing.T) {
 	}
 
 	err := Walk(val, func(path Path, val Value) (bool, error) {
-		gotCalls[Call{
+		gotCallsWalk[Call{
 			Path: fmt.Sprintf("%#v", path),
 			Type: val.Type().FriendlyName(),
 		}] = struct{}{}
@@ -82,17 +83,34 @@ func TestWalk(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if len(gotCalls) != len(wantCalls) {
-		t.Errorf("wrong number of calls %d; want %d", len(gotCalls), len(wantCalls))
+	for path, val := range DeepValues(val) {
+		gotCallsDeepValues[Call{
+			Path: fmt.Sprintf("%#v", path),
+			Type: val.Type().FriendlyName(),
+		}] = struct{}{}
 	}
 
-	for gotCall := range gotCalls {
-		t.Logf("got call {%#q, %q}", gotCall.Path, gotCall.Type)
+	if len(gotCallsWalk) != len(wantCalls) {
+		t.Errorf("wrong number of calls from Walk %d; want %d", len(gotCallsWalk), len(wantCalls))
 	}
-
+	for gotCall := range gotCallsWalk {
+		t.Logf("Walk produced {%#q, %q}", gotCall.Path, gotCall.Type)
+	}
 	for _, wantCall := range wantCalls {
-		if _, has := gotCalls[wantCall]; !has {
-			t.Errorf("missing call {%#q, %q}", wantCall.Path, wantCall.Type)
+		if _, has := gotCallsWalk[wantCall]; !has {
+			t.Errorf("Walk did not produce {%#q, %q}", wantCall.Path, wantCall.Type)
+		}
+	}
+
+	if len(gotCallsDeepValues) != len(wantCalls) {
+		t.Errorf("wrong number of results from DeepValues %d; want %d", len(gotCallsDeepValues), len(wantCalls))
+	}
+	for gotCall := range gotCallsDeepValues {
+		t.Logf("DeepValues produced {%#q, %q}", gotCall.Path, gotCall.Type)
+	}
+	for _, wantCall := range wantCalls {
+		if _, has := gotCallsDeepValues[wantCall]; !has {
+			t.Errorf("DeepValues did not produce {%#q, %q}", wantCall.Path, wantCall.Type)
 		}
 	}
 }

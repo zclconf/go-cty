@@ -2,6 +2,7 @@ package cty
 
 import (
 	"fmt"
+	"iter"
 	"math/big"
 
 	"github.com/zclconf/go-cty/cty/set"
@@ -1186,30 +1187,49 @@ func (val Value) LengthInt() int {
 	}
 }
 
+// Elements returns an iterable sequence over the elements of the reciever,
+// which must be a collection type, a tuple type, or an object type.
+// If called on a value of any other type, this method will panic.
+// The value must also be known, non-null, and unmarked, or this method will
+// panic.
+//
+// Use [Value.CanIterateElements] to check dynamically if a particular value
+// can support this method without panicking.
+//
+// The two values in each iteration represent a key and a value respectively.
+//
+// If the receiver is of list type then the key is guaranteed to be of type
+// [Number] and the values are of the list's element type.
+//
+// The the reciever is of a map type then the key is guaranteed to be of type
+// [String] and the values are of the map's element type. Elements are
+// produced in ascending lexicographical order by key.
+//
+// If the receiver is of a set type then each element is returned as both the
+// key and the value, because set member values are their own identity.
+//
+// If the reciever is of a tuple type then the key is guaranteed to be of type
+// [Number] and the and the value types match the corresponding element types.
+//
+// If the reciever is of an object type then the key is guaranteed to be of
+// type [String] and the value types match the corresponding attribute types.
+func (val Value) Elements() iter.Seq2[Value, Value] {
+	return func(yield func(Value, Value) bool) {
+		for it := val.ElementIterator(); it.Next(); {
+			if !yield(it.Element()) {
+				break
+			}
+		}
+	}
+}
+
 // ElementIterator returns an ElementIterator for iterating the elements
 // of the receiver, which must be a collection type, a tuple type, or an object
 // type. If called on a method of any other type, this method will panic.
+// The value must be known and non-null, or this method will panic.
 //
-// The value must be Known and non-Null, or this method will panic.
-//
-// If the receiver is of a list type, the returned keys will be of type Number
-// and the values will be of the list's element type.
-//
-// If the receiver is of a map type, the returned keys will be of type String
-// and the value will be of the map's element type. Elements are passed in
-// ascending lexicographical order by key.
-//
-// If the receiver is of a set type, each element is returned as both the
-// key and the value, since set members are their own identity.
-//
-// If the receiver is of a tuple type, the returned keys will be of type Number
-// and the value will be of the corresponding element's type.
-//
-// If the receiver is of an object type, the returned keys will be of type
-// String and the value will be of the corresponding attributes's type.
-//
-// ElementIterator is an integration method, so it cannot handle Unknown
-// values. This method will panic if the receiver is Unknown.
+// The element iterator produces keys and values matching what's described
+// for [Value.Elements]. New code should prefer to use [Value.Elements].
 func (val Value) ElementIterator() ElementIterator {
 	val.assertUnmarked()
 	if !val.IsKnown() {
@@ -1222,7 +1242,7 @@ func (val Value) ElementIterator() ElementIterator {
 }
 
 // CanIterateElements returns true if the receiver can support the
-// ElementIterator method (and by extension, ForEachElement) without panic.
+// Elements, ElementIterator, and ForEachElement methods without panic.
 func (val Value) CanIterateElements() bool {
 	return canElementIterator(val)
 }
@@ -1232,7 +1252,9 @@ func (val Value) CanIterateElements() bool {
 // will panic.
 //
 // ForEachElement uses ElementIterator internally, and so the values passed
-// to the callback are as described for ElementIterator.
+// to the callback are as described for [Value.Elements]. New code should
+// prefer to use [Value.Elements] in a normal for loop instead of using this
+// method.
 //
 // Returns true if the iteration exited early due to the callback function
 // returning true, or false if the loop ran to completion.

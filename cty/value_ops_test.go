@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"reflect"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 func TestValueEquals(t *testing.T) {
@@ -4021,6 +4023,86 @@ func TestHasElement(t *testing.T) {
 			got := test.Set.HasElement(test.Elem)
 			if !test.Want.RawEquals(got) {
 				t.Errorf("wrong result\ngot:  %#v\nwant: %#v", got, test.Want)
+			}
+		})
+	}
+}
+
+func TestElements(t *testing.T) {
+	tests := []struct {
+		Input Value
+		Want  [][2]Value
+	}{
+		{
+			ListValEmpty(String),
+			[][2]Value{},
+		},
+		{
+			ListVal([]Value{
+				StringVal("hello"),
+				StringVal("world"),
+			}),
+			[][2]Value{
+				{NumberIntVal(0), StringVal("hello")},
+				{NumberIntVal(1), StringVal("world")},
+			},
+		},
+		{
+			TupleVal([]Value{
+				StringVal("hello"),
+				StringVal("world"),
+			}),
+			[][2]Value{
+				{NumberIntVal(0), StringVal("hello")},
+				{NumberIntVal(1), StringVal("world")},
+			},
+		},
+		{
+			SetVal([]Value{
+				StringVal("hello"),
+				StringVal("world"),
+			}),
+			[][2]Value{
+				// When the element type is string, the results are returned
+				// in lexicographical order. Otherwise the order is unspecified.
+				{StringVal("hello"), StringVal("hello")},
+				{StringVal("world"), StringVal("world")},
+			},
+		},
+		{
+			MapVal(map[string]Value{
+				"greeting": StringVal("hello"),
+				"greetee":  StringVal("world"),
+			}),
+			[][2]Value{
+				{StringVal("greetee"), StringVal("world")},
+				{StringVal("greeting"), StringVal("hello")},
+			},
+		},
+		{
+			ObjectVal(map[string]Value{
+				"greeting": StringVal("hello"),
+				"greetee":  StringVal("world"),
+			}),
+			[][2]Value{
+				{StringVal("greetee"), StringVal("world")},
+				{StringVal("greeting"), StringVal("hello")},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%#v", test.Input), func(t *testing.T) {
+			t.Logf("%#v.Elements()", test.Input)
+
+			got := make([][2]Value, 0)
+			for k, v := range test.Input.Elements() {
+				got = append(got, [2]Value{k, v})
+			}
+
+			compare := cmp.Comparer(func(a, b Value) bool { return a.RawEquals(b) })
+			if diff := cmp.Diff(test.Want, got, compare); diff != "" {
+				t.Error("wrong result\n" + diff)
 			}
 		})
 	}
