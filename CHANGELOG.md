@@ -1,5 +1,6 @@
 # 1.16.4 (Unreleased)
 
+* `cty.UnknownAsNull` now accepts marked values and preserves the given marks in its result. Previously it had no direct support for marks and so would either panic or return incorrect results when given marked values.
 
 # 1.16.3 (May 16, 2025)
 

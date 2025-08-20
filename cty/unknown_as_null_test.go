@@ -179,6 +179,100 @@ func TestUnknownAsNull(t *testing.T) {
 				"greeting": NullVal(String),
 			}),
 		},
+
+		// Marks should be accepted and preserved verbatim
+		{
+			StringVal("hello").Mark("..."),
+			StringVal("hello").Mark("..."),
+		},
+		{
+			UnknownVal(String).Mark("..."),
+			NullVal(String).Mark("..."),
+		},
+		{
+			DynamicVal.Mark("..."),
+			NullVal(DynamicPseudoType).Mark("..."),
+		},
+		{
+			ListVal([]Value{
+				UnknownVal(String),
+			}).Mark("..."),
+			ListVal([]Value{
+				NullVal(String),
+			}).Mark("..."),
+		},
+		{
+			ListVal([]Value{
+				UnknownVal(String).Mark("..."),
+			}),
+			ListVal([]Value{
+				NullVal(String).Mark("..."),
+			}),
+		},
+		{
+			SetVal([]Value{
+				UnknownVal(String),
+			}).Mark("..."),
+			SetVal([]Value{
+				NullVal(String),
+			}).Mark("..."),
+		},
+		{
+			SetVal([]Value{
+				UnknownVal(String).Mark("..."),
+			}),
+			SetVal([]Value{
+				NullVal(String).Mark("..."),
+			}),
+		},
+		{
+			TupleVal([]Value{
+				UnknownVal(String),
+			}).Mark("..."),
+			TupleVal([]Value{
+				NullVal(String),
+			}).Mark("..."),
+		},
+		{
+			TupleVal([]Value{
+				UnknownVal(String).Mark("..."),
+			}),
+			TupleVal([]Value{
+				NullVal(String).Mark("..."),
+			}),
+		},
+		{
+			MapVal(map[string]Value{
+				"greeting": UnknownVal(String),
+			}).Mark("..."),
+			MapVal(map[string]Value{
+				"greeting": NullVal(String),
+			}).Mark("..."),
+		},
+		{
+			MapVal(map[string]Value{
+				"greeting": UnknownVal(String).Mark("..."),
+			}),
+			MapVal(map[string]Value{
+				"greeting": NullVal(String).Mark("..."),
+			}),
+		},
+		{
+			ObjectVal(map[string]Value{
+				"greeting": UnknownVal(String),
+			}).Mark("..."),
+			ObjectVal(map[string]Value{
+				"greeting": NullVal(String),
+			}).Mark("..."),
+		},
+		{
+			ObjectVal(map[string]Value{
+				"greeting": UnknownVal(String).Mark("..."),
+			}),
+			ObjectVal(map[string]Value{
+				"greeting": NullVal(String).Mark("..."),
+			}),
+		},
 	}
 
 	for _, test := range tests {
