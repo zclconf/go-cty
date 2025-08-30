@@ -2,8 +2,13 @@
 
 `cty` now requires Go 1.23 or later.
 
-* `cty.Value.Elements` offers a modern `iter.Seq2`-based equivalent of `cty.Value.ElementIterator`.
-* `cty.DeepValues` offers a modern `iter.Seq2`-based equivalent of `cty.Walk`.
+- `cty.Value.Elements` offers a modern `iter.Seq2`-based equivalent of `cty.Value.ElementIterator`.
+- `cty.DeepValues` offers a modern `iter.Seq2`-based equivalent of `cty.Walk`.
+- `cty.Value.WrangleMarksDeep` allows inspecting and modifying individual marks throughout a possibly-nested data structure.
+
+  Having now got some experience using marks more extensively in some callers, it's become clear that it's often necessary for different subsystems to be able to collaborate using independent marks without upsetting each other's assumptions. Today that tends to be achieved using hand-written transforms either with `cty.Transform` or `cty.Value.UnmarkDeepWithPaths`/`cty.Value.MarkWithPaths`, both of which can be pretty expensive even in the common case where there are no marks present at all.
+
+  This new function allows inspecting and transforming marks with far less overhead, by creating new values only for parts of a structure that actually need to change and by reusing (rather than recreating) the "payloads" of the values being modified when we know that only the marks have changed.
 
 # 1.16.4 (August 20, 2025)
 
