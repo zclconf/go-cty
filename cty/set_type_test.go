@@ -60,15 +60,15 @@ func TestSetOfCapsuleType(t *testing.T) {
 	}
 
 	typeWithHash := CapsuleWithOps("with hash function", reflect.TypeOf(capsuleTypeForSetTests{}), &CapsuleOps{
-		RawEquals: func(a, b interface{}) bool {
+		RawEquals: func(a, b any) bool {
 			return a.(*capsuleTypeForSetTests).name == b.(*capsuleTypeForSetTests).name
 		},
-		HashKey: func(v interface{}) string {
+		HashKey: func(v any) string {
 			return v.(*capsuleTypeForSetTests).name
 		},
 	})
 	typeWithoutHash := CapsuleWithOps("without hash function", reflect.TypeOf(capsuleTypeForSetTests{}), &CapsuleOps{
-		RawEquals: func(a, b interface{}) bool {
+		RawEquals: func(a, b any) bool {
 			return a.(*capsuleTypeForSetTests).name == b.(*capsuleTypeForSetTests).name
 		},
 	})

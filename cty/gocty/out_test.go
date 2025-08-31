@@ -26,7 +26,7 @@ func TestOut(t *testing.T) {
 	tests := []struct {
 		CtyValue   cty.Value
 		TargetType reflect.Type
-		Want       interface{}
+		Want       any
 	}{
 
 		// Bool
@@ -374,10 +374,10 @@ func TestOut(t *testing.T) {
 	}
 }
 
-type testOutAssertFunc func(cty.Value, reflect.Type, interface{}, *testing.T)
+type testOutAssertFunc func(cty.Value, reflect.Type, any, *testing.T)
 
-func testOutAssertPtrVal(want interface{}) testOutAssertFunc {
-	return func(ctyValue cty.Value, targetType reflect.Type, gotPtr interface{}, t *testing.T) {
+func testOutAssertPtrVal(want any) testOutAssertFunc {
+	return func(ctyValue cty.Value, targetType reflect.Type, gotPtr any, t *testing.T) {
 		wantVal := reflect.ValueOf(want)
 		gotVal := reflect.ValueOf(gotPtr)
 
@@ -400,7 +400,7 @@ func testOutAssertPtrVal(want interface{}) testOutAssertFunc {
 	}
 }
 
-func testOutWrongResult(ctyValue cty.Value, targetType reflect.Type, got interface{}, want interface{}, t *testing.T) {
+func testOutWrongResult(ctyValue cty.Value, targetType reflect.Type, got any, want any, t *testing.T) {
 	t.Errorf("wrong result\ninput:       %#v\ntarget type: %s\ngot:         %#v\nwant:        %#v", ctyValue, targetType, got, want)
 }
 

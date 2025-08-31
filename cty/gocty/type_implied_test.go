@@ -9,7 +9,7 @@ import (
 
 func TestImpliedType(t *testing.T) {
 	tests := []struct {
-		Input interface{}
+		Input any
 		Want  cty.Type
 	}{
 		// Primitive types

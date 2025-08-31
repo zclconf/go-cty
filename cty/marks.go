@@ -20,19 +20,19 @@ import (
 // an application that never marks a value does not need to worry about
 // encountering marked values.
 type marker struct {
-	realV interface{}
+	realV any
 	marks ValueMarks
 }
 
 // ValueMarks is a map, representing a set, of "mark" values associated with
 // a Value. See Value.Mark for more information on the usage of mark values.
-type ValueMarks map[interface{}]struct{}
+type ValueMarks map[any]struct{}
 
 // NewValueMarks constructs a new ValueMarks set with the given mark values.
 //
 // If any of the arguments are already ValueMarks values then they'll be merged
 // into the result, rather than used directly as individual marks.
-func NewValueMarks(marks ...interface{}) ValueMarks {
+func NewValueMarks(marks ...any) ValueMarks {
 	if len(marks) == 0 {
 		return nil
 	}
@@ -113,7 +113,7 @@ func (val Value) IsMarked() bool {
 }
 
 // HasMark returns true if and only if the receiving value has the given mark.
-func (val Value) HasMark(mark interface{}) bool {
+func (val Value) HasMark(mark any) bool {
 	if mr, ok := val.v.(marker); ok {
 		_, ok := mr.marks[mark]
 		return ok
@@ -123,7 +123,7 @@ func (val Value) HasMark(mark interface{}) bool {
 
 // HasMarkDeep is like [HasMark] but also searches any values nested inside
 // the given value.
-func (val Value) HasMarkDeep(mark interface{}) bool {
+func (val Value) HasMarkDeep(mark any) bool {
 	found := false
 	Walk(val, func(p Path, v Value) (bool, error) {
 		if v.HasMark(mark) {
@@ -245,7 +245,7 @@ func (val Value) HasSameMarks(other Value) bool {
 //
 // An application that never calls this method does not need to worry about
 // handling marked values.
-func (val Value) Mark(mark interface{}) Value {
+func (val Value) Mark(mark any) Value {
 	if _, ok := mark.(ValueMarks); ok {
 		panic("cannot call Value.Mark with a ValueMarks value (use WithMarks instead)")
 	}

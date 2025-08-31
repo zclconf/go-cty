@@ -14,7 +14,7 @@ func (val Value) GoString() string {
 	if val.IsMarked() {
 		unVal, marks := val.Unmark()
 		if len(marks) == 1 {
-			var mark interface{}
+			var mark any
 			for m := range marks {
 				mark = m
 			}
@@ -244,11 +244,11 @@ func (val Value) Equals(other Value) Value {
 		for attr, aty := range oty.AttrTypes {
 			lhs := Value{
 				ty: aty,
-				v:  val.v.(map[string]interface{})[attr],
+				v:  val.v.(map[string]any)[attr],
 			}
 			rhs := Value{
 				ty: aty,
-				v:  other.v.(map[string]interface{})[attr],
+				v:  other.v.(map[string]any)[attr],
 			}
 			eq := lhs.Equals(rhs)
 			if !eq.IsKnown() {
@@ -265,11 +265,11 @@ func (val Value) Equals(other Value) Value {
 		for i, ety := range tty.ElemTypes {
 			lhs := Value{
 				ty: ety,
-				v:  val.v.([]interface{})[i],
+				v:  val.v.([]any)[i],
 			}
 			rhs := Value{
 				ty: ety,
-				v:  other.v.([]interface{})[i],
+				v:  other.v.([]any)[i],
 			}
 			eq := lhs.Equals(rhs)
 			if !eq.IsKnown() {
@@ -282,16 +282,16 @@ func (val Value) Equals(other Value) Value {
 		}
 	case ty.IsListType():
 		ety := ty.typeImpl.(typeList).ElementTypeT
-		if len(val.v.([]interface{})) == len(other.v.([]interface{})) {
+		if len(val.v.([]any)) == len(other.v.([]any)) {
 			result = true
-			for i := range val.v.([]interface{}) {
+			for i := range val.v.([]any) {
 				lhs := Value{
 					ty: ety,
-					v:  val.v.([]interface{})[i],
+					v:  val.v.([]any)[i],
 				}
 				rhs := Value{
 					ty: ety,
-					v:  other.v.([]interface{})[i],
+					v:  other.v.([]any)[i],
 				}
 				eq := lhs.Equals(rhs)
 				if !eq.IsKnown() {
@@ -304,8 +304,8 @@ func (val Value) Equals(other Value) Value {
 			}
 		}
 	case ty.IsSetType():
-		s1 := val.v.(set.Set[interface{}])
-		s2 := other.v.(set.Set[interface{}])
+		s1 := val.v.(set.Set[any])
+		s2 := other.v.(set.Set[any])
 		equal := true
 
 		// Two sets are equal if all of their values are known and all values
@@ -332,20 +332,20 @@ func (val Value) Equals(other Value) Value {
 		result = equal
 	case ty.IsMapType():
 		ety := ty.typeImpl.(typeMap).ElementTypeT
-		if len(val.v.(map[string]interface{})) == len(other.v.(map[string]interface{})) {
+		if len(val.v.(map[string]any)) == len(other.v.(map[string]any)) {
 			result = true
-			for k := range val.v.(map[string]interface{}) {
-				if _, ok := other.v.(map[string]interface{})[k]; !ok {
+			for k := range val.v.(map[string]any) {
+				if _, ok := other.v.(map[string]any)[k]; !ok {
 					result = false
 					break
 				}
 				lhs := Value{
 					ty: ety,
-					v:  val.v.(map[string]interface{})[k],
+					v:  val.v.(map[string]any)[k],
 				}
 				rhs := Value{
 					ty: ety,
-					v:  other.v.(map[string]interface{})[k],
+					v:  other.v.(map[string]any)[k],
 				}
 				eq := lhs.Equals(rhs)
 				if !eq.IsKnown() {
@@ -463,11 +463,11 @@ func (val Value) RawEquals(other Value) bool {
 		for attr, aty := range oty.AttrTypes {
 			lhs := Value{
 				ty: aty,
-				v:  val.v.(map[string]interface{})[attr],
+				v:  val.v.(map[string]any)[attr],
 			}
 			rhs := Value{
 				ty: aty,
-				v:  other.v.(map[string]interface{})[attr],
+				v:  other.v.(map[string]any)[attr],
 			}
 			eq := lhs.RawEquals(rhs)
 			if !eq {
@@ -480,11 +480,11 @@ func (val Value) RawEquals(other Value) bool {
 		for i, ety := range tty.ElemTypes {
 			lhs := Value{
 				ty: ety,
-				v:  val.v.([]interface{})[i],
+				v:  val.v.([]any)[i],
 			}
 			rhs := Value{
 				ty: ety,
-				v:  other.v.([]interface{})[i],
+				v:  other.v.([]any)[i],
 			}
 			eq := lhs.RawEquals(rhs)
 			if !eq {
@@ -494,15 +494,15 @@ func (val Value) RawEquals(other Value) bool {
 		return true
 	case ty.IsListType():
 		ety := ty.typeImpl.(typeList).ElementTypeT
-		if len(val.v.([]interface{})) == len(other.v.([]interface{})) {
-			for i := range val.v.([]interface{}) {
+		if len(val.v.([]any)) == len(other.v.([]any)) {
+			for i := range val.v.([]any) {
 				lhs := Value{
 					ty: ety,
-					v:  val.v.([]interface{})[i],
+					v:  val.v.([]any)[i],
 				}
 				rhs := Value{
 					ty: ety,
-					v:  other.v.([]interface{})[i],
+					v:  other.v.([]any)[i],
 				}
 				eq := lhs.RawEquals(rhs)
 				if !eq {
@@ -546,18 +546,18 @@ func (val Value) RawEquals(other Value) bool {
 		}
 		valUn, _ := val.Unmark()
 		otherUn, _ := other.Unmark()
-		if len(valUn.v.(map[string]interface{})) == len(otherUn.v.(map[string]interface{})) {
-			for k := range valUn.v.(map[string]interface{}) {
-				if _, ok := otherUn.v.(map[string]interface{})[k]; !ok {
+		if len(valUn.v.(map[string]any)) == len(otherUn.v.(map[string]any)) {
+			for k := range valUn.v.(map[string]any) {
+				if _, ok := otherUn.v.(map[string]any)[k]; !ok {
 					return false
 				}
 				lhs := Value{
 					ty: ety,
-					v:  valUn.v.(map[string]interface{})[k],
+					v:  valUn.v.(map[string]any)[k],
 				}
 				rhs := Value{
 					ty: ety,
-					v:  otherUn.v.(map[string]interface{})[k],
+					v:  otherUn.v.(map[string]any)[k],
 				}
 				eq := lhs.RawEquals(rhs)
 				if !eq {
@@ -817,7 +817,7 @@ func (val Value) GetAttr(name string) Value {
 
 	return Value{
 		ty: attrType,
-		v:  val.v.(map[string]interface{})[name],
+		v:  val.v.(map[string]any)[name],
 	}
 }
 
@@ -873,7 +873,7 @@ func (val Value) Index(key Value) Value {
 
 		return Value{
 			ty: elty,
-			v:  val.v.([]interface{})[index],
+			v:  val.v.([]any)[index],
 		}
 	case val.Type().IsMapType():
 		elty := val.Type().ElementType()
@@ -896,7 +896,7 @@ func (val Value) Index(key Value) Value {
 
 		return Value{
 			ty: elty,
-			v:  val.v.(map[string]interface{})[keyStr],
+			v:  val.v.(map[string]any)[keyStr],
 		}
 	case val.Type().IsTupleType():
 		if key.Type() == DynamicPseudoType {
@@ -923,7 +923,7 @@ func (val Value) Index(key Value) Value {
 
 		return Value{
 			ty: eltys[index],
-			v:  val.v.([]interface{})[index],
+			v:  val.v.([]any)[index],
 		}
 	default:
 		panic("not a list, map, or tuple type")
@@ -970,7 +970,7 @@ func (val Value) HasIndex(key Value) Value {
 			return False
 		}
 
-		return BoolVal(int(index) < len(val.v.([]interface{})) && index >= 0)
+		return BoolVal(int(index) < len(val.v.([]any)) && index >= 0)
 	case val.Type().IsMapType():
 		if key.Type() == DynamicPseudoType {
 			return UnknownVal(Bool).RefineNotNull()
@@ -987,7 +987,7 @@ func (val Value) HasIndex(key Value) Value {
 		}
 
 		keyStr := key.v.(string)
-		_, exists := val.v.(map[string]interface{})[keyStr]
+		_, exists := val.v.(map[string]any)[keyStr]
 
 		return BoolVal(exists)
 	case val.Type().IsTupleType():
@@ -1063,7 +1063,7 @@ func (val Value) HasElement(elem Value) Value {
 		return False
 	}
 
-	s := val.v.(set.Set[interface{}])
+	s := val.v.(set.Set[any])
 	if !s.Has(elem.v) {
 		return noMatchResult
 	}
@@ -1103,7 +1103,7 @@ func (val Value) Length() Value {
 		// may or may not be equal to other elements in the set, and thus they
 		// may or may not coalesce with other elements and produce fewer
 		// items in the resulting set.
-		storeLength := int64(val.v.(set.Set[interface{}]).Length())
+		storeLength := int64(val.v.(set.Set[any]).Length())
 		if storeLength == 1 || val.IsWhollyKnown() {
 			// If our set is wholly known then we know its length.
 			//
@@ -1165,7 +1165,7 @@ func (val Value) LengthInt() int {
 	switch {
 
 	case val.ty.IsListType():
-		return len(val.v.([]interface{}))
+		return len(val.v.([]any))
 
 	case val.ty.IsSetType():
 		// NOTE: This is technically not correct in cases where the set
@@ -1177,10 +1177,10 @@ func (val Value) LengthInt() int {
 		// compatibility with callers that were relying on LengthInt rather
 		// than calling Length. Instead of panicking when a set contains an
 		// unknown value, LengthInt returns the largest possible length.
-		return val.v.(set.Set[interface{}]).Length()
+		return val.v.(set.Set[any]).Length()
 
 	case val.ty.IsMapType():
-		return len(val.v.(map[string]interface{}))
+		return len(val.v.(map[string]any))
 
 	default:
 		panic("value is not a collection")
@@ -1537,7 +1537,7 @@ func (val Value) AsValueSet() ValueSet {
 // The result is the same pointer that was passed to CapsuleVal to create
 // the value. Since cty considers values to be immutable, it is strongly
 // recommended to treat the encapsulated value itself as immutable too.
-func (val Value) EncapsulatedValue() interface{} {
+func (val Value) EncapsulatedValue() any {
 	val.assertUnmarked()
 	if !val.Type().IsCapsuleType() {
 		panic("not a capsule-typed value")

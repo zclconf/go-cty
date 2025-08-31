@@ -11,7 +11,7 @@ One could think of `cty` as being the reflection API for a language that
 doesn't exist, or that doesn't exist _yet_. It provides a set of value types
 and an API for working with values of that type.
 
-Fundamentally what `cty` provides is equivalent to an `interface{}` with some
+Fundamentally what `cty` provides is equivalent to an `any` with some
 dynamic type information attached, but `cty` encapsulates this to ensure that
 invariants are preserved and to provide a more convenient API.
 
@@ -19,12 +19,12 @@ As well as primitive types, basic collection types (lists, maps and sets) and
 structural types (object, tuple), the `cty` type and value system has some
 additional, optional features that may be useful to certain applications:
 
-* Representation of "unknown" values, which serve as a typed placeholder for
+- Representation of "unknown" values, which serve as a typed placeholder for
   a value that has yet to be determined. This can be a useful building-block
   for a type checker. Unknown values support all of the same operations as
   known values of their type, but the result will often itself be unknown.
 
-* Representation of values whose _types_ aren't even known yet. This can
+- Representation of values whose _types_ aren't even known yet. This can
   represent, for example, the result of a JSON-decoding function before the
   JSON data is known.
 
@@ -35,14 +35,14 @@ converted to and from native Go data structures, or serialized as JSON.
 
 For more details, see the following documentation:
 
-* [Concepts](./docs/concepts.md)
-* [Full Description of the `cty` Types](./docs/types.md)
-* [API Reference](https://godoc.org/github.com/zclconf/go-cty/cty) (godoc)
-* [Conversion between `cty` types](./docs/convert.md)
-* [Conversion to and from native Go values](./docs/gocty.md)
-* [JSON serialization](./docs/json.md)
-* [`cty` Functions system](./docs/functions.md)
-* [Compatibility Policy for future Minor Releases](./COMPATIBILITY.md): please
+- [Concepts](./docs/concepts.md)
+- [Full Description of the `cty` Types](./docs/types.md)
+- [API Reference](https://godoc.org/github.com/zclconf/go-cty/cty) (godoc)
+- [Conversion between `cty` types](./docs/convert.md)
+- [Conversion to and from native Go values](./docs/gocty.md)
+- [JSON serialization](./docs/json.md)
+- [`cty` Functions system](./docs/functions.md)
+- [Compatibility Policy for future Minor Releases](./COMPATIBILITY.md): please
   review this before using `cty` in your application to avoid depending on
   implementation details that may change.
 

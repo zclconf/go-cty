@@ -32,19 +32,19 @@ func TestCapsuleWithOps(t *testing.T) {
 	var i3 = 1
 	t.Run("with ops", func(t *testing.T) {
 		ty := CapsuleWithOps("with ops", reflect.TypeOf(0), &CapsuleOps{
-			GoString: func(v interface{}) string {
+			GoString: func(v any) string {
 				iPtr := v.(*int)
 				return fmt.Sprintf("test.WithOpsVal(%#v)", *iPtr)
 			},
 			TypeGoString: func(ty reflect.Type) string {
 				return fmt.Sprintf("test.WithOps(%s)", ty)
 			},
-			Equals: func(a, b interface{}) Value {
+			Equals: func(a, b any) Value {
 				aPtr := a.(*int)
 				bPtr := b.(*int)
 				return BoolVal(*aPtr == *bPtr)
 			},
-			RawEquals: func(a, b interface{}) bool {
+			RawEquals: func(a, b any) bool {
 				aPtr := a.(*int)
 				bPtr := b.(*int)
 				return *aPtr == *bPtr
@@ -54,13 +54,13 @@ func TestCapsuleWithOps(t *testing.T) {
 		v2 := CapsuleVal(ty, &i2)
 		v3 := CapsuleVal(ty, &i3)
 
-		got := map[string]interface{}{}
+		got := map[string]any{}
 		got["GoString"] = v.GoString()
 		got["TypeGoString"] = ty.GoString()
 		got["Equals.Yes"] = v.Equals(v2)
 		got["Equals.No"] = v.Equals(v3)
 
-		want := map[string]interface{}{
+		want := map[string]any{
 			"GoString":     "test.WithOpsVal(0)",
 			"TypeGoString": "test.WithOps(int)",
 			"Equals.Yes":   True,
@@ -77,13 +77,13 @@ func TestCapsuleWithOps(t *testing.T) {
 		v := CapsuleVal(ty, &i)
 		v2 := CapsuleVal(ty, &i2)
 
-		got := map[string]interface{}{}
+		got := map[string]any{}
 		got["GoString"] = v.GoString()
 		got["TypeGoString"] = ty.GoString()
 		got["Equals"] = v.Equals(v2)
 		got["RawEquals"] = v.RawEquals(v2)
 
-		want := map[string]interface{}{
+		want := map[string]any{
 			"GoString":     fmt.Sprintf(`cty.CapsuleVal(cty.Capsule("without ops", reflect.TypeOf(0)), (*int)(0x%x))`, &i),
 			"TypeGoString": `cty.Capsule("without ops", reflect.TypeOf(0))`,
 			"Equals":       False,
@@ -100,7 +100,7 @@ func TestCapsuleWithOps(t *testing.T) {
 
 func TestCapsuleExtensionData(t *testing.T) {
 	ty := CapsuleWithOps("with extension data", reflect.TypeOf(0), &CapsuleOps{
-		ExtensionData: func(key interface{}) interface{} {
+		ExtensionData: func(key any) any {
 			switch key {
 			// Note that this is a bad example of a key, just using a plain
 			// string for easier testing. Real-world extension keys should
@@ -115,7 +115,7 @@ func TestCapsuleExtensionData(t *testing.T) {
 	})
 
 	got := ty.CapsuleExtensionData("hello")
-	want := interface{}("world")
+	want := any("world")
 	if got != want {
 		t.Errorf("wrong result for 'hello'\ngot:  %#v\nwant: %#v", got, want)
 	}

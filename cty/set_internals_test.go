@@ -14,15 +14,15 @@ func TestSetHashBytes(t *testing.T) {
 		name string
 	}
 	typeWithHash := CapsuleWithOps("with hash function", reflect.TypeOf(encapsulated{}), &CapsuleOps{
-		RawEquals: func(a, b interface{}) bool {
+		RawEquals: func(a, b any) bool {
 			return a.(*encapsulated).name == b.(*encapsulated).name
 		},
-		HashKey: func(v interface{}) string {
+		HashKey: func(v any) string {
 			return v.(*encapsulated).name
 		},
 	})
 	typeWithoutHash := CapsuleWithOps("without hash function", reflect.TypeOf(encapsulated{}), &CapsuleOps{
-		RawEquals: func(a, b interface{}) bool {
+		RawEquals: func(a, b any) bool {
 			return a.(*encapsulated).name == b.(*encapsulated).name
 		},
 	})
@@ -333,8 +333,8 @@ func TestSetOrder(t *testing.T) {
 
 func TestSetRulesSameRules(t *testing.T) {
 	tests := []struct {
-		a    set.Rules[interface{}]
-		b    set.Rules[interface{}]
+		a    set.Rules[any]
+		b    set.Rules[any]
 		want bool
 	}{
 		{

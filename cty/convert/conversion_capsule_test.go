@@ -10,32 +10,32 @@ import (
 
 func TestConvertCapsuleType(t *testing.T) {
 	capTy := cty.CapsuleWithOps("test thingy", reflect.TypeOf(""), &cty.CapsuleOps{
-		GoString: func(rawV interface{}) string {
+		GoString: func(rawV any) string {
 			vPtr := rawV.(*string)
 			return fmt.Sprintf("capTy(%q)", *vPtr)
 		},
 		TypeGoString: func(ty reflect.Type) string {
 			return "capTy"
 		},
-		RawEquals: func(a, b interface{}) bool {
+		RawEquals: func(a, b any) bool {
 			aPtr := a.(*string)
 			bPtr := b.(*string)
 			return *aPtr == *bPtr
 		},
-		ConversionFrom: func(srcTy cty.Type) func(interface{}, cty.Path) (cty.Value, error) {
+		ConversionFrom: func(srcTy cty.Type) func(any, cty.Path) (cty.Value, error) {
 			if !srcTy.Equals(cty.String) {
 				return nil
 			}
-			return func(rawV interface{}, path cty.Path) (cty.Value, error) {
+			return func(rawV any, path cty.Path) (cty.Value, error) {
 				vPtr := rawV.(*string)
 				return cty.StringVal(*vPtr), nil
 			}
 		},
-		ConversionTo: func(dstTy cty.Type) func(cty.Value, cty.Path) (interface{}, error) {
+		ConversionTo: func(dstTy cty.Type) func(cty.Value, cty.Path) (any, error) {
 			if !dstTy.Equals(cty.String) {
 				return nil
 			}
-			return func(from cty.Value, path cty.Path) (interface{}, error) {
+			return func(from cty.Value, path cty.Path) (any, error) {
 				s := from.AsString()
 				return &s, nil
 			}
@@ -47,9 +47,9 @@ func TestConvertCapsuleType(t *testing.T) {
 	}
 
 	capIntTy := cty.CapsuleWithOps("int test thingy", reflect.TypeOf(0), &cty.CapsuleOps{
-		ConversionFrom: func(src cty.Type) func(interface{}, cty.Path) (cty.Value, error) {
+		ConversionFrom: func(src cty.Type) func(any, cty.Path) (cty.Value, error) {
 			if src.Equals(capTy) {
-				return func(v interface{}, p cty.Path) (cty.Value, error) {
+				return func(v any, p cty.Path) (cty.Value, error) {
 					return capVal(fmt.Sprintf("%d", *(v.(*int)))), nil
 				}
 			}

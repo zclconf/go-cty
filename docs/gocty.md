@@ -13,7 +13,7 @@ native types.
 ## From Go to `cty`
 
 Converting Go values to `cty` values is the task of the `ToCtyValue` function.
-It takes an arbitrary Go value (as an `interface{}`) and `cty.Type` describing
+It takes an arbitrary Go value (as an `any`) and `cty.Type` describing
 the shape of the desired value.
 
 The given type is used both as a conformance check and as a source of hints
@@ -53,11 +53,11 @@ err := gocty.FromCtyValue(value, &val)
 
 There are a few different ways that this can fail:
 
-* If `value` is not a `cty.Number` value, the error message returned says
+- If `value` is not a `cty.Number` value, the error message returned says
   "a number is required", assuming that this value came from user input
   and the user provided a value of the wrong type.
 
-* If `value` is not an integer, or it's an integer outside of the range of
+- If `value` is not an integer, or it's an integer outside of the range of
   an `int8`, the error message says "must be a whole number between -128 and
   127", again assuming that this was user input and that the target type here
   is an implied constraint on the value provided by the user.
@@ -159,14 +159,14 @@ data structure then this function is suitable.
 
 The mapping is as follows:
 
-* Go's int, uint and float types all map to `cty.Number`.
-* Go's bool type maps to `cty.Bool`
-* Go's string type maps to `cty.String`
-* Go slice types map to `cty` lists with the element type mapped per these rules.
-* Go maps _with string keys_ map to `cty` maps with the element type mapped per these rules.
-* Go struct types are converted to `cty` object types using the struct tag
+- Go's int, uint and float types all map to `cty.Number`.
+- Go's bool type maps to `cty.Bool`
+- Go's string type maps to `cty.String`
+- Go slice types map to `cty` lists with the element type mapped per these rules.
+- Go maps _with string keys_ map to `cty` maps with the element type mapped per these rules.
+- Go struct types are converted to `cty` object types using the struct tag
   convention described above and these mapping rules for each tagged field.
-* A Go value of type `cty.Value` maps to `cty.DynamicPseudoType`, allowing for
+- A Go value of type `cty.Value` maps to `cty.DynamicPseudoType`, allowing for
   values whose precise type isn't known statically.
 
 `ImpliedType` considers only the Go type of the provided value, so it's valid
