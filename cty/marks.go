@@ -2,6 +2,8 @@ package cty
 
 import (
 	"fmt"
+	"io"
+	"iter"
 	"strings"
 )
 
@@ -117,6 +119,60 @@ func (val Value) HasMark(mark interface{}) bool {
 		return ok
 	}
 	return false
+}
+
+// HasMarkDeep is like [HasMark] but also searches any values nested inside
+// the given value.
+func (val Value) HasMarkDeep(mark interface{}) bool {
+	found := false
+	Walk(val, func(p Path, v Value) (bool, error) {
+		if v.HasMark(mark) {
+			found = true
+			return false, io.EOF // arbitrary error just to stop the Walk early
+		}
+		return true, nil
+	})
+	return found
+}
+
+// ValueMarksOfType returns an iterable sequence of any marks directly
+// associated with the given value that can be type-asserted to the given
+// type.
+func ValueMarksOfType[T any](v Value) iter.Seq[T] {
+	return func(yield func(T) bool) {
+		yieldValueMarksOfType(v, yield)
+	}
+}
+
+// ValueMarksOfTypeDeep is like [ValueMarksOfType] but also visits any values
+// nested inside the given value.
+//
+// The same value may be produced multiple times if multiple nested values are
+// marked with it.
+func ValueMarksOfTypeDeep[T any](v Value) iter.Seq[T] {
+	return func(yield func(T) bool) {
+		Walk(v, func(p Path, v Value) (bool, error) {
+			if !yieldValueMarksOfType(v, yield) {
+				return false, io.EOF // arbitrary error just to stop the Walk early
+			}
+			return true, nil
+		})
+	}
+}
+
+func yieldValueMarksOfType[T any](v Value, yield func(T) bool) bool {
+	mr, ok := v.v.(marker)
+	if !ok {
+		return true
+	}
+	for mark := range mr.marks {
+		if v, ok := mark.(T); ok {
+			if !yield(v) {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 // ContainsMarked returns true if the receiving value or any value within it

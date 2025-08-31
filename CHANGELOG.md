@@ -10,6 +10,9 @@
 
   This new function allows inspecting and transforming marks with far less overhead, by creating new values only for parts of a structure that actually need to change and by reusing (rather than recreating) the "payloads" of the values being modified when we know that only the marks have changed.
 
+- `cty.ValueMarksOfType` and `cty.ValueMarksOfTypeDeep` make it easier to use type-based rather than value-based mark schemes, where different values of a common type are used to track a specific kind of relationship with multiple external values.
+- `cty.Value.HasMarkDeep` provides a "deep" version of the existing `cty.Value.HasMark`, searching throughout a possibly-nested structure for any values that have the given mark.
+
 # 1.16.4 (August 20, 2025)
 
 * `cty.UnknownAsNull` now accepts marked values and preserves the given marks in its result. Previously it had no direct support for marks and so would either panic or return incorrect results when given marked values.

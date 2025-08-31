@@ -2,7 +2,10 @@ package cty
 
 import (
 	"fmt"
+	"slices"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 func TestContainsMarked(t *testing.T) {
@@ -505,5 +508,59 @@ func TestReapplyMarks(t *testing.T) {
 
 	if !first.RawEquals(second) {
 		t.Fatalf("Value changed re-applying marks\n1st: %#v\n2nd: %#v\n", first, second)
+	}
+}
+
+func TestHasMarkDeep(t *testing.T) {
+	obj := ObjectVal(map[string]Value{
+		"nested": ObjectVal(map[string]Value{
+			"marked": True.Mark("boop"),
+		}),
+	})
+	if !obj.HasMarkDeep("boop") {
+		t.Error("did not find nested mark")
+	}
+}
+
+func TestValueMarksOfType(t *testing.T) {
+	t.Run("shallow", func(t *testing.T) {
+		obj := ObjectVal(map[string]Value{
+			"nested": ObjectVal(map[string]Value{
+				"marked 1": True.Mark("nested"),
+				"marked 2": True.Mark(2),
+			}),
+		}).Mark("shallow").Mark(2)
+		got := slices.Collect(ValueMarksOfType[string](obj))
+		want := []string{"shallow"}
+		if diff := cmp.Diff(want, got); diff != "" {
+			t.Error("wrong result\n" + diff)
+		}
+	})
+	t.Run("only nested", func(t *testing.T) {
+		obj := ObjectVal(map[string]Value{
+			"nested": ObjectVal(map[string]Value{
+				"marked 1": True.Mark("nested"),
+				"marked 2": True.Mark(2),
+			}),
+		})
+		got := slices.Collect(ValueMarksOfType[string](obj))
+		want := []string(nil)
+		if diff := cmp.Diff(want, got); diff != "" {
+			t.Error("wrong result\n" + diff)
+		}
+	})
+}
+
+func TestValueMarksOfTypeDeep(t *testing.T) {
+	obj := ObjectVal(map[string]Value{
+		"nested": ObjectVal(map[string]Value{
+			"marked 1": True.Mark("boop"),
+			"marked 2": True.Mark(2),
+		}),
+	})
+	got := slices.Collect(ValueMarksOfTypeDeep[string](obj))
+	want := []string{"boop"}
+	if diff := cmp.Diff(want, got); diff != "" {
+		t.Error("wrong result\n" + diff)
 	}
 }
