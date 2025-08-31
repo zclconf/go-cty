@@ -1,6 +1,7 @@
 package cty
 
 import (
+	"io"
 	"iter"
 )
 
@@ -38,7 +39,10 @@ func Walk(val Value, cb func(Path, Value) (bool, error)) error {
 func DeepValues(val Value) iter.Seq2[Path, Value] {
 	return func(yield func(Path, Value) bool) {
 		Walk(val, func(p Path, v Value) (bool, error) {
-			return yield(p, v), nil
+			if !yield(p, v) {
+				return false, io.EOF // arbitrary error just to get Walk to stop
+			}
+			return true, nil
 		})
 	}
 }

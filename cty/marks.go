@@ -2,7 +2,6 @@ package cty
 
 import (
 	"fmt"
-	"io"
 	"iter"
 	"strings"
 )
@@ -124,15 +123,12 @@ func (val Value) HasMark(mark any) bool {
 // HasMarkDeep is like [HasMark] but also searches any values nested inside
 // the given value.
 func (val Value) HasMarkDeep(mark any) bool {
-	found := false
-	Walk(val, func(p Path, v Value) (bool, error) {
+	for _, v := range DeepValues(val) {
 		if v.HasMark(mark) {
-			found = true
-			return false, io.EOF // arbitrary error just to stop the Walk early
+			return true
 		}
-		return true, nil
-	})
-	return found
+	}
+	return false
 }
 
 // ValueMarksOfType returns an iterable sequence of any marks directly
@@ -151,12 +147,11 @@ func ValueMarksOfType[T any](v Value) iter.Seq[T] {
 // marked with it.
 func ValueMarksOfTypeDeep[T any](v Value) iter.Seq[T] {
 	return func(yield func(T) bool) {
-		Walk(v, func(p Path, v Value) (bool, error) {
+		for _, v := range DeepValues(v) {
 			if !yieldValueMarksOfType(v, yield) {
-				return false, io.EOF // arbitrary error just to stop the Walk early
+				break
 			}
-			return true, nil
-		})
+		}
 	}
 }
 
@@ -181,15 +176,12 @@ func yieldValueMarksOfType[T any](v Value, yield func(T) bool) bool {
 // This operation is relatively expensive. If you only need a shallow result,
 // use IsMarked instead.
 func (val Value) ContainsMarked() bool {
-	ret := false
-	Walk(val, func(_ Path, v Value) (bool, error) {
+	for _, v := range DeepValues(val) {
 		if v.IsMarked() {
-			ret = true
-			return false, nil
+			return true
 		}
-		return true, nil
-	})
-	return ret
+	}
+	return false
 }
 
 func (val Value) assertUnmarked() {
