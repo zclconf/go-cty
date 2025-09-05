@@ -1,4 +1,4 @@
-# 1.17.0 (Unreleased)
+# 1.17.0 (September 5, 2025)
 
 `cty` now requires Go 1.23 or later.
 
@@ -12,7 +12,7 @@
 
 - `cty.ValueMarksOfType` and `cty.ValueMarksOfTypeDeep` make it easier to use type-based rather than value-based mark schemes, where different values of a common type are used to track a specific kind of relationship with multiple external values.
 - `cty.Value.HasMarkDeep` provides a "deep" version of the existing `cty.Value.HasMark`, searching throughout a possibly-nested structure for any values that have the given mark.
-- `cty.Value.UnmarkDeep` and `cty.Value.UnmarkDeepWithPaths` are now implemented in terms of `cty.Value.WrangleMarksDeep`, so they benefit from its reduced overhead. In particular they avoid reconstructing a data structure that contains no marks at all.
+- `cty.Value.UnmarkDeep` and `cty.Value.UnmarkDeepWithPaths` are now implemented in terms of `cty.Value.WrangleMarksDeep`, so they benefit from its reduced overhead. In particular they avoid reconstructing a data structure that contains no marked values at all.
 - `cty.Value.MarkWithPaths` now has a fast path when it's given a zero-length `PathValueMarks`, in which case it just returns the value it was given with no modifications.
 
 # 1.16.4 (August 20, 2025)
