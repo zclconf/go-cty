@@ -451,15 +451,19 @@ func fromCtyObject(val cty.Value, target reflect.Value, path cty.Path) error {
 	case reflect.Struct:
 
 		attrTypes := val.Type().AttributeTypes()
-		targetFields := structTagIndices(target.Type())
+		targetFields := structTagInfo(target.Type())
 
 		path = append(path, nil)
 
-		for k, i := range targetFields {
+		for k, info := range targetFields {
 			if _, exists := attrTypes[k]; !exists {
+				if info.optional {
+					continue
+				}
+
 				// If the field in question isn't able to represent nil,
 				// that's an error.
-				fk := target.Field(i).Kind()
+				fk := target.Field(info.index).Kind()
 				switch fk {
 				case reflect.Ptr, reflect.Slice, reflect.Map, reflect.Interface:
 					// okay
@@ -474,14 +478,14 @@ func fromCtyObject(val cty.Value, target reflect.Value, path cty.Path) error {
 				Name: k,
 			}
 
-			fieldIdx, exists := targetFields[k]
+			fieldInfo, exists := targetFields[k]
 			if !exists {
 				return path.NewErrorf("unsupported attribute %q", k)
 			}
 
 			ev := val.GetAttr(k)
 
-			targetField := target.Field(fieldIdx)
+			targetField := target.Field(fieldInfo.index)
 			err := fromCtyValue(ev, targetField, path)
 			if err != nil {
 				return err
