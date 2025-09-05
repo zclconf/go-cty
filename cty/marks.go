@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"iter"
 	"strings"
+
+	"github.com/zclconf/go-cty/cty/ctymarks"
 )
 
 // marker is an internal wrapper type used to add special "marks" to values.
@@ -284,6 +286,11 @@ func (t *applyPathValueMarksTransformer) Exit(p Path, v Value) (Value, error) {
 // markers to particular paths and returns the marked
 // Value.
 func (val Value) MarkWithPaths(pvm []PathValueMarks) Value {
+	if len(pvm) == 0 {
+		// If we have no marks to apply then there's nothing to do, so we'll
+		// just return the same value rather than wastefully rebuilding it.
+		return val
+	}
 	ret, _ := TransformWithTransformer(val, &applyPathValueMarksTransformer{pvm})
 	return ret
 }
@@ -305,24 +312,6 @@ func (val Value) Unmark() (Value, ValueMarks) {
 	}, marks
 }
 
-type unmarkTransformer struct {
-	pvm []PathValueMarks
-}
-
-func (t *unmarkTransformer) Enter(p Path, v Value) (Value, error) {
-	unmarkedVal, marks := v.Unmark()
-	if len(marks) > 0 {
-		path := make(Path, len(p), len(p)+1)
-		copy(path, p)
-		t.pvm = append(t.pvm, PathValueMarks{path, marks})
-	}
-	return unmarkedVal, nil
-}
-
-func (t *unmarkTransformer) Exit(p Path, v Value) (Value, error) {
-	return v, nil
-}
-
 // UnmarkDeep is similar to Unmark, but it works with an entire nested structure
 // rather than just the given value directly.
 //
@@ -330,17 +319,12 @@ func (t *unmarkTransformer) Exit(p Path, v Value) (Value, error) {
 // the returned marks set includes the superset of all of the marks encountered
 // during the operation.
 func (val Value) UnmarkDeep() (Value, ValueMarks) {
-	t := unmarkTransformer{}
-	ret, _ := TransformWithTransformer(val, &t)
-
-	marks := make(ValueMarks)
-	for _, pvm := range t.pvm {
-		for m, s := range pvm.Marks {
-			marks[m] = s
-		}
-	}
-
-	return ret, marks
+	retMarks := make(ValueMarks)
+	retVal, _ := val.WrangleMarksDeep(func(mark any, path Path) (ctymarks.WrangleAction, error) {
+		retMarks[mark] = struct{}{}
+		return ctymarks.WrangleDrop, nil
+	})
+	return retVal, retMarks
 }
 
 // UnmarkDeepWithPaths is like UnmarkDeep, except it returns a slice
@@ -348,9 +332,24 @@ func (val Value) UnmarkDeep() (Value, ValueMarks) {
 // a caller to know which marks are associated with which paths
 // in the Value.
 func (val Value) UnmarkDeepWithPaths() (Value, []PathValueMarks) {
-	t := unmarkTransformer{}
-	ret, _ := TransformWithTransformer(val, &t)
-	return ret, t.pvm
+	var pvm []PathValueMarks
+	retVal, _ := val.WrangleMarksDeep(func(mark any, path Path) (ctymarks.WrangleAction, error) {
+		if len(pvm) != 0 {
+			// We'll try to modify the most recent item instead of adding
+			// a new one, if the path hasn't changed.
+			latest := &pvm[len(pvm)-1]
+			if latest.Path.Equals(path) {
+				latest.Marks[mark] = struct{}{}
+				return ctymarks.WrangleDrop, nil
+			}
+		}
+		pvm = append(pvm, PathValueMarks{
+			Path:  path.Copy(),
+			Marks: NewValueMarks(mark),
+		})
+		return ctymarks.WrangleDrop, nil
+	})
+	return retVal, pvm
 }
 
 func (val Value) unmarkForce() Value {
