@@ -80,7 +80,7 @@ func conversionObjectToObject(in, out cty.Type, unsafe bool) conversion {
 				}
 			}
 
-			if val.IsNull() {
+			if val.IsNull() && val != cty.NilVal {
 				// Strip optional attributes out of the embedded type for null
 				// values.
 				val = cty.NullVal(val.Type().WithoutOptionalAttributesDeep())
