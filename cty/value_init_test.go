@@ -2,7 +2,9 @@ package cty
 
 import (
 	"fmt"
+	"math/big"
 	"testing"
+	"time"
 )
 
 func TestSetVal(t *testing.T) {
@@ -429,6 +431,43 @@ func TestCanMapVal(t *testing.T) {
 		got := CanMapVal(tc.Elems)
 		if got != tc.Want {
 			t.Errorf("wrong result for elements %#v:\ngot %v, want %v", tc.Elems, got, tc.Want)
+		}
+	}
+}
+
+func TestParseNumberVal(t *testing.T) {
+	testCases := []struct {
+		Input string
+		Want  Value
+	}{
+		{
+			"123",
+			NumberIntVal(123),
+		},
+		{
+			"123ns",
+			NumberIntVal(123),
+		},
+		{
+			"123s",
+			NumberIntVal(123 * time.Second.Nanoseconds()),
+		},
+		{
+			"123h",
+			NumberIntVal(123 * time.Hour.Nanoseconds()),
+		},
+	}
+
+	for _, tc := range testCases {
+		got, err := ParseNumberVal(tc.Input)
+		if err != nil {
+			t.Errorf("unexpected error for input %#v: %s", tc.Input, err)
+		}
+
+		v1 := got.v.(*big.Float)
+		v2 := tc.Want.v.(*big.Float)
+		if v1.Cmp(v2) != 0 {
+			t.Errorf("wrong result for input %#v:\ngot %#v, want %#v", tc.Input, v1, v2)
 		}
 	}
 }

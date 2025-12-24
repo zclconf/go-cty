@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/big"
 	"reflect"
+	"time"
 
 	"github.com/zclconf/go-cty/cty/ctystrings"
 	"github.com/zclconf/go-cty/cty/set"
@@ -50,6 +51,10 @@ func ParseNumberVal(s string) (Value, error) {
 	// way to handle numbers arriving as strings.
 	f, _, err := big.ParseFloat(s, 10, 512, big.ToNearestEven)
 	if err != nil {
+		// The string is defined as a duration? try parse it.
+		if val, err := time.ParseDuration(s); err == nil {
+			return NumberIntVal(val.Nanoseconds()), nil
+		}
 		return NilVal, fmt.Errorf("a number is required")
 	}
 	return NumberVal(f), nil
