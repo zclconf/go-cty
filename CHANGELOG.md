@@ -1,3 +1,7 @@
+# 1.18.0 (Unreleased)
+
+`cty` now requires Go 1.25 or later.
+
 # 1.17.0 (September 5, 2025)
 
 `cty` now requires Go 1.23 or later.

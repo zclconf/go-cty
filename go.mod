@@ -12,4 +12,4 @@ require (
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 )
 
-go 1.23
+go 1.25
