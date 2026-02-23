@@ -862,7 +862,6 @@ func TestValueEquals(t *testing.T) {
 			StringVal("b").Mark(2),
 			False.WithMarks(NewValueMarks(1, 2)),
 		},
-
 		{
 			MapVal(map[string]Value{
 				"a": StringVal("a").Mark("boop"),
@@ -871,6 +870,24 @@ func TestValueEquals(t *testing.T) {
 				"a": StringVal("a").Mark("blop"),
 			}),
 			True.WithMarks(NewValueMarks("boop", "blop")),
+		},
+		{
+			ObjectVal(map[string]Value{
+				"a": StringVal("a").Mark("nested"),
+			}).Mark("toplevel a"),
+			NullVal(Object(map[string]Type{
+				"a": String,
+			})).Mark("toplevel b"),
+			False.WithMarks(NewValueMarks("toplevel a", "toplevel b")),
+		},
+		{
+			NullVal(Object(map[string]Type{
+				"a": String,
+			})).Mark("toplevel a"),
+			NullVal(Object(map[string]Type{
+				"a": String,
+			})).Mark("toplevel b"),
+			True.WithMarks(NewValueMarks("toplevel a", "toplevel b")),
 		},
 	}
 

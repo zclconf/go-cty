@@ -2,6 +2,10 @@
 
 `cty` now requires Go 1.25 or later.
 
+- `cty.Value.Equals` now has a special case where if a null value is compared with a non-null value then only top-level marks from the non-null value will transfer to the boolean result.
+
+    This is a limited introduction of the idea that only the parts of a nested data structure that were actually relevant to the comparison should transfer to the result. The more general form of that idea might follow in a later release, but that would require some more severe refactoring of this method's implementation that would be far riskier and so this is a pragmatic compromise to support just the relatively-common case of comparing with null in callers like HCL where an equality test is the canonical way to test a value for "null-ness".
+
 # 1.17.0 (September 5, 2025)
 
 `cty` now requires Go 1.23 or later.
