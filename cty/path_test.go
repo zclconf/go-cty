@@ -160,6 +160,75 @@ func TestPathApply(t *testing.T) {
 			cty.StringVal("there").Mark(1),
 			``,
 		},
+		{
+			cty.SetVal([]cty.Value{
+				cty.StringVal("hello").Mark(1), // Note: this mark is automatically hoisted to the set as a whole
+			}).Mark(2),
+			cty.IndexPath(cty.StringVal("hello")),
+			cty.StringVal("hello").Mark(1).Mark(2),
+			``,
+		},
+		{
+			cty.SetVal([]cty.Value{
+				cty.StringVal("hello").Mark(1), // Note: this mark is automatically hoisted to the set as a whole
+			}).Mark(2),
+			cty.IndexPath(cty.StringVal("not present")),
+			cty.NilVal,
+			`at step 0: set does not contain the requested element`,
+		},
+		{
+			cty.SetVal([]cty.Value{
+				cty.StringVal("hello").Mark(1), // Note: this mark is automatically hoisted to the set as a whole
+				cty.UnknownVal(cty.String),
+			}).Mark(2),
+			cty.IndexPath(cty.StringVal("not present")),
+			cty.UnknownVal(cty.String).Mark(1).Mark(2),
+			``,
+		},
+		{
+			cty.SetVal([]cty.Value{
+				cty.StringVal("hello").Mark(1), // Note: this mark is automatically hoisted to the set as a whole
+			}).Mark(2),
+			cty.IndexPath(cty.True), // type mismatch is treated the same as value not present, constistent with Value.HasElement
+			cty.NilVal,
+			`at step 0: set does not contain the requested element`,
+		},
+		{
+			cty.SetVal([]cty.Value{
+				cty.StringVal("hello").Mark(1), // Note: this mark is automatically hoisted to the set as a whole
+			}).Mark(2),
+			cty.IndexPath(cty.NullVal(cty.String)), // null is a valid set element, but it isn't present in this set
+			cty.NilVal,
+			`at step 0: set does not contain the requested element`,
+		},
+		{
+			cty.SetVal([]cty.Value{
+				cty.NullVal(cty.String).Mark(1), // Note: this mark is automatically hoisted to the set as a whole
+			}).Mark(2),
+			cty.IndexPath(cty.NullVal(cty.String)),
+			cty.NullVal(cty.String).Mark(1).Mark(2),
+			``,
+		},
+		{
+			cty.SetVal([]cty.Value{
+				cty.StringVal("hello").Mark(1), // Note: this mark is automatically hoisted to the set as a whole
+			}).Mark(2),
+			cty.IndexPath(cty.UnknownVal(cty.String)),
+			cty.UnknownVal(cty.String).Mark(1).Mark(2),
+			``,
+		},
+		{
+			cty.UnknownVal(cty.Set(cty.String)).Mark(2),
+			cty.IndexPath(cty.StringVal("hello")),
+			cty.UnknownVal(cty.String).Mark(2),
+			``,
+		},
+		{
+			cty.NullVal(cty.Set(cty.String)).Mark(2),
+			cty.IndexPath(cty.StringVal("hello")),
+			cty.NilVal,
+			`at step 0: cannot index a null value`,
+		},
 	}
 
 	for _, test := range tests {

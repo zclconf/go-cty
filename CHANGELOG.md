@@ -5,6 +5,11 @@
 - `cty.Value.Equals` now has a special case where if a null value is compared with a non-null value then only top-level marks from the non-null value will transfer to the boolean result.
 
     This is a limited introduction of the idea that only the parts of a nested data structure that were actually relevant to the comparison should transfer to the result. The more general form of that idea might follow in a later release, but that would require some more severe refactoring of this method's implementation that would be far riskier and so this is a pragmatic compromise to support just the relatively-common case of comparing with null in callers like HCL where an equality test is the canonical way to test a value for "null-ness".
+- `cty.IndexStep.Apply` now works for traversing through a set.
+
+    Although `cty.Value.Index` does not allow looking up a set element due to set elements not having indices, we often use `cty.Path` to describe a specific location in a nested structure and have a convention of handling traversal through a set as a `cty.IndexStep` whose "key" is the set element's value.
+
+    To make that work a little better with code that uses `cty.Path.Apply` on such paths, `cty.IndexStep` now has a special case where if the given value is a set then it checks whether the index step's key is a member of the set and returns that value if so. If unknown values mean that it's not decidable whether there is a matching element then the result is an unknown value of the set's element type, so that traversal can continue and presumably eventually return an unknown value of the appropriate leaf type.
 
 # 1.17.0 (September 5, 2025)
 
