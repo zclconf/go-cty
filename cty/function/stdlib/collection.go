@@ -321,8 +321,9 @@ var ContainsFunc = function.New(&function.Spec{
 			Type: cty.DynamicPseudoType,
 		},
 		{
-			Name: "value",
-			Type: cty.DynamicPseudoType,
+			Name:      "value",
+			Type:      cty.DynamicPseudoType,
+			AllowNull: true,
 		},
 	},
 	Type:         function.StaticReturnType(cty.Bool),

@@ -1,5 +1,6 @@
 # 1.18.1 (Unreleased)
 
+- stdlib: `ContainsFunc` now allows its second argument to be null, to test whether the given collection contains any null elements.
 
 # 1.18.0 (February 23, 2026)
 
