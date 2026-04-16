@@ -1,4 +1,4 @@
-# 1.18.1 (Unreleased)
+# 1.18.1 (April 16, 2026)
 
 - stdlib: `ContainsFunc` now allows its second argument to be null, to test whether the given collection contains any null elements.
 - stdlib: `MergeFunc` no longer panics if all of its arguments are null values of the same object type with at least one attribute.
