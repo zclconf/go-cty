@@ -529,7 +529,54 @@ func TestMerge(t *testing.T) {
 			cty.EmptyObjectVal,
 			false,
 		},
-		{ // single null input
+		{ // single null object with attributes
+			[]cty.Value{
+				cty.NullVal(cty.Object(map[string]cty.Type{
+					"a": cty.String,
+				})),
+			},
+			cty.EmptyObjectVal,
+			false,
+		},
+		{ // multible null objects with the same attributes
+			[]cty.Value{
+				cty.NullVal(cty.Object(map[string]cty.Type{
+					"a": cty.String,
+				})),
+				cty.NullVal(cty.Object(map[string]cty.Type{
+					"a": cty.String,
+				})),
+			},
+			cty.EmptyObjectVal,
+			false,
+		},
+		{ // multible null objects with the differing attributes
+			[]cty.Value{
+				cty.NullVal(cty.Object(map[string]cty.Type{
+					"a": cty.String,
+				})),
+				cty.NullVal(cty.Object(map[string]cty.Type{
+					"b": cty.String,
+				})),
+			},
+			cty.EmptyObjectVal,
+			false,
+		},
+		{ // mixture of null and non-null objects of the same type
+			[]cty.Value{
+				cty.NullVal(cty.Object(map[string]cty.Type{
+					"a": cty.String,
+				})),
+				cty.ObjectVal(map[string]cty.Value{
+					"a": cty.StringVal("a value"),
+				}),
+			},
+			cty.ObjectVal(map[string]cty.Value{
+				"a": cty.StringVal("a value"),
+			}),
+			false,
+		},
+		{ // single empty map
 			[]cty.Value{
 				cty.MapValEmpty(cty.String),
 			},

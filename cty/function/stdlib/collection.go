@@ -3,6 +3,7 @@ package stdlib
 import (
 	"errors"
 	"fmt"
+	"maps"
 	"sort"
 
 	"github.com/zclconf/go-cty/cty"
@@ -794,10 +795,13 @@ var MergeFunc = function.New(&function.Spec{
 			arg, _ = arg.Unmark()
 
 			switch {
-			case ty.IsObjectType() && !arg.IsNull():
-				for attr, aty := range ty.AttributeTypes() {
-					attrs[attr] = aty
+			case ty.IsObjectType():
+				if arg.IsNull() {
+					// Null objects are treated by this function as if they have
+					// no attributes at all.
+					ty = cty.EmptyObject
 				}
+				maps.Copy(attrs, ty.AttributeTypes())
 			case ty.IsMapType():
 				switch {
 				case arg.IsNull():
@@ -817,11 +821,11 @@ var MergeFunc = function.New(&function.Spec{
 
 			// record the first argument type for comparison
 			if i == 0 {
-				first = arg.Type()
+				first = ty
 				continue
 			}
 
-			if !ty.Equals(first) && matching {
+			if matching && !ty.Equals(first) {
 				matching = false
 			}
 		}
