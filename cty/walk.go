@@ -56,8 +56,18 @@ func walk(path Path, val Value, cb func(Path, Value) (bool, error)) error {
 		return nil
 	}
 
-	if val.IsNull() || !val.IsKnown() {
-		// Can't recurse into null or unknown values, regardless of type
+	if val.IsNull() {
+		// Can't recurse into null values, regardless of type
+		return nil
+	}
+	if !val.IsKnown() {
+		if nestedVal := unknownMarkedDescendentPlaceholder(val); nestedVal != NilVal {
+			path = append(path, UnknownDescendentStep{})
+			err := walk(path, nestedVal, cb)
+			if err != nil {
+				return err
+			}
+		}
 		return nil
 	}
 
@@ -175,9 +185,24 @@ func transform(path Path, val Value, t Transformer) (Value, error) {
 
 	switch {
 
-	case val.IsNull() || !val.IsKnown():
-		// Can't recurse into null or unknown values, regardless of type
-		newVal = val
+	case val.IsNull():
+		// Can't recurse into null values, regardless of type
+
+	case !val.IsKnown():
+		// We recurse into unknown values only in one specific case: if the
+		// unknown value has at least one nested mark, which we therefore
+		// report as belonging to a placeholder for an arbitrary descendent
+		// of the unknown value.
+		if nestedVal := unknownMarkedDescendentPlaceholder(val); nestedVal != NilVal {
+			path = append(path, UnknownDescendentStep{})
+			nv, err := transform(path, nestedVal, t)
+			if err != nil {
+				return DynamicVal, err
+			}
+			newVal = nv.WithMarks(marks)
+		} else {
+			newVal = val
+		}
 
 	case ty.IsListType() || ty.IsSetType() || ty.IsTupleType():
 		l := rawVal.LengthInt()

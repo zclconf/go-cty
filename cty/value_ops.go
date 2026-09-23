@@ -34,7 +34,8 @@ func (val Value) GoString() string {
 		return "cty.DynamicVal"
 	}
 	if !val.IsKnown() {
-		rfn := val.v.(*unknownType).refinement
+		unk := val.v.(*unknownType)
+		rfn := unk.refinement
 		var suffix string
 		if rfn != nil {
 			calls := rfn.GoString()
@@ -43,6 +44,9 @@ func (val Value) GoString() string {
 			} else {
 				suffix = ".Refine()" + rfn.GoString() + ".NewValue()"
 			}
+		}
+		if nestedMarks := unk.nestedMarks; len(nestedMarks) != 0 {
+			return fmt.Sprintf("cty.UnknownValWithNestedMarks(%#v, %#v)%s", val.ty, nestedMarks, suffix)
 		}
 		return fmt.Sprintf("cty.UnknownVal(%#v)%s", val.ty, suffix)
 	}
@@ -455,11 +459,15 @@ func (val Value) RawEquals(other Value) bool {
 	other = other.unmarkForce()
 
 	if (!val.IsKnown()) && (!other.IsKnown()) {
-		// If either unknown value has refinements then they must match.
-		valRfn := val.v.(*unknownType).refinement
-		otherRfn := other.v.(*unknownType).refinement
+		// If either unknown value has refinements or nested marks then they must match.
+		valUnk := val.v.(*unknownType)
+		otherUnk := other.v.(*unknownType)
+		valRfn := valUnk.refinement
+		otherRfn := otherUnk.refinement
+		valNM := valUnk.nestedMarks
+		otherNM := otherUnk.nestedMarks
 		switch {
-		case (valRfn == nil) != (otherRfn == nil):
+		case ((valRfn == nil) != (otherRfn == nil)) || !valNM.Equal(otherNM):
 			return false
 		case valRfn != nil:
 			return valRfn.rawEqual(otherRfn)

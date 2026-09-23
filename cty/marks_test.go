@@ -451,6 +451,18 @@ func TestPathValueMarks(t *testing.T) {
 				{GetAttrPath("z"), NewValueMarks("f")},
 			},
 		},
+		"unknown value with nested marks": {
+			ObjectVal(map[string]Value{
+				"unk": UnknownValWithNestedMarks(Map(String), NewValueMarks("a")).Mark("b"),
+			}),
+			ObjectVal(map[string]Value{
+				"unk": UnknownVal(Map(String)),
+			}),
+			[]PathValueMarks{
+				{GetAttrPath("unk"), NewValueMarks("b")},
+				{GetAttrPath("unk").UnknownDescendent(), NewValueMarks("a")},
+			},
+		},
 		"path array reuse regression test": {
 			ObjectVal(map[string]Value{
 				"environment": ListVal([]Value{
@@ -534,6 +546,13 @@ func TestHasMarkDeep(t *testing.T) {
 			"marked": True.Mark("boop"),
 		}),
 	})
+	if !obj.HasMarkDeep("boop") {
+		t.Error("did not find nested mark")
+	}
+}
+
+func TestHasMarkDeepUnknown(t *testing.T) {
+	obj := UnknownValWithNestedMarks(List(Number), NewValueMarks("boop"))
 	if !obj.HasMarkDeep("boop") {
 		t.Error("did not find nested mark")
 	}

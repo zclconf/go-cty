@@ -369,6 +369,100 @@ found mark "bad" at path cty.Path{cty.IndexStep{Key:cty.NumberIntVal(2)}}`,
 				"unmarked 2": cty.StringVal("unmarked"),
 			}),
 		},
+
+		"unknown map with a nested mark, preserved": {
+			input: cty.UnknownValWithNestedMarks(cty.Map(cty.String), cty.NewValueMarks("a")),
+			funcs: []cty.WrangleFunc{
+				func(mark any, path cty.Path) (ctymarks.WrangleAction, error) {
+					if len(path) == 0 {
+						return nil, fmt.Errorf("this error should not be observed")
+					}
+					return ctymarks.WrangleKeep, nil
+				},
+			},
+			want: cty.UnknownValWithNestedMarks(cty.Map(cty.String), cty.NewValueMarks("a")),
+		},
+		"unknown map with a nested mark, dropped": {
+			input: cty.UnknownValWithNestedMarks(cty.Map(cty.String), cty.NewValueMarks("a")),
+			funcs: []cty.WrangleFunc{
+				func(mark any, path cty.Path) (ctymarks.WrangleAction, error) {
+					if len(path) == 0 {
+						return nil, fmt.Errorf("this error should not be observed")
+					}
+					return ctymarks.WrangleDrop, nil
+				},
+			},
+			want: cty.UnknownVal(cty.Map(cty.String)),
+		},
+		"unknown map with a nested mark, expanded": {
+			input: cty.UnknownValWithNestedMarks(cty.Map(cty.String), cty.NewValueMarks("a")),
+			funcs: []cty.WrangleFunc{
+				func(mark any, path cty.Path) (ctymarks.WrangleAction, error) {
+					if len(path) == 0 {
+						return nil, fmt.Errorf("this error should not be observed")
+					}
+					return ctymarks.WrangleExpand, nil
+				},
+			},
+			want: cty.UnknownValWithNestedMarks(cty.Map(cty.String), cty.NewValueMarks("a")).Mark("a"),
+		},
+		"unknown map with both direct and nested nested marks, all preserved": {
+			input: cty.UnknownValWithNestedMarks(cty.Map(cty.String), cty.NewValueMarks("nested")).Mark("direct"),
+			funcs: []cty.WrangleFunc{
+				func(mark any, path cty.Path) (ctymarks.WrangleAction, error) {
+					return ctymarks.WrangleKeep, nil
+				},
+			},
+			want: cty.UnknownValWithNestedMarks(cty.Map(cty.String), cty.NewValueMarks("nested")).Mark("direct"),
+		},
+		"unknown map with both direct and nested nested marks, all expanded": {
+			input: cty.UnknownValWithNestedMarks(cty.Map(cty.String), cty.NewValueMarks("nested")).Mark("direct"),
+			funcs: []cty.WrangleFunc{
+				func(mark any, path cty.Path) (ctymarks.WrangleAction, error) {
+					return ctymarks.WrangleExpand, nil
+				},
+			},
+			want: cty.UnknownValWithNestedMarks(cty.Map(cty.String), cty.NewValueMarks("nested")).Mark("direct").Mark("nested"),
+		},
+		"unknown map with both direct and nested nested marks, all dropped": {
+			input: cty.UnknownValWithNestedMarks(cty.Map(cty.String), cty.NewValueMarks("nested")).Mark("direct"),
+			funcs: []cty.WrangleFunc{
+				func(mark any, path cty.Path) (ctymarks.WrangleAction, error) {
+					return ctymarks.WrangleDrop, nil
+				},
+			},
+			want: cty.UnknownVal(cty.Map(cty.String)),
+		},
+		"unknown map with both direct and nested nested marks, nested one dropped": {
+			input: cty.UnknownValWithNestedMarks(cty.Map(cty.String), cty.NewValueMarks("nested")).Mark("direct"),
+			funcs: []cty.WrangleFunc{
+				func(mark any, path cty.Path) (ctymarks.WrangleAction, error) {
+					if len(path) == 0 {
+						return ctymarks.WrangleKeep, nil
+					}
+					if _, ok := path[0].(cty.UnknownDescendentStep); !ok {
+						return nil, fmt.Errorf("unexpected path %#v", path)
+					}
+					return ctymarks.WrangleDrop, nil
+				},
+			},
+			want: cty.UnknownVal(cty.Map(cty.String)).Mark("direct"),
+		},
+		"unknown map with both direct and nested nested marks, direct one dropped": {
+			input: cty.UnknownValWithNestedMarks(cty.Map(cty.String), cty.NewValueMarks("nested")).Mark("direct"),
+			funcs: []cty.WrangleFunc{
+				func(mark any, path cty.Path) (ctymarks.WrangleAction, error) {
+					if len(path) == 0 {
+						return ctymarks.WrangleDrop, nil
+					}
+					if _, ok := path[0].(cty.UnknownDescendentStep); !ok {
+						return nil, fmt.Errorf("unexpected path %#v", path)
+					}
+					return ctymarks.WrangleKeep, nil
+				},
+			},
+			want: cty.UnknownValWithNestedMarks(cty.Map(cty.String), cty.NewValueMarks("nested")),
+		},
 	}
 
 	for name, test := range tests {

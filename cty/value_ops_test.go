@@ -1550,6 +1550,31 @@ func TestValueRawEquals(t *testing.T) {
 			false, // because no string value -- even null -- can be equal to a non-null number
 		},
 		{
+			UnknownValWithNestedMarks(Map(String), NewValueMarks("a")),
+			UnknownValWithNestedMarks(Map(String), NewValueMarks("a")),
+			true,
+		},
+		{
+			UnknownValWithNestedMarks(Map(String), NewValueMarks("a")),
+			UnknownValWithNestedMarks(Map(Number), NewValueMarks("a")),
+			false,
+		},
+		{
+			UnknownVal(Map(String)),
+			UnknownValWithNestedMarks(Map(String), NewValueMarks("a")),
+			false,
+		},
+		{
+			UnknownValWithNestedMarks(Map(String), NewValueMarks("a", "b")),
+			UnknownValWithNestedMarks(Map(String), NewValueMarks("a")),
+			false,
+		},
+		{
+			UnknownValWithNestedMarks(Map(String), NewValueMarks("a")).RefineNotNull(),
+			UnknownValWithNestedMarks(Map(String), NewValueMarks("a")),
+			false,
+		},
+		{
 			ObjectVal(map[string]Value{
 				"a": StringVal("a"),
 			}),

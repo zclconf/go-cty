@@ -1,5 +1,10 @@
 package cty
 
+import (
+	"fmt"
+	"maps"
+)
+
 // unknownType is the placeholder type used for the sigil value representing
 // "Unknown", to make it unambigiously distinct from any other possible value.
 type unknownType struct {
@@ -7,6 +12,24 @@ type unknownType struct {
 	// additional constraints we know about the range of real values this
 	// unknown value could be a placeholder for.
 	refinement unknownValRefinement
+
+	// nestedMarks represents marks that elements or attributes of the unknown
+	// value may have, separately from marks on the collection or structural
+	// value that the unknown value is directly representing.
+	//
+	// This is a conservative approximation that doesn't attempt to represent
+	// exactly where in the potential final data structure the marks will
+	// appear. It's here primarily just so that functions like
+	// [Value.UnmarkDeep] can return an approximation of what that function
+	// return on the known final value, while still keeping those nested marks
+	// out of the result of the shallow [Value.Unmark].
+	//
+	// This could potentially grow to support more precise tracking of locations
+	// of marks in the nested data structure later if we learn of a good reason
+	// to do that, but it's not yet clear whether that complexity is warranted.
+	// Conceptually the marks given here apply to any descendent of the unknown
+	// value, regardless of the downstream path.
+	nestedMarks ValueMarks
 }
 
 // totallyUnknown is the representation a a value we know nothing about at
@@ -29,6 +52,77 @@ func UnknownVal(t Type) Value {
 		ty: t,
 		v:  totallyUnknown,
 	}
+}
+
+// UnknownValWithNestedMarks is a variant of the exported [UnknownVal] which
+// also records some nested marks inside its result. "Nested marks" in this
+// case is an approximation for there being marks on the elements or attributes
+// of an unknown value of a collection or structural type.
+//
+// Primitive-typed values, capsule-typed values, and values of empty structural
+// types can never have nested marks so this panics if called with such a type.
+func UnknownValWithNestedMarks(t Type, nestedMarks ValueMarks) Value {
+	if !typeCanHaveNestedMarks(t) {
+		panic(fmt.Sprintf("type %#v cannot have nested marks", t))
+	}
+	if len(nestedMarks) == 0 {
+		return UnknownVal(t)
+	}
+	return Value{
+		ty: t,
+		v: &unknownType{
+			nestedMarks: nestedMarks,
+		},
+	}
+}
+
+// typeCanHaveNestedMarks returns true if the given type is one whose known
+// values could potentially have marks inside them, and therefore it's also
+// valid for unknown values of that type to track nested marks.
+func typeCanHaveNestedMarks(ty Type) bool {
+	if ty.IsObjectType() {
+		return len(ty.AttributeTypes()) != 0
+	}
+	if ty.IsTupleType() {
+		return len(ty.TupleElementTypes()) != 0
+	}
+	return ty == DynamicPseudoType || ty.IsCollectionType()
+}
+
+// unknownMarkedDescendentPlaceholder is an internal helper that provides a
+// placeholder value that represents an arbitrary descendent of the given
+// unknown value if and only if the given value is an unknown value with
+// nested marks. The result is always an unknown value of unknown type.
+//
+// This function returns [NilVal] in situations where there is no placeholder
+// because there are not any nested marks.
+func unknownMarkedDescendentPlaceholder(v Value) Value {
+	unk, ok := v.v.(*unknownType)
+	if !ok {
+		return NilVal // not an unknown value
+	}
+	if len(unk.nestedMarks) == 0 {
+		return NilVal // no marks, so not interesting to report
+	}
+	return DynamicVal.WithMarks(unk.nestedMarks).WithSameMarks(v)
+}
+
+func unknownValWithMoreNestedMarks(v Value, nestedMarks ValueMarks) Value {
+	v, marks := v.Unmark()
+	if v.IsKnown() {
+		panic("unknownValWithMoreNestedMarks on known value")
+	}
+	if len(nestedMarks) == 0 {
+		return v
+	}
+	unk := *v.v.(*unknownType) // shallow copy, since we're only going to modify nestedMarks
+	if len(unk.nestedMarks) != 0 {
+		nestedMarks = maps.Clone(nestedMarks)
+		maps.Copy(nestedMarks, unk.nestedMarks)
+	}
+	unk.nestedMarks = nestedMarks
+	v.v = &unk
+	return v.WithMarks(marks)
 }
 
 func (t unknownType) GoString() string {
