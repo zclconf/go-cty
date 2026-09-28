@@ -847,6 +847,33 @@ func (val Value) GetAttr(name string) Value {
 	}
 }
 
+// GetAttrByValue is a variation of [Value.GetAttr] that accepts the attribute
+// name as a [Value] of type [String] instead of as a Go string value.
+//
+// This function panics if the given value is known not to be a string value,
+// or if it is known to be null. If given an unknown value of a suitable type
+// then this returns an unknown value acting as a placeholder result.
+func (val Value) GetAttrByValue(attrName Value) Value {
+	if val.IsMarked() || attrName.IsMarked() {
+		val, valMarks := val.Unmark()
+		attrName, attrNameMarks := attrName.Unmark()
+		return val.GetAttrByValue(attrName).WithMarks(valMarks, attrNameMarks)
+	}
+	if attrName.IsNull() {
+		panic("attribute name is null")
+	}
+	attrNameTy := attrName.Type()
+	if !(attrNameTy == String || attrNameTy == DynamicPseudoType) {
+		panic("attribute name must be a string")
+	}
+	if attrName.IsKnown() {
+		return val.GetAttr(attrName.AsString())
+	}
+	// For now we just always return DynamicVal if the attribute name is not
+	// known. We might do something more precise in future.
+	return DynamicVal
+}
+
 // Index returns the value of an element of the receiver, which must have
 // either a list, map or tuple type. This method will panic if the receiver
 // type is not compatible.

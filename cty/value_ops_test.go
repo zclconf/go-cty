@@ -2493,6 +2493,77 @@ func TestValueGetAttr(t *testing.T) {
 	}
 }
 
+func TestValueGetAttrByValue(t *testing.T) {
+	tests := []struct {
+		Object   Value
+		AttrName Value
+		Expected Value
+	}{
+		{
+			ObjectVal(map[string]Value{
+				"greeting": StringVal("hello"),
+			}),
+			StringVal("greeting"),
+			StringVal("hello"),
+		},
+		{
+			UnknownVal(Object(map[string]Type{
+				"gr\u00e9eting": String, // precombined é
+			})),
+			StringVal("gre\u0301eting"), // e with combining acute accent
+			UnknownVal(String),
+		},
+		{
+			DynamicVal,
+			StringVal("hello"),
+			DynamicVal,
+		},
+		{
+			DynamicVal,
+			UnknownVal(String),
+			DynamicVal,
+		},
+		{
+			DynamicVal,
+			DynamicVal,
+			DynamicVal,
+		},
+		{
+			ObjectVal(map[string]Value{
+				"greeting": StringVal("hello"),
+			}).Mark(1),
+			StringVal("greeting"),
+			StringVal("hello").Mark(1),
+		},
+		{
+			DynamicVal,
+			UnknownVal(String).Mark(1),
+			DynamicVal.Mark(1),
+		},
+		{
+			DynamicVal.Mark(1),
+			UnknownVal(String).Mark(2),
+			DynamicVal.Mark(1).Mark(2),
+		},
+		{
+			ObjectVal(map[string]Value{
+				"greeting": StringVal("hello").Mark(1),
+			}).Mark(2),
+			UnknownVal(String).Mark(3),
+			DynamicVal.Mark(2).Mark(3),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%#v.GetAttrByValue(%#v)", test.Object, test.AttrName), func(t *testing.T) {
+			got := test.Object.GetAttrByValue(test.AttrName)
+			if !got.RawEquals(test.Expected) {
+				t.Fatalf("GetAttrByValue returned %#v; want %#v", got, test.Expected)
+			}
+		})
+	}
+}
+
 func TestValueIndex(t *testing.T) {
 	tests := []struct {
 		Collection Value
