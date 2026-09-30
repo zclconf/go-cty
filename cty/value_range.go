@@ -105,6 +105,20 @@ func (r ValueRange) TypeConstraint() Type {
 	return r.ty
 }
 
+// AsValue returns an value that coulod be used as a placeholder for any
+// value included in the range.
+//
+// The result is usually at least partially unknown, but can potentially be
+// fully known in cases where the range is tightly constrained enough that
+// we can prove there's only one possible value.
+//
+// ValueRange has limited precision in what it can track for different types
+// of value, so round-tripping through [Value.Range] and [ValueRange.AsValue]
+// will typically lose information.
+func (r ValueRange) AsValue() Value {
+	return refinedValue(UnknownVal(r.ty), r.raw)
+}
+
 // CouldBeNull returns true unless the value being described is definitely
 // known to represent a non-null value.
 func (r ValueRange) CouldBeNull() bool {
