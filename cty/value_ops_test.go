@@ -2548,9 +2548,54 @@ func TestValueGetAttrByValue(t *testing.T) {
 		{
 			ObjectVal(map[string]Value{
 				"greeting": StringVal("hello").Mark(1),
+				"name":     StringVal("ermintrude").Mark(4),
 			}).Mark(2),
 			UnknownVal(String).Mark(3),
-			DynamicVal.Mark(2).Mark(3),
+			UnknownVal(String).RefineNotNull().Mark(2).Mark(3),
+		},
+		{
+			ObjectVal(map[string]Value{
+				"greeting": StringVal("hello").Mark(1),
+			}).Mark(2),
+			UnknownVal(String).Mark(3),
+			StringVal("hello").Mark(2).Mark(3),
+		},
+		{
+			ObjectVal(map[string]Value{
+				"greeting": StringVal("hello").Mark(prvnMark("a")),
+				"name":     StringVal("ermintrude").Mark(prvnMark("b")),
+			}).Mark(2),
+			UnknownVal(String).Mark(3),
+			UnknownVal(String).RefineNotNull().Mark(2).Mark(3).Mark(prvnMark("a")).Mark(prvnMark("b")),
+		},
+		{
+			ObjectVal(map[string]Value{
+				"greeting": StringVal("hello").Mark(prvnMark("a")),
+			}).Mark(2),
+			UnknownVal(String).Mark(3),
+			StringVal("hello").Mark(2).Mark(3).Mark(prvnMark("a")),
+		},
+		{
+			ObjectVal(map[string]Value{
+				"greeting": StringVal("hello").Mark(prvnMark("a")),
+				"happy":    True.Mark(prvnMark("b")),
+			}).Mark(2),
+			UnknownVal(String).Mark(3),
+			DynamicVal.Mark(2).Mark(3).Mark(prvnMark("a")).Mark(prvnMark("b")),
+		},
+		{
+			ObjectVal(map[string]Value{
+				"greeting": StringVal("hello").Mark(prvnMark("a")),
+				"stuff":    ListVal([]Value{True.Mark(prvnMark("c"))}).Mark(prvnMark("b")),
+			}).Mark(2),
+			UnknownVal(String).Mark(3),
+			// prvnMark("c") intentionally doesn't appear here because we only
+			// capture provenance marks from the direct attribute values of
+			// the object.
+			// TODO: Should capture nested provenance marks as part of the
+			// DynamicVal here so that we can keep track of them without
+			// misreporting them as belonging directly to the attribute values.
+			DynamicVal.Mark(2).Mark(3).Mark(prvnMark("a")).Mark(prvnMark("b")),
 		},
 	}
 
@@ -2558,7 +2603,7 @@ func TestValueGetAttrByValue(t *testing.T) {
 		t.Run(fmt.Sprintf("%#v.GetAttrByValue(%#v)", test.Object, test.AttrName), func(t *testing.T) {
 			got := test.Object.GetAttrByValue(test.AttrName)
 			if !got.RawEquals(test.Expected) {
-				t.Fatalf("GetAttrByValue returned %#v; want %#v", got, test.Expected)
+				t.Fatalf("wrong result from GetAttrByValue\nobject: %#v\nattr:   %#v\ngot:    %#v\nwant:   %#v", test.Object, test.AttrName, got, test.Expected)
 			}
 		})
 	}

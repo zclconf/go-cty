@@ -5,6 +5,7 @@ import (
 	"iter"
 	"math/big"
 
+	"github.com/zclconf/go-cty/cty/ctymarks"
 	"github.com/zclconf/go-cty/cty/set"
 )
 
@@ -866,12 +867,35 @@ func (val Value) GetAttrByValue(attrName Value) Value {
 	if !(attrNameTy == String || attrNameTy == DynamicPseudoType) {
 		panic("attribute name must be a string")
 	}
+	if val.ty != DynamicPseudoType && !val.ty.IsObjectType() {
+		panic("value is not an object")
+	}
+	if val.ty == DynamicPseudoType {
+		return DynamicVal
+	}
 	if attrName.IsKnown() {
 		return val.GetAttr(attrName.AsString())
 	}
-	// For now we just always return DynamicVal if the attribute name is not
-	// known. We might do something more precise in future.
-	return DynamicVal
+	// If the attribute name is not known then we'll return a placeholder that
+	// represents selecting any one of the possible attributes.
+	return UnknownChoice(func(yield func(Value) bool) {
+		for name := range val.Type().AttributeTypes() {
+			av := val.GetAttr(name)
+			av, _ = av.WrangleMarksDeep(func(mark any, path Path) (ctymarks.WrangleAction, error) {
+				// We only keep provenance marks here, because it would be too
+				// conservative to report that the full set of marks from all
+				// attributes would definitely appear on the result once the
+				// attribute name is known.
+				if ctymarks.IsProvenanceMark(mark) {
+					return ctymarks.WrangleKeep, nil
+				}
+				return ctymarks.WrangleDrop, nil
+			})
+			if !yield(av) {
+				return
+			}
+		}
+	})
 }
 
 // Index returns the value of an element of the receiver, which must have

@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+
+	"github.com/zclconf/go-cty/cty/ctymarks"
 )
 
 func TestContainsMarked(t *testing.T) {
@@ -580,4 +582,19 @@ func TestValueMarksOfTypeDeep(t *testing.T) {
 	if diff := cmp.Diff(want, got); diff != "" {
 		t.Error("wrong result\n" + diff)
 	}
+}
+
+type provenanceMarkForTesting struct {
+	v string
+	ctymarks.ProvenanceMark
+}
+
+func prvnMark(v string) provenanceMarkForTesting {
+	return provenanceMarkForTesting{
+		v: v,
+	}
+}
+
+func (m provenanceMarkForTesting) GoString() string {
+	return fmt.Sprintf("prvnMark(%q)", m.v)
 }
