@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"iter"
 	"math/big"
+	"strings"
 
 	"github.com/zclconf/go-cty/cty/ctymarks"
 	"github.com/zclconf/go-cty/cty/set"
@@ -878,8 +879,12 @@ func (val Value) GetAttrByValue(attrName Value) Value {
 	}
 	// If the attribute name is not known then we'll return a placeholder that
 	// represents selecting any one of the possible attributes.
+	attrNamePrefix := attrName.Range().StringPrefix()
 	return UnknownChoice(func(yield func(Value) bool) {
 		for name := range val.Type().AttributeTypes() {
+			if !strings.HasPrefix(name, attrNamePrefix) {
+				continue
+			}
 			av := val.GetAttr(name)
 			av, _ = av.WrangleMarksDeep(func(mark any, path Path) (ctymarks.WrangleAction, error) {
 				// We only keep provenance marks here, because it would be too

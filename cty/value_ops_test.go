@@ -2597,6 +2597,35 @@ func TestValueGetAttrByValue(t *testing.T) {
 			// misreporting them as belonging directly to the attribute values.
 			DynamicVal.Mark(2).Mark(3).Mark(prvnMark("a")).Mark(prvnMark("b")),
 		},
+		{
+			ObjectVal(map[string]Value{
+				"greeting": StringVal("hello").Mark(prvnMark("a")),
+				"happy":    True.Mark(prvnMark("b")),
+			}).Mark(2),
+			UnknownVal(String).Refine().StringPrefixFull("hap").NewValue().Mark(3),
+			// The known prefix on the attribute name let us filter out all
+			// but one of the attributes, giving a more precise result.
+			True.Mark(2).Mark(3).Mark(prvnMark("b")),
+		},
+		{
+			EmptyObjectVal.Mark(1),
+			UnknownVal(String).Mark(2),
+			// We actually know this can't possibly succeed, but we return a
+			// wholly-unknown value anyway so that the caller can wait to return
+			// a less confusing error once the attribute name is known.
+			DynamicVal.Mark(1).Mark(2),
+		},
+		{
+			ObjectVal(map[string]Value{
+				"greeting": StringVal("hello").Mark(prvnMark("a")),
+				"happy":    True.Mark(prvnMark("b")),
+			}).Mark(2),
+			UnknownVal(String).Refine().StringPrefixFull("nonmatch").NewValue().Mark(3),
+			// The prefix means this can't possibly succeed, but we return a
+			// wholly-unknown value anyway so that the caller can wait to return
+			// a less confusing error once the attribute name is known.
+			DynamicVal.Mark(2).Mark(3),
+		},
 	}
 
 	for _, test := range tests {
