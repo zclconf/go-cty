@@ -287,3 +287,13 @@ func replaceKWithIdx[K any, V any](in iter.Seq2[K, V]) iter.Seq2[int, V] {
 		}
 	}
 }
+
+func onlyProvenanceMarks(v Value) Value {
+	ret, _ := v.WrangleMarksDeep(func(mark any, path Path) (ctymarks.WrangleAction, error) {
+		if ctymarks.IsProvenanceMark(mark) {
+			return ctymarks.WrangleKeep, nil
+		}
+		return ctymarks.WrangleDrop, nil
+	})
+	return ret
+}

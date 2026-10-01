@@ -6,7 +6,6 @@ import (
 	"math/big"
 	"strings"
 
-	"github.com/zclconf/go-cty/cty/ctymarks"
 	"github.com/zclconf/go-cty/cty/set"
 )
 
@@ -885,17 +884,11 @@ func (val Value) GetAttrByValue(attrName Value) Value {
 			if !strings.HasPrefix(name, attrNamePrefix) {
 				continue
 			}
-			av := val.GetAttr(name)
-			av, _ = av.WrangleMarksDeep(func(mark any, path Path) (ctymarks.WrangleAction, error) {
-				// We only keep provenance marks here, because it would be too
-				// conservative to report that the full set of marks from all
-				// attributes would definitely appear on the result once the
-				// attribute name is known.
-				if ctymarks.IsProvenanceMark(mark) {
-					return ctymarks.WrangleKeep, nil
-				}
-				return ctymarks.WrangleDrop, nil
-			})
+			// We only keep provenance marks here, because it would be too
+			// conservative to report that the full set of marks from all
+			// attributes would definitely appear on the result once the
+			// attribute name is known.
+			av := onlyProvenanceMarks(val.GetAttr(name))
 			if !yield(av) {
 				return
 			}
@@ -929,6 +922,31 @@ func (val Value) Index(key Value) Value {
 	if val.ty == DynamicPseudoType {
 		return DynamicVal
 	}
+	var unknownKeyPlaceholder func(elty Type) Value
+	if !key.IsKnown() {
+		unknownKeyPlaceholder = func(elty Type) Value {
+			keyRng := key.Range()
+			ret := UnknownChoice(func(yield func(Value) bool) {
+				for idx, elem := range val.Elements() {
+					if inc := keyRng.Includes(idx); inc.IsKnown() && inc.False() {
+						continue
+					}
+					// We only keep provenance marks here, because it would be too
+					// conservative to report that the full set of marks from all
+					// attributes would definitely appear on the result once the
+					// attribute name is known.
+					av := onlyProvenanceMarks(elem)
+					if !yield(av) {
+						return
+					}
+				}
+			})
+			if ret.Type() == DynamicPseudoType {
+				ret = UnknownVal(elty)
+			}
+			return ret
+		}
+	}
 
 	switch {
 	case val.Type().IsListType():
@@ -940,12 +958,11 @@ func (val Value) Index(key Value) Value {
 		if key.Type() != Number {
 			panic("element key for list must be number")
 		}
-		if !key.IsKnown() {
-			return UnknownVal(elty)
-		}
-
 		if !val.IsKnown() {
 			return UnknownVal(elty)
+		}
+		if !key.IsKnown() {
+			return unknownKeyPlaceholder(elty)
 		}
 
 		index, accuracy := key.v.(*big.Float).Int64()
@@ -966,12 +983,11 @@ func (val Value) Index(key Value) Value {
 		if key.Type() != String {
 			panic("element key for map must be string")
 		}
-		if !key.IsKnown() {
-			return UnknownVal(elty)
-		}
-
 		if !val.IsKnown() {
 			return UnknownVal(elty)
+		}
+		if !key.IsKnown() {
+			return unknownKeyPlaceholder(elty)
 		}
 
 		keyStr := key.v.(string)
@@ -989,7 +1005,7 @@ func (val Value) Index(key Value) Value {
 			panic("element key for tuple must be number")
 		}
 		if !key.IsKnown() {
-			return DynamicVal
+			return unknownKeyPlaceholder(DynamicPseudoType)
 		}
 
 		index, accuracy := key.v.(*big.Float).Int64()

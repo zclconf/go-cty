@@ -2655,9 +2655,27 @@ func TestValueIndex(t *testing.T) {
 			StringVal("world"),
 		},
 		{
+			ListVal([]Value{StringVal("http://foo.example.com"), StringVal("http://bar.example.com")}),
+			UnknownVal(Number),
+			UnknownVal(String).Refine().
+				NotNull().
+				StringPrefixFull("http://").
+				NewValue(),
+		},
+		{
 			ListVal([]Value{StringVal("hello")}),
 			UnknownVal(Number),
-			UnknownVal(String),
+			StringVal("hello"),
+		},
+		{
+			ListVal([]Value{StringVal("http://foo.example.com"), StringVal("http://bar.example.com"), StringVal("https://bar.example.com")}),
+			UnknownVal(Number).Refine().
+				NumberRangeInclusive(Zero, NumberIntVal(1)). // excludes the last element
+				NewValue(),
+			UnknownVal(String).Refine().
+				NotNull().
+				StringPrefixFull("http://").
+				NewValue(),
 		},
 		{
 			ListVal([]Value{StringVal("hello")}),
@@ -2680,9 +2698,29 @@ func TestValueIndex(t *testing.T) {
 			StringVal("hello"),
 		},
 		{
+			MapVal(map[string]Value{"greeting": True, "dismissal": False}),
+			UnknownVal(String),
+			UnknownVal(Bool).RefineNotNull(),
+		},
+		{
+			MapVal(map[string]Value{"greeting": True, "dismissal": False}),
+			UnknownVal(String).Refine().StringPrefixFull("greet").NewValue(),
+			True,
+		},
+		{
+			MapVal(map[string]Value{"greeting": True, "dismissal": False}),
+			UnknownVal(String).Refine().StringPrefixFull("dis").NewValue(),
+			False,
+		},
+		{
+			MapVal(map[string]Value{"greeting": True, "dismissal": False}),
+			UnknownVal(String).Refine().StringPrefixFull("nonmatch").NewValue(),
+			UnknownVal(Bool),
+		},
+		{
 			MapVal(map[string]Value{"greeting": True}),
 			UnknownVal(String),
-			UnknownVal(Bool),
+			True,
 		},
 		{
 			MapVal(map[string]Value{"greeting": True}),
@@ -2745,6 +2783,11 @@ func TestValueIndex(t *testing.T) {
 			DynamicVal,
 		},
 		{
+			TupleVal([]Value{StringVal("hello"), StringVal("goodbye"), UnknownVal(Number)}),
+			UnknownVal(Number).Refine().NumberRangeInclusive(Zero, NumberIntVal(1)).NewValue(), // excludes the last element
+			UnknownVal(String).RefineNotNull(),
+		},
+		{
 			UnknownVal(Tuple([]Type{String})),
 			NumberIntVal(0),
 			UnknownVal(String),
@@ -2758,6 +2801,20 @@ func TestValueIndex(t *testing.T) {
 			ListVal([]Value{StringVal("hello")}),
 			NumberIntVal(0).Mark(1),
 			StringVal("hello").Mark(1),
+		},
+		{
+			ListVal([]Value{
+				ObjectVal(map[string]Value{
+					"inner": True.Mark(1).Mark(prvnMark("a")),
+				}).Mark(2).Mark(prvnMark("b")),
+				ObjectVal(map[string]Value{
+					"inner": False,
+				}).Mark(2).Mark(prvnMark("c")),
+			}).Mark(3),
+			UnknownVal(Number),
+			UnknownVal(Object(map[string]Type{
+				"inner": Bool,
+			})).RefineNotNull().Mark(3).Mark(prvnMark("b")).Mark(prvnMark("c")), // not 2 or "a" intentionally, because they are too nested
 		},
 	}
 
