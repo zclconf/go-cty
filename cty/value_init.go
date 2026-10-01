@@ -2,6 +2,7 @@ package cty
 
 import (
 	"fmt"
+	"iter"
 	"math/big"
 	"reflect"
 
@@ -363,4 +364,59 @@ func CapsuleVal(ty Type, wrapVal any) Value {
 		ty: ty,
 		v:  wrapVal,
 	}
+}
+
+// UnknownChoice takes a sequence of values and returns a single value that
+// somehow represents an as-yet-undecided choice of any one of them.
+//
+// If the given sequence has length zero then the result is cty.NilVal.
+// If the sequence has length one then the result is that one value.
+// For two or more values that are not equal the result is a value that has
+// at least some aspects unknown, but is a best effort to represent what
+// all of the values have in common. The precision of the result might improve
+// in future versions such that some inputs produce a result with fewer unknown
+// values than before.
+//
+// The intended use of this function is for cty-based languages that want to
+// implement some sort of conditional choice between values where the selection
+// may itself be based on an unknown value, and therefore the result of that
+// conditional choice must include unknowns itself.
+//
+// This function does not impose restrictions on the types of the given values,
+// but if the values are of different types then the result is likely to be
+// an unknown value of an unknown type. Callers may therefore wish to attempt
+// to unify the types using functions in the "convert" package before passing
+// the converted values to this function, in which case the result is far more
+// likely to have a wholly-known type.
+func UnknownChoice(vals iter.Seq[Value]) Value {
+	var ret Value
+	for val := range vals {
+		if ret == NilVal {
+			ret = val
+			continue
+		}
+		// We use RawEquals here because if the two values are equal but
+		// disagree on marks then existing applications like it better when we
+		// report that as an unknown value with both marks than as a known
+		// value with both marks, since once the choice becomes known only
+		// one of those sets of marks would actually be selected and some
+		// applications fail if one known value is replaced by another once
+		// new known information is added (although that's not something we
+		// generally guarantee -- just being pragmatic here because the cost
+		// of being more conservative here is relatively low).
+		if val.RawEquals(ret) {
+			continue
+		}
+		// If we get here then our result is going to be at least partially
+		// unknown, but we'll try to make it as known as possible if
+		// the values all have something in common. To do that we'll
+		// find a ValueRange that includes both values and then build our
+		// value from it.
+		a, aMarks := val.Unmark()
+		b, bMarks := ret.Unmark()
+		aRng, bRng := a.Range(), b.Range()
+		newRng := commonRange(aRng, bRng)
+		ret = newRng.AsValue().WithMarks(aMarks, bMarks)
+	}
+	return ret
 }

@@ -510,6 +510,10 @@ func (b *RefinementBuilder) StringPrefixFull(prefix string) *RefinementBuilder {
 	return b
 }
 
+func (b *RefinementBuilder) currentRefinement() unknownValRefinement {
+	return b.wip
+}
+
 // NewValue completes the refinement process by constructing a new value
 // that is guaranteed to meet all of the previously-specified refinements.
 //
@@ -531,7 +535,7 @@ func refinedValue(origVal Value, refinement unknownValRefinement) Value {
 		return refinedValue(v, refinement).WithMarks(marks)
 	}
 
-	if origVal.IsKnown() || origVal == DynamicVal {
+	if origVal.IsKnown() || refinement == nil || origVal == DynamicVal {
 		return origVal
 	}
 
