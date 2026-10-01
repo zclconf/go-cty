@@ -1,5 +1,9 @@
 package cty
 
+import (
+	"fmt"
+)
+
 // unknownType is the placeholder type used for the sigil value representing
 // "Unknown", to make it unambigiously distinct from any other possible value.
 type unknownType struct {
@@ -35,7 +39,7 @@ func (t unknownType) GoString() string {
 	// This is the stringification of our internal unknown marker. The
 	// stringification of the public representation of unknowns is in
 	// Value.GoString.
-	return "cty.unknown"
+	return fmt.Sprintf("cty.unknownType{refinement:%#v}", t.refinement)
 }
 
 type pseudoTypeDynamic struct {
