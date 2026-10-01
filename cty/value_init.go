@@ -369,7 +369,7 @@ func CapsuleVal(ty Type, wrapVal any) Value {
 // UnknownChoice takes a sequence of values and returns a single value that
 // somehow represents an as-yet-undecided choice of any one of them.
 //
-// If the given sequence has length zero then the result is cty.NilVal.
+// If the given sequence has length zero then the result is always [DynamicVal].
 // If the sequence has length one then the result is that one value.
 // For two or more values that are not equal the result is a value that has
 // at least some aspects unknown, but is a best effort to represent what
@@ -417,6 +417,9 @@ func UnknownChoice(vals iter.Seq[Value]) Value {
 		aRng, bRng := a.Range(), b.Range()
 		newRng := commonRange(aRng, bRng)
 		ret = newRng.AsValue().WithMarks(aMarks, bMarks)
+	}
+	if ret == NilVal {
+		ret = DynamicVal // just to avoid a panic hazard for callers if they pass an empty sequence
 	}
 	return ret
 }

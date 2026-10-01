@@ -442,7 +442,7 @@ func TestUnknownChoice(t *testing.T) {
 	}{
 		{
 			nil,
-			NilVal,
+			DynamicVal,
 		},
 
 		{
