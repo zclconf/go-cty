@@ -415,6 +415,17 @@ func UnknownChoice(vals iter.Seq[Value]) Value {
 		a, aMarks := val.Unmark()
 		b, bMarks := ret.Unmark()
 		aRng, bRng := a.Range(), b.Range()
+		if aRng.raw != nil && bRng.raw != nil && aRng.raw.null() == tristateTrue && bRng.raw.null() == tristateTrue {
+			// If both of the values are definitely null then we'll prefer to
+			// return a null instead of a refined unknown value, because this
+			// allows us to preserve the nullness even if the types are
+			// different.
+			retTy := DynamicPseudoType
+			if aTy := a.Type(); aTy.Equals(b.Type()) {
+				retTy = aTy
+			}
+			return NullVal(retTy).WithMarks(aMarks, bMarks)
+		}
 		newRng := commonRange(aRng, bRng)
 		ret = newRng.AsValue().WithMarks(aMarks, bMarks)
 	}

@@ -3504,7 +3504,7 @@ func TestValueCond(t *testing.T) {
 			UnknownVal(Bool),
 			NullVal(String),
 			NullVal(Number),
-			DynamicVal,
+			NullVal(DynamicPseudoType),
 		},
 		{
 			UnknownVal(Bool),

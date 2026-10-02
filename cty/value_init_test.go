@@ -680,6 +680,20 @@ func TestUnknownChoice(t *testing.T) {
 			},
 			DynamicVal,
 		},
+		{
+			[]Value{
+				NullVal(Bool),
+				NullVal(Bool),
+			},
+			NullVal(Bool),
+		},
+		{
+			[]Value{
+				NullVal(Bool),
+				NullVal(String),
+			},
+			NullVal(DynamicPseudoType),
+		},
 	}
 
 	for _, test := range tests {
