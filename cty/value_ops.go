@@ -1434,6 +1434,60 @@ func (val Value) Or(other Value) Value {
 	return BoolVal(val.v.(bool) || other.v.(bool))
 }
 
+// Cond selects between the two given values based on whether the reciever is
+// true or false.
+//
+// The reciever of this method acts as the predicate. This function panics if
+// the predicate not boolean or if it is null. If the predicate is an unknown
+// boolean value then the result is a placeholder that potentially partially
+// represents what both of the arguments have in common.
+//
+// The ifTrue and ifFalse values are not required to be of the same type, but
+// the return value is likely to be less unknown if the two results are of the
+// same type, so callers may wish to attempt type unification (e.g. using the
+// facilities in the "convert" package) before calling this function.
+//
+// When the predicate is known, the result preserves all marks from the selected
+// value and discards all marks from the other value. When the predicate is
+// unknown, the result has the union of marks from both values.
+func (val Value) Cond(ifTrue, ifFalse Value) Value {
+	if val.IsMarked() {
+		val, valMarks := val.Unmark()
+		return val.Cond(ifTrue, ifFalse).WithMarks(valMarks)
+		// (we handle marks on ifTrue and ifFalse directly below)
+	}
+
+	if val.IsNull() {
+		panic("cannot use null value as conditional predicate")
+	}
+	if ty := val.Type(); ty != Bool && ty != DynamicPseudoType {
+		panic("conditional predicate must be Bool value")
+	}
+
+	if !val.IsKnown() {
+		// NOTE: Some other features that rely on UnknownChoice intentionally
+		// preserve only "provenance marks" from their input values, but that
+		// special case was introduced to avoid breaking callers that were not
+		// expecting such conservative tracking of marks based on the behavior
+		// in earlier versions. The main outside caller that had its own
+		// conditional implementation was HCL (and the original ZCL
+		// implementation it forked from) and that _did_ have this conservative
+		// behavior of preserving all marks from both, and cty didn't ever have
+		// a Cond implementation prior to this behavior anyway, so there is no
+		// equivalent risk here.
+		return UnknownChoice(func(yield func(Value) bool) {
+			if !yield(ifTrue) {
+				return
+			}
+			yield(ifFalse)
+		})
+	}
+	if val.True() {
+		return ifTrue
+	}
+	return ifFalse
+}
+
 // LessThan returns True if the receiver is less than the other given value,
 // which must both be numbers or this method will panic.
 func (val Value) LessThan(other Value) Value {

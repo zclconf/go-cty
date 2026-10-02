@@ -3434,6 +3434,171 @@ func TestValueOr(t *testing.T) {
 	}
 }
 
+func TestValueCond(t *testing.T) {
+	tests := []struct {
+		Predicate       Value
+		IfTrue, IfFalse Value
+		Expected        Value
+	}{
+		{
+			True,
+			StringVal("yes"),
+			StringVal("no"),
+			StringVal("yes"),
+		},
+		{
+			False,
+			StringVal("yes"),
+			StringVal("no"),
+			StringVal("no"),
+		},
+		{
+			UnknownVal(Bool),
+			StringVal("yes"),
+			StringVal("no"),
+			UnknownVal(String).RefineNotNull(),
+		},
+		{
+			DynamicVal,
+			StringVal("yes"),
+			StringVal("no"),
+			UnknownVal(String).RefineNotNull(),
+		},
+		{
+			True,
+			StringVal("yes"),
+			Zero,
+			StringVal("yes"),
+		},
+		{
+			False,
+			StringVal("yes"),
+			Zero,
+			Zero,
+		},
+		{
+			UnknownVal(Bool),
+			StringVal("yes"),
+			Zero,
+			DynamicVal,
+		},
+		{
+			DynamicVal,
+			StringVal("yes"),
+			Zero,
+			DynamicVal,
+		},
+		{
+			UnknownVal(Bool),
+			StringVal("yes"),
+			NullVal(String),
+			UnknownVal(String),
+		},
+		{
+			UnknownVal(Bool),
+			NullVal(String),
+			NullVal(String),
+			NullVal(String),
+		},
+		{
+			UnknownVal(Bool),
+			NullVal(String),
+			NullVal(Number),
+			DynamicVal,
+		},
+		{
+			UnknownVal(Bool),
+			StringVal("uhh, yes"),
+			StringVal("uhh, no"),
+			UnknownVal(String).Refine().
+				NotNull().
+				StringPrefixFull("uhh, ").
+				NewValue(),
+		},
+		{
+			UnknownVal(Bool),
+			StringVal("a"),
+			StringVal("a"),
+			StringVal("a"),
+		},
+		{
+			True,
+			StringVal("yes").Mark("y"),
+			StringVal("no").Mark("n"),
+			StringVal("yes").Mark("y"),
+		},
+		{
+			False,
+			StringVal("yes").Mark("y"),
+			StringVal("no").Mark("n"),
+			StringVal("no").Mark("n"),
+		},
+		{
+			UnknownVal(Bool),
+			StringVal("yes").Mark("y"),
+			StringVal("no").Mark("n"),
+			UnknownVal(String).RefineNotNull().Mark("y").Mark("n"),
+		},
+		{
+			UnknownVal(Bool),
+			StringVal("a").Mark("t"),
+			StringVal("a").Mark("f"),
+			UnknownVal(String).Refine().
+				NotNull().
+				StringPrefixFull("a").
+				NewValue().Mark("t").Mark("f"),
+		},
+		{
+			True.Mark("?"),
+			StringVal("yes"),
+			StringVal("no"),
+			StringVal("yes").Mark("?"),
+		},
+		{
+			False.Mark("?"),
+			StringVal("yes"),
+			StringVal("no"),
+			StringVal("no").Mark("?"),
+		},
+		{
+			UnknownVal(Bool).Mark("?"),
+			StringVal("yes"),
+			StringVal("no"),
+			UnknownVal(String).RefineNotNull().Mark("?"),
+		},
+		{
+			True.Mark("?"),
+			StringVal("yes").Mark("y"),
+			StringVal("no").Mark("n"),
+			StringVal("yes").Mark("?").Mark("y"),
+		},
+		{
+			False.Mark("?"),
+			StringVal("yes").Mark("y"),
+			StringVal("no").Mark("n"),
+			StringVal("no").Mark("?").Mark("n"),
+		},
+		{
+			UnknownVal(Bool).Mark("?"),
+			StringVal("yes").Mark("y"),
+			StringVal("no").Mark("n"),
+			UnknownVal(String).RefineNotNull().Mark("?").Mark("y").Mark("n"),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%#v.Cond(%#v,%#v)", test.Predicate, test.IfTrue, test.IfFalse), func(t *testing.T) {
+			got := test.Predicate.Cond(test.IfTrue, test.IfFalse)
+			if !got.RawEquals(test.Expected) {
+				t.Fatalf(
+					"wrong result\npredicate: %#v\nif true:   %#v\nif false:  %#v\n\ngot:  %#v\nwant: %#v",
+					test.Predicate, test.IfTrue, test.IfFalse, got, test.Expected,
+				)
+			}
+		})
+	}
+}
+
 func TestLessThan(t *testing.T) {
 	tests := []struct {
 		Receiver Value
