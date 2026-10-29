@@ -300,3 +300,42 @@ func (s GetAttrStep) Apply(val Value) (Value, error) {
 func (s GetAttrStep) GoString() string {
 	return fmt.Sprintf("cty.GetAttrStep{Name:%q}", s.Name)
 }
+
+// UnknownNestedStep is a special [PathStep] used only to describe marks that
+// are expected to appear at some path beneath a currently-unknown value.
+//
+// Applications that never use [UnknownValWithNestedMarks] directly and which
+// do not use values with any marks that implement [ctymarks.ProvenanceMark]
+// will not encounter paths containing steps of this type unless they explicitly
+// construct them, but any application that directly or indirectly produces
+// unknown values with nested marks must be ready to handle steps of this type
+// whenever "walking" or "transforming" a [Value].
+//
+// Note that this step type is an approximation that captures potential marks
+// at any level of nesting beneath an unknown value, and so when comparing
+// marked paths in a final unknown value an application must allow for the
+// marks on a step of this type potentially matching with any path whose
+// prefix matches the steps before this one, regardless of subsequent length.
+type UnknownNestedStep struct {
+	pathStepImpl
+}
+
+// Apply returns the value of our named attribute from the given value, which
+// must be of an object type that has a value of that name.
+func (s UnknownNestedStep) Apply(val Value) (Value, error) {
+	if val == NilVal || val.IsNull() {
+		return NilVal, errors.New("a null value does not have any nested attributes or elements")
+	}
+	ty := val.Type()
+	switch {
+	case ty.IsObjectType() || ty.IsCollectionType() || ty.IsTupleType():
+		_, marks := val.UnmarkDeep()
+		return DynamicVal.WithMarks(marks), nil
+	default:
+		return NilVal, errors.New("this value does not have any nested attribtues or elements")
+	}
+}
+
+func (s UnknownNestedStep) GoString() string {
+	return "cty.UnknownNestedStep{}"
+}
