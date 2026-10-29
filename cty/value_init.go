@@ -369,6 +369,17 @@ func CapsuleVal(ty Type, wrapVal any) Value {
 // UnknownChoice takes a sequence of values and returns a single value that
 // somehow represents an as-yet-undecided choice of any one of them.
 //
+// If orMismatch is true, the result considers the possibility that the final
+// selection might actually not match any of the given values and return an
+// error instead. In practice this forces the result to represent only the
+// [ValueRange] of the given values, so the result won't "over-promise" and
+// thus potentially generate confusingly-precise results downstream. orMismatch
+// should be set only in cases where the final selection itself might fail,
+// such as in [Value.Index] with an unknown value, and not in cases where
+// exactly one of the values is guaranteed to be chosen assuming that no
+// non-selection related errors occur, such as in [Value.Cond] with an known
+// boolean predicate.
+//
 // If the given sequence has length zero then the result is always [DynamicVal].
 // If the sequence has length one then the result is that one value.
 // For two or more values that are not equal the result is a value that has
@@ -388,9 +399,17 @@ func CapsuleVal(ty Type, wrapVal any) Value {
 // to unify the types using functions in the "convert" package before passing
 // the converted values to this function, in which case the result is far more
 // likely to have a wholly-known type.
-func UnknownChoice(vals iter.Seq[Value]) Value {
+func UnknownChoice(vals iter.Seq[Value], orMismatch bool) Value {
 	var ret Value
 	for val := range vals {
+		if orMismatch {
+			// We handle the "or mismatch" case by using a placeholder based
+			// on the value's range, instead of using the value directly.
+			// This will usually contain at least some unknown elements, except
+			// for some special situations like an empty list known not to be
+			// null, for which there is no possible other value it could have.
+			val = val.RangeBasedPlaceholder()
+		}
 		if ret == NilVal {
 			ret = val
 			continue

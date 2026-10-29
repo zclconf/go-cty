@@ -893,7 +893,7 @@ func (val Value) GetAttrByValue(attrName Value) Value {
 				return
 			}
 		}
-	})
+	}, true)
 }
 
 // Index returns the value of an element of the receiver, which must have
@@ -940,7 +940,7 @@ func (val Value) Index(key Value) Value {
 						return
 					}
 				}
-			})
+			}, true)
 			if ret.Type() == DynamicPseudoType {
 				ret = UnknownVal(elty)
 			}
@@ -1480,7 +1480,7 @@ func (val Value) Cond(ifTrue, ifFalse Value) Value {
 				return
 			}
 			yield(ifFalse)
-		})
+		}, false)
 	}
 	if val.True() {
 		return ifTrue

@@ -2558,7 +2558,10 @@ func TestValueGetAttrByValue(t *testing.T) {
 				"greeting": StringVal("hello").Mark(1),
 			}).Mark(2),
 			UnknownVal(String).Mark(3),
-			StringVal("hello").Mark(2).Mark(3),
+			UnknownVal(String).Refine().
+				NotNull().
+				StringPrefixFull("hello").
+				NewValue().Mark(2).Mark(3),
 		},
 		{
 			ObjectVal(map[string]Value{
@@ -2573,7 +2576,10 @@ func TestValueGetAttrByValue(t *testing.T) {
 				"greeting": StringVal("hello").Mark(prvnMark("a")),
 			}).Mark(2),
 			UnknownVal(String).Mark(3),
-			StringVal("hello").Mark(2).Mark(3).Mark(prvnMark("a")),
+			UnknownVal(String).Refine().
+				NotNull().
+				StringPrefixFull("hello").
+				NewValue().Mark(2).Mark(3).Mark(prvnMark("a")),
 		},
 		{
 			ObjectVal(map[string]Value{
@@ -2605,7 +2611,7 @@ func TestValueGetAttrByValue(t *testing.T) {
 			UnknownVal(String).Refine().StringPrefixFull("hap").NewValue().Mark(3),
 			// The known prefix on the attribute name let us filter out all
 			// but one of the attributes, giving a more precise result.
-			True.Mark(2).Mark(3).Mark(prvnMark("b")),
+			UnknownVal(Bool).RefineNotNull().Mark(2).Mark(3).Mark(prvnMark("b")),
 		},
 		{
 			EmptyObjectVal.Mark(1),
@@ -2665,7 +2671,10 @@ func TestValueIndex(t *testing.T) {
 		{
 			ListVal([]Value{StringVal("hello")}),
 			UnknownVal(Number),
-			StringVal("hello"),
+			UnknownVal(String).Refine().
+				NotNull().
+				StringPrefixFull("hello").
+				NewValue(), // unknown because the final known index could be out of range, but still approximates what's guaranteed if index is valid
 		},
 		{
 			ListVal([]Value{StringVal("http://foo.example.com"), StringVal("http://bar.example.com"), StringVal("https://bar.example.com")}),
@@ -2705,12 +2714,12 @@ func TestValueIndex(t *testing.T) {
 		{
 			MapVal(map[string]Value{"greeting": True, "dismissal": False}),
 			UnknownVal(String).Refine().StringPrefixFull("greet").NewValue(),
-			True,
+			UnknownVal(Bool).RefineNotNull(), // unknown because the final known index could be out of range, but still approximates what's guaranteed if index is valid
 		},
 		{
 			MapVal(map[string]Value{"greeting": True, "dismissal": False}),
 			UnknownVal(String).Refine().StringPrefixFull("dis").NewValue(),
-			False,
+			UnknownVal(Bool).RefineNotNull(), // unknown because the final known index could be out of range, but still approximates what's guaranteed if index is valid
 		},
 		{
 			MapVal(map[string]Value{"greeting": True, "dismissal": False}),
@@ -2720,7 +2729,7 @@ func TestValueIndex(t *testing.T) {
 		{
 			MapVal(map[string]Value{"greeting": True}),
 			UnknownVal(String),
-			True,
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			MapVal(map[string]Value{"greeting": True}),

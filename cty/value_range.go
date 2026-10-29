@@ -89,6 +89,21 @@ func (v Value) Range() ValueRange {
 	return ValueRange{ty, synth}
 }
 
+// RangeBasedPlaceholder is essentially a shorthand for calling [Value.Range]
+// and then calling [ValueRange.AsValue] on its result, except that it
+// automatically handles propagating any relevant marks from the source into
+// the resulting value.
+func (v Value) RangeBasedPlaceholder() Value {
+	// For now we just shallowly unmark and then reapply those shallow marks
+	// afterwards. This will want to do something more involved once we start
+	// tracking nested "provenance marks" for unknown values, so that the
+	// provenance subset of the non-direct marks in the source value also get
+	// preserved in the result.
+	v, marks := v.Unmark()
+	v = v.Range().AsValue().WithMarks(marks)
+	return v
+}
+
 // ValueRange offers partial information about the range of a value.
 //
 // This is primarily interesting for unknown values, because it provides access
