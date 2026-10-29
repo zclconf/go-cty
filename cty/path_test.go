@@ -161,6 +161,14 @@ func TestPathApply(t *testing.T) {
 			``,
 		},
 		{
+			cty.ObjectVal(map[string]cty.Value{
+				"hello": cty.UnknownVal(cty.Map(cty.String)).Mark(1),
+			}),
+			cty.GetAttrPath("hello").UnknownSubpath(),
+			cty.DynamicVal.Mark(1),
+			``,
+		},
+		{
 			cty.SetVal([]cty.Value{
 				cty.StringVal("hello").Mark(1), // Note: this mark is automatically hoisted to the set as a whole
 			}).Mark(2),
@@ -374,6 +382,40 @@ func TestPathEquals(t *testing.T) {
 				cty.IndexStep{Key: cty.NumberIntVal(0)},
 				cty.GetAttrStep{Name: "attr"},
 			},
+		},
+		{
+			A: cty.Path{
+				cty.GetAttrStep{Name: "attr"},
+				cty.UnknownNestedSteps{},
+			},
+			B: cty.Path{
+				cty.GetAttrStep{Name: "attr"},
+				cty.UnknownNestedSteps{},
+			},
+			Equal:  true,
+			Prefix: true,
+		},
+		{
+			A: cty.Path{
+				cty.GetAttrStep{Name: "attr"},
+				cty.UnknownNestedSteps{},
+			},
+			B: cty.Path{
+				cty.GetAttrStep{Name: "attr"},
+			},
+			Equal:  false,
+			Prefix: true,
+		},
+		{
+			A: cty.Path{
+				cty.GetAttrStep{Name: "attr"},
+			},
+			B: cty.Path{
+				cty.GetAttrStep{Name: "attr"},
+				cty.UnknownNestedSteps{},
+			},
+			Equal:  false,
+			Prefix: false,
 		},
 
 		// tests for convenience methods
