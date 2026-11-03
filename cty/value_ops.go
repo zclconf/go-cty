@@ -45,6 +45,9 @@ func (val Value) GoString() string {
 				suffix = ".Refine()" + rfn.GoString() + ".NewValue()"
 			}
 		}
+		if nestedMarks := val.unknownValueNestedMarks(); len(nestedMarks) != 0 {
+			return fmt.Sprintf("cty.UnknownValWithNestedMarks(%#v, %#v.All())%s", val.ty, nestedMarks, suffix)
+		}
 		return fmt.Sprintf("cty.UnknownVal(%#v)%s", val.ty, suffix)
 	}
 
@@ -465,7 +468,10 @@ func (val Value) RawEquals(other Value) bool {
 		case valRfn != nil:
 			return valRfn.rawEqual(otherRfn)
 		default:
-			return true
+			// The nested marks (if any) on the two values must also match.
+			valNestedMarks := val.unknownValueNestedMarks()
+			otherNestedMarks := other.unknownValueNestedMarks()
+			return valNestedMarks.Equal(otherNestedMarks)
 		}
 	}
 	if (val.IsKnown() && !other.IsKnown()) || (other.IsKnown() && !val.IsKnown()) {

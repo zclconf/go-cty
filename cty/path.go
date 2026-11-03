@@ -154,7 +154,6 @@ func (p Path) Equals(other Path) bool {
 	}
 
 	return true
-
 }
 
 // HasPrefix determines if the path p contains the provided prefix.
@@ -164,6 +163,20 @@ func (p Path) HasPrefix(prefix Path) bool {
 	}
 
 	return p[:len(prefix)].Equals(prefix)
+}
+
+// Matches returns true if either the receiver is equal to the given path
+// or if the receiver has an unknown tail but the known prefix matches the
+// prefix of the given path.
+func (p Path) Matches(other Path) bool {
+	// The length check here is important because an unknown-tailed path
+	// only matches paths _under_ its known prefix, not _at_ its known
+	// prefix. We're checking this before we stripped off the tail, so
+	// it's >= rather than > because we're going to shorten it by one below.
+	if len(other) >= len(p) && p.HasUnknownTail() {
+		return other.HasPrefix(p[:len(p)-1])
+	}
+	return other.Equals(p)
 }
 
 // GetAttrPath is a convenience method to start a new Path with a GetAttrStep.

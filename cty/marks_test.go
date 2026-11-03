@@ -62,6 +62,18 @@ func TestContainsMarked(t *testing.T) {
 			}),
 			true,
 		},
+		{
+			UnknownVal(Bool),
+			false,
+		},
+		{
+			UnknownVal(Bool).Mark("a"),
+			true,
+		},
+		{
+			UnknownValWithNestedMarks(List(Bool), slices.Values([]any{"a"})),
+			true,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -95,6 +107,18 @@ func TestIsMarked(t *testing.T) {
 		{
 			ListVal([]Value{NumberIntVal(1), NumberIntVal(2)}).Mark("a"),
 			true,
+		},
+		{
+			UnknownVal(Bool),
+			false,
+		},
+		{
+			UnknownVal(Bool).Mark("a"),
+			true,
+		},
+		{
+			UnknownValWithNestedMarks(List(Bool), slices.Values([]any{"a"})),
+			false,
 		},
 	}
 
@@ -347,6 +371,11 @@ func TestUnmarkDeep(t *testing.T) {
 			}),
 			NewValueMarks("a", "b", "c", "d", "e", "f", "g"),
 		},
+		"unknown with nested marks": {
+			UnknownValWithNestedMarks(List(String), slices.Values([]any{"nested"})).Mark("toplevel"),
+			UnknownVal(List(String)),
+			NewValueMarks("nested", "toplevel"),
+		},
 	}
 
 	for name, tc := range testCases {
@@ -477,6 +506,14 @@ func TestPathValueMarks(t *testing.T) {
 			[]PathValueMarks{
 				{GetAttrPath("environment").IndexInt(0).GetAttr("variables").IndexString("bar"), NewValueMarks("sensitive")},
 				{GetAttrPath("environment").IndexInt(0).GetAttr("variables").IndexString("foo"), NewValueMarks("sensitive")},
+			},
+		},
+		"unknown with nested marks": {
+			UnknownValWithNestedMarks(List(String), slices.Values([]any{"nested"})).Mark("toplevel"),
+			UnknownVal(List(String)),
+			[]PathValueMarks{
+				{nil, NewValueMarks("toplevel")},
+				{UnknownPath, NewValueMarks("nested")},
 			},
 		},
 	}

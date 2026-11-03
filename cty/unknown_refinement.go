@@ -538,6 +538,7 @@ func refinedValue(origVal Value, refinement unknownValRefinement) Value {
 	if origVal.IsKnown() || refinement == nil || origVal == DynamicVal {
 		return origVal
 	}
+	nestedMarks := origVal.unknownValueNestedMarks()
 
 	// We have a few cases where the value has been refined enough that we now
 	// know exactly what the value is, or at least we can produce a more
@@ -584,7 +585,7 @@ func refinedValue(origVal Value, refinement unknownValRefinement) Value {
 					elems := make([]Value, knownLen)
 					unk := UnknownVal(ty.ElementType())
 					for i := range elems {
-						elems[i] = unk
+						elems[i] = unk.WithMarks(nestedMarks)
 					}
 					return ListVal(elems)
 				} else if ty.IsSetType() && knownLen == 1 {
@@ -592,15 +593,30 @@ func refinedValue(origVal Value, refinement unknownValRefinement) Value {
 					// know the one element can't possibly coalesce with
 					// anything else and so we can create a known set with
 					// an unknown element.
-					return SetVal([]Value{UnknownVal(ty.ElementType())})
+					return SetVal([]Value{UnknownVal(ty.ElementType()).WithMarks(nestedMarks)})
 				}
 			}
 		}
 	}
 
+	if origVal.ty.IsSetType() {
+		// Set elements cannot retain their own separate marks and so they
+		// always aggregate up onto the set itself. We'll mimick that here
+		// even when we're dealing with an unknown set, just to give a more
+		// realistic result.
+		return Value{
+			ty: origVal.ty,
+			v: &unknownType{
+				refinement: refinement,
+			},
+		}.WithMarks(nestedMarks)
+	}
 	return Value{
 		ty: origVal.ty,
-		v:  &unknownType{refinement: refinement},
+		v: &unknownType{
+			refinement:  refinement,
+			nestedMarks: nestedMarks,
+		},
 	}
 }
 

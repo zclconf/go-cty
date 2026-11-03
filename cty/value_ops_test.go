@@ -3,6 +3,7 @@ package cty
 import (
 	"fmt"
 	"reflect"
+	"slices"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -1751,6 +1752,36 @@ func TestValueRawEquals(t *testing.T) {
 		{
 			StringVal("a").Mark(1),
 			StringVal("b").Mark(2),
+			false,
+		},
+		{
+			UnknownVal(String).Mark(1),
+			UnknownVal(String).Mark(1),
+			true,
+		},
+		{
+			UnknownVal(String).Mark(1),
+			UnknownVal(String),
+			false,
+		},
+		{
+			UnknownVal(String).Mark(1),
+			UnknownVal(String).Mark(2),
+			false,
+		},
+		{
+			UnknownValWithNestedMarks(List(String), slices.Values([]any{1})),
+			UnknownValWithNestedMarks(List(String), slices.Values([]any{1})),
+			true,
+		},
+		{
+			UnknownValWithNestedMarks(List(String), slices.Values([]any{1})),
+			UnknownVal(String),
+			false,
+		},
+		{
+			UnknownValWithNestedMarks(List(String), slices.Values([]any{1})),
+			UnknownValWithNestedMarks(List(String), slices.Values([]any{2})),
 			false,
 		},
 	}
