@@ -518,14 +518,16 @@ func commonRange(a, b ValueRange) ValueRange {
 		}
 		newMin := mostNumberValue(Value.LessThan, aRfn.min, bRfn.min)
 		newMax := mostNumberValue(Value.GreaterThan, aRfn.max, bRfn.max)
-		// For simplicity we currently always return inclusive bounds here,
-		// which means our result is potentially slightly looser than it
-		// could've been but we're still definitely returning something that
-		// subsumes both ranges.
-		rfn = &refinementNumber{
-			min: newMin, minInc: true,
-			max: newMax, maxInc: true,
-			refinementNullable: nullable,
+		if (newMin != NilVal && newMin != NegativeInfinity) || (newMax != NilVal && newMax != PositiveInfinity) {
+			// For simplicity we currently always return inclusive bounds here,
+			// which means our result is potentially slightly looser than it
+			// could've been but we're still definitely returning something that
+			// subsumes both ranges.
+			rfn = &refinementNumber{
+				min: newMin, minInc: true,
+				max: newMax, maxInc: true,
+				refinementNullable: nullable,
+			}
 		}
 	}
 	if rfn == nil && nullable.isNull != tristateUnknown {
