@@ -315,7 +315,18 @@ func (t *applyPathValueMarksTransformer) Exit(p Path, v Value) (Value, error) {
 		}
 		if nestedMarks != nil {
 			if len(path.Path) > len(p) && path.Path.HasPrefix(p) {
-				maps.Copy(nestedMarks, path.Marks)
+				for mark := range path.Marks {
+					// We only implicitly apply provenance marks here because
+					// historically nested marks were not handled here at all
+					// and older callers may be relying on that. Provenance
+					// marks were added at the same time as nested mark tracking
+					// so that callers can opt in to the more complete tracking
+					// for marks that need it without us breaking existing
+					// uses of marks where this detail isn't helpful.
+					if ctymarks.IsProvenanceMark(mark) {
+						nestedMarks[mark] = struct{}{}
+					}
+				}
 			}
 		}
 	}

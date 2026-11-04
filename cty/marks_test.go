@@ -516,6 +516,14 @@ func TestPathValueMarks(t *testing.T) {
 				{UnknownPath, NewValueMarks("nested")},
 			},
 		},
+		"unknown with nested provenance marks": {
+			UnknownValWithNestedMarks(List(String), slices.Values([]any{prvnMark("nested")})).Mark("toplevel"),
+			UnknownVal(List(String)),
+			[]PathValueMarks{
+				{nil, NewValueMarks("toplevel")},
+				{UnknownPath, NewValueMarks(prvnMark("nested"))},
+			},
+		},
 	}
 
 	for name, tc := range testCases {
@@ -542,8 +550,19 @@ func TestPathValueMarks(t *testing.T) {
 
 		t.Run(fmt.Sprintf("mark: %s", name), func(t *testing.T) {
 			got := tc.unmarked.MarkWithPaths(tc.pvms)
-			if !got.RawEquals(tc.marked) {
-				t.Errorf("wrong value\n got: %#v\nwant: %#v", got, tc.marked)
+			// For annoying legacy compatibility reasons we only preserve
+			// the provenance subset of nested marks in unknown values, and
+			// so we need to do a little transforming of our "marked" value
+			// to make it comparable with what this function is intended
+			// to produce.
+			want, _ := tc.marked.WrangleMarksDeep(func(mark any, path Path) (ctymarks.WrangleAction, error) {
+				if path.HasUnknownTail() && !ctymarks.IsProvenanceMark(mark) {
+					return ctymarks.WrangleDrop, nil
+				}
+				return ctymarks.WrangleKeep, nil
+			})
+			if !got.RawEquals(want) {
+				t.Errorf("wrong value\n got: %#v\nwant: %#v", got, want)
 			}
 		})
 	}
