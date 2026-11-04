@@ -3,6 +3,7 @@ package cty
 import (
 	"fmt"
 	"iter"
+	"maps"
 )
 
 // unknownType is the placeholder type used for the sigil value representing
@@ -179,6 +180,16 @@ func init() {
 // must treat it as immutable to avoid breaking the expectations of other
 // holders of the value.
 func (v Value) unknownValueNestedMarks() ValueMarks {
+	if v.IsMarked() {
+		v, marks := v.Unmark()
+		nestedMarks := v.unknownValueNestedMarks()
+		// Note that we intentionally modify marks rather than nestedMarks
+		// hre because Unmark produces a separate map for each call, whereas
+		// unknownValueNestedMarks returns a shared reference to the same
+		// marks set inside v which we must therefore treat as immutable.
+		maps.Copy(marks, nestedMarks)
+		return marks
+	}
 	unk, ok := v.v.(*unknownType)
 	if !ok {
 		panic("unknownValueNestedMarks is only valid for unknown values")
