@@ -2719,7 +2719,10 @@ func TestValueIndex(t *testing.T) {
 		{
 			ListVal([]Value{StringVal("hello")}),
 			DynamicVal,
-			UnknownVal(String),
+			UnknownVal(String).Refine().
+				NotNull().
+				StringPrefixFull("hello").
+				NewValue(),
 		},
 		{
 			UnknownVal(List(String)),
@@ -2764,7 +2767,7 @@ func TestValueIndex(t *testing.T) {
 		{
 			MapVal(map[string]Value{"greeting": True}),
 			DynamicVal,
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			UnknownVal(Map(String)),

@@ -961,14 +961,14 @@ func (val Value) Index(key Value) Value {
 	case val.Type().IsListType():
 		elty := val.Type().ElementType()
 		if key.Type() == DynamicPseudoType {
-			return UnknownVal(elty)
+			return unknownKeyPlaceholder(elty)
 		}
 
 		if key.Type() != Number {
 			panic("element key for list must be number")
 		}
 		if !val.IsKnown() {
-			return UnknownVal(elty)
+			return UnknownVal(elty).WithMarks(val.unknownValueNestedMarks())
 		}
 		if !key.IsKnown() {
 			return unknownKeyPlaceholder(elty)
@@ -986,14 +986,14 @@ func (val Value) Index(key Value) Value {
 	case val.Type().IsMapType():
 		elty := val.Type().ElementType()
 		if key.Type() == DynamicPseudoType {
-			return UnknownVal(elty)
+			return unknownKeyPlaceholder(elty)
 		}
 
 		if key.Type() != String {
 			panic("element key for map must be string")
 		}
 		if !val.IsKnown() {
-			return UnknownVal(elty)
+			return UnknownVal(elty).WithMarks(val.unknownValueNestedMarks())
 		}
 		if !key.IsKnown() {
 			return unknownKeyPlaceholder(elty)
@@ -1007,7 +1007,7 @@ func (val Value) Index(key Value) Value {
 		}
 	case val.Type().IsTupleType():
 		if key.Type() == DynamicPseudoType {
-			return DynamicVal
+			return unknownKeyPlaceholder(DynamicPseudoType)
 		}
 
 		if key.Type() != Number {
