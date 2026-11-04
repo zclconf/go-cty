@@ -2,6 +2,8 @@ package stdlib
 
 import (
 	"fmt"
+	"maps"
+	"slices"
 
 	"github.com/zclconf/go-cty/cty"
 	"github.com/zclconf/go-cty/cty/convert"
@@ -67,6 +69,7 @@ var CoalesceFunc = function.New(&function.Spec{
 		AllowUnknown:     true,
 		AllowDynamicType: true,
 		AllowNull:        true,
+		AllowMarked:      true,
 	},
 	Type: func(args []cty.Value) (ret cty.Type, err error) {
 		argTypes := make([]cty.Type, len(args))
@@ -81,15 +84,38 @@ var CoalesceFunc = function.New(&function.Spec{
 	},
 	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
-		for _, argVal := range args {
-			if !argVal.IsKnown() {
-				return cty.UnknownVal(retType), nil
+		var extraMarks cty.ValueMarks
+		defer func() {
+			if len(extraMarks) != 0 && ret != cty.NilVal {
+				ret = ret.WithMarks(extraMarks)
 			}
+		}()
+		for i, argVal := range args {
+			unmarkedVal, marks := argVal.Unmark()
 			if argVal.IsNull() {
+				if extraMarks == nil {
+					extraMarks = make(cty.ValueMarks)
+				}
+				maps.Copy(extraMarks, marks)
 				continue
 			}
-
-			return convert.Convert(argVal, retType)
+			rng := unmarkedVal.Range()
+			if rng.DefinitelyNotNull() {
+				return convert.Convert(argVal, retType)
+			}
+			// If we get here then we don't know whether this argument is
+			// null or not. Therefore our result could potentially be this
+			// or any subsequent value that could potentially be null, until
+			// we find one that is definitely not null.
+			remaining := args[i:]
+			for i, argVal := range remaining {
+				unmarkedVal, _ := argVal.Unmark()
+				if unmarkedVal.Range().DefinitelyNotNull() {
+					remaining = remaining[:i+1]
+					return convert.Convert(cty.UnknownChoice(slices.Values(remaining), false), retType)
+				}
+			}
+			return convert.Convert(cty.UnknownChoice(slices.Values(remaining), true), retType)
 		}
 		return cty.NilVal, fmt.Errorf("no non-null arguments")
 	},
