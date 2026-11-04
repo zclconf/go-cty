@@ -61,21 +61,19 @@ func UnknownVal(t Type) Value {
 // that all of the values in the given sequence are marks that are assumed to
 // apply to at least one nested value inside the final known value.
 //
-// Only complex-typed values can have nested marks, so this will panic if called
-// with a primitive type. The "marks" sequence is allowed to be nil, in which
-// case this is exactly equivalent to calling [UnknownVal] with the same type,
-// including accepting primitive types without panicking.
+// Only complex-typed values can have nested marks, so if this is called with
+// a primitive type the nested marks are silently ignored and this is therefore
+// equivalent to [UnknownVal]. The "marks" sequence is allowed to be nil, in
+// which case this is exactly equivalent to calling [UnknownVal] with the same
+// type.
 //
 // When cty operations automatically track nested marks for unknown values they
 // are typically filtered to include only "provenance marks" as described in
 // [ctymarks.ProvenenanceMark], but when explicitly constructing a value with
 // this function it's valid to specify non-provenance marks too.
 func UnknownValWithNestedMarks(t Type, marks iter.Seq[any]) Value {
-	if marks == nil {
+	if marks == nil || t.IsPrimitiveType() {
 		return UnknownVal(t)
-	}
-	if t.IsPrimitiveType() {
-		panic(fmt.Sprintf("UnknownValWithNestedMarks with primitive type %#v", t))
 	}
 	var nestedMarks ValueMarks
 	for mark := range marks {
