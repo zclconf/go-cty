@@ -671,6 +671,66 @@ func TestUnknownChoice(t *testing.T) {
 		},
 		{
 			[]Value{
+				// Nested _non-provenance_ marks do not propagate into the result
+				ListVal([]Value{True.Mark("a")}),
+				ListVal([]Value{False.Mark("b")}),
+			},
+			ListVal([]Value{UnknownVal(Bool)}),
+			ListVal([]Value{UnknownVal(Bool)}),
+		},
+		{
+			[]Value{
+				// Nested provenance marks _do_ propagate into the result
+				ListVal([]Value{True.Mark(prvnMark("a"))}),
+				ListVal([]Value{False.Mark(prvnMark("b"))}),
+			},
+			ListVal([]Value{UnknownVal(Bool).Mark(prvnMark("a")).Mark(prvnMark("b"))}),
+			ListVal([]Value{UnknownVal(Bool).Mark(prvnMark("a")).Mark(prvnMark("b"))}),
+		},
+		{
+			[]Value{
+				// Nested _non-provenance_ marks do not propagate into the result
+				ListVal([]Value{True.Mark("a")}),
+				ListVal([]Value{False.Mark("b"), False}),
+			},
+			UnknownVal(List(Bool)).Refine().
+				NotNull().
+				CollectionLengthLowerBound(1).
+				CollectionLengthUpperBound(2).
+				NewValue(),
+			UnknownVal(List(Bool)).Refine().
+				NotNull().
+				CollectionLengthLowerBound(1).
+				CollectionLengthUpperBound(2).
+				NewValue(),
+		},
+		{
+			[]Value{
+				// Nested provenance marks _do_ propagate into the result
+				ListVal([]Value{True.Mark(prvnMark("a"))}),
+				ListVal([]Value{False.Mark(prvnMark("b")), False}),
+			},
+			UnknownValWithNestedMarks(List(Bool), slices.Values([]any{prvnMark("a"), prvnMark("b")})).Refine().
+				NotNull().
+				CollectionLengthLowerBound(1).
+				CollectionLengthUpperBound(2).
+				NewValue(),
+			UnknownValWithNestedMarks(List(Bool), slices.Values([]any{prvnMark("a"), prvnMark("b")})).Refine().
+				NotNull().
+				CollectionLengthLowerBound(1).
+				CollectionLengthUpperBound(2).
+				NewValue(),
+		},
+		{
+			[]Value{
+				// Nested provenance mark propagates into the result regardless of whether we're setting "orMismatch"
+				ListVal([]Value{True.Mark(prvnMark("a"))}),
+			},
+			ListVal([]Value{True.Mark(prvnMark("a"))}),
+			ListVal([]Value{UnknownVal(Bool).Mark(prvnMark("a"))}),
+		},
+		{
+			[]Value{
 				ListValEmpty(Bool),
 				ListVal([]Value{True}),
 				ListVal([]Value{True, True}),

@@ -373,6 +373,30 @@ func (val Value) UnmarkDeep() (Value, ValueMarks) {
 	return retVal, retMarks
 }
 
+// UnmarkDirectAndNested is a compromise between [Value.Unmark] and
+// [Value.UnmarkDeep] which returns all of the marks throughout the nested
+// structure of the value but split into two buckets: marks directly on the
+// value, and marks nested anywhere inside the value.
+//
+// The returned unmarked value contains no marks anywhere within it.
+func (val Value) UnmarkDirectAndNested() (unmarked Value, direct, nested ValueMarks) {
+	unmarked, _ = val.WrangleMarksDeep(func(mark any, path Path) (ctymarks.WrangleAction, error) {
+		if len(path) == 0 {
+			if direct == nil {
+				direct = make(ValueMarks)
+			}
+			direct[mark] = struct{}{}
+		} else {
+			if nested == nil {
+				nested = make(ValueMarks)
+			}
+			nested[mark] = struct{}{}
+		}
+		return ctymarks.WrangleDrop, nil
+	})
+	return unmarked, direct, nested
+}
+
 // UnmarkDeepWithPaths is like UnmarkDeep, except it returns a slice
 // of PathValueMarks rather than a superset of all marks. This allows
 // a caller to know which marks are associated with which paths

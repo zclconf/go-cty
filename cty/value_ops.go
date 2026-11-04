@@ -459,6 +459,12 @@ func (val Value) RawEquals(other Value) bool {
 	other = other.unmarkForce()
 
 	if (!val.IsKnown()) && (!other.IsKnown()) {
+		valNestedMarks := val.unknownValueNestedMarks()
+		otherNestedMarks := other.unknownValueNestedMarks()
+		if !valNestedMarks.Equal(otherNestedMarks) {
+			return false
+		}
+
 		// If either unknown value has refinements then they must match.
 		valRfn := val.v.(*unknownType).refinement
 		otherRfn := other.v.(*unknownType).refinement
@@ -468,10 +474,7 @@ func (val Value) RawEquals(other Value) bool {
 		case valRfn != nil:
 			return valRfn.rawEqual(otherRfn)
 		default:
-			// The nested marks (if any) on the two values must also match.
-			valNestedMarks := val.unknownValueNestedMarks()
-			otherNestedMarks := other.unknownValueNestedMarks()
-			return valNestedMarks.Equal(otherNestedMarks)
+			return true
 		}
 	}
 	if (val.IsKnown() && !other.IsKnown()) || (other.IsKnown() && !val.IsKnown()) {

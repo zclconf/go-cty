@@ -2,6 +2,7 @@ package cty
 
 import (
 	"fmt"
+	"iter"
 	"math"
 	"strings"
 )
@@ -99,8 +100,8 @@ func (v Value) RangeBasedPlaceholder() Value {
 	// tracking nested "provenance marks" for unknown values, so that the
 	// provenance subset of the non-direct marks in the source value also get
 	// preserved in the result.
-	v, marks := v.Unmark()
-	v = v.Range().AsValue().WithMarks(marks)
+	v, marks, nestedMarks := v.UnmarkDirectAndNested()
+	v = v.Range().asValueWithMarks(marks, nestedMarks)
 	return v
 }
 
@@ -132,6 +133,14 @@ func (r ValueRange) TypeConstraint() Type {
 // will typically lose information.
 func (r ValueRange) AsValue() Value {
 	return refinedValue(UnknownVal(r.ty), r.raw)
+}
+
+func (r ValueRange) asValueWithMarks(direct, nested ValueMarks) Value {
+	var nestedSeq iter.Seq[any]
+	if len(nested) != 0 {
+		nestedSeq = nested.All()
+	}
+	return refinedValue(UnknownValWithNestedMarks(r.ty, nestedSeq).WithMarks(direct), r.raw)
 }
 
 // CouldBeNull returns true unless the value being described is definitely

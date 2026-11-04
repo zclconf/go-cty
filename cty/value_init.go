@@ -3,9 +3,11 @@ package cty
 import (
 	"fmt"
 	"iter"
+	"maps"
 	"math/big"
 	"reflect"
 
+	"github.com/zclconf/go-cty/cty/ctymarks"
 	"github.com/zclconf/go-cty/cty/ctystrings"
 	"github.com/zclconf/go-cty/cty/set"
 )
@@ -431,8 +433,8 @@ func UnknownChoice(vals iter.Seq[Value], orMismatch bool) Value {
 		// the values all have something in common. To do that we'll
 		// find a ValueRange that includes both values and then build our
 		// value from it.
-		a, aMarks := val.Unmark()
-		b, bMarks := ret.Unmark()
+		a, aMarks, aNestedMarks := val.UnmarkDirectAndNested()
+		b, bMarks, bNestedMarks := ret.UnmarkDirectAndNested()
 		aRng, bRng := a.Range(), b.Range()
 		if aRng.raw != nil && bRng.raw != nil && aRng.raw.null() == tristateTrue && bRng.raw.null() == tristateTrue {
 			// If both of the values are definitely null then we'll prefer to
@@ -443,10 +445,33 @@ func UnknownChoice(vals iter.Seq[Value], orMismatch bool) Value {
 			if aTy := a.Type(); aTy.Equals(b.Type()) {
 				retTy = aTy
 			}
-			return NullVal(retTy).WithMarks(aMarks, bMarks)
+			ret = NullVal(retTy).WithMarks(aMarks, bMarks)
+			continue
 		}
 		newRng := commonRange(aRng, bRng)
-		ret = newRng.AsValue().WithMarks(aMarks, bMarks)
+		// We'll just merge the a and b marks into "a"'s sets here, which is
+		// okay because UnmarkDirectAndNested creates distinct ValueMarks for
+		// each call.
+		if aMarks == nil {
+			aMarks = make(ValueMarks)
+		}
+		if aNestedMarks == nil {
+			aNestedMarks = make(ValueMarks)
+		}
+		maps.Copy(aMarks, bMarks)
+		maps.Copy(aNestedMarks, bNestedMarks)
+		// Only "provenance marks" are automatically propagated into the nested
+		// marks, which is important for backward-compatibility for cty callers
+		// that predate the concept of nested marks and could break if they
+		// suddenly encounter nested marks they weren't expecting. (Provenance
+		// marks are okay because that concept was introduced at the same time
+		// as unknown values began supporting nested marks.)
+		for mark := range aNestedMarks {
+			if !ctymarks.IsProvenanceMark(mark) {
+				delete(aNestedMarks, mark)
+			}
+		}
+		ret = newRng.asValueWithMarks(aMarks, aNestedMarks)
 	}
 	if ret == NilVal {
 		ret = DynamicVal // just to avoid a panic hazard for callers if they pass an empty sequence

@@ -2626,13 +2626,12 @@ func TestValueGetAttrByValue(t *testing.T) {
 				"stuff":    ListVal([]Value{True.Mark(prvnMark("c"))}).Mark(prvnMark("b")),
 			}).Mark(2),
 			UnknownVal(String).Mark(3),
-			// prvnMark("c") intentionally doesn't appear here because we only
-			// capture provenance marks from the direct attribute values of
-			// the object.
-			// TODO: Should capture nested provenance marks as part of the
-			// DynamicVal here so that we can keep track of them without
-			// misreporting them as belonging directly to the attribute values.
-			DynamicVal.Mark(2).Mark(3).Mark(prvnMark("a")).Mark(prvnMark("b")),
+			// Because prvnMark("c") is a provenance mark, it gets preserved
+			// as a "nested mark" in the result. This is important because it
+			// means that a mark like this could be used to represent where
+			// this value came from without that tracking getting erased by
+			// a lookup of an unknown attribute.
+			UnknownValWithNestedMarks(DynamicPseudoType, slices.Values([]any{prvnMark("c")})).Mark(2).Mark(3).Mark(prvnMark("a")).Mark(prvnMark("b")),
 		},
 		{
 			ObjectVal(map[string]Value{
@@ -2848,13 +2847,16 @@ func TestValueIndex(t *testing.T) {
 					"inner": True.Mark(1).Mark(prvnMark("a")),
 				}).Mark(2).Mark(prvnMark("b")),
 				ObjectVal(map[string]Value{
-					"inner": False,
+					"inner": False.Mark(prvnMark("d")),
 				}).Mark(2).Mark(prvnMark("c")),
 			}).Mark(3),
 			UnknownVal(Number),
-			UnknownVal(Object(map[string]Type{
+			UnknownValWithNestedMarks(Object(map[string]Type{
 				"inner": Bool,
-			})).RefineNotNull().Mark(3).Mark(prvnMark("b")).Mark(prvnMark("c")), // not 2 or "a" intentionally, because they are too nested
+			}), slices.Values([]any{prvnMark("a"), prvnMark("d")})).RefineNotNull().
+				Mark(3).
+				Mark(prvnMark("b")).
+				Mark(prvnMark("c")), // not 1 or 2 intentionally, because they are too nested and are not provenance marks
 		},
 	}
 
@@ -2862,7 +2864,7 @@ func TestValueIndex(t *testing.T) {
 		t.Run(fmt.Sprintf("%#v.Index(%q)", test.Collection, test.Key), func(t *testing.T) {
 			got := test.Collection.Index(test.Key)
 			if !got.RawEquals(test.Expected) {
-				t.Fatalf("Index returned %#v; want %#v", got, test.Expected)
+				t.Fatalf("wrong result from Index\ngot:  %#v\nwant: %#v", got, test.Expected)
 			}
 		})
 	}
