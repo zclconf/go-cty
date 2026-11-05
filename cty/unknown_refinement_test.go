@@ -237,6 +237,41 @@ func TestValueRefine(t *testing.T) {
 			},
 			Want: NumberIntVal(1),
 		},
+		"unknown number cannot have exclusive bounds that are equal": {
+			Build: func() Value {
+				// This is invalid because the number cannot be both greater
+				// than two and less than two at the same time.
+				return UnknownVal(Number).Refine().
+					NumberRangeLowerBound(NumberIntVal(2), false).
+					NumberRangeUpperBound(NumberIntVal(2), false).
+					NewValue()
+			},
+			WantPanic: `numeric bounds >cty.NumberIntVal(2) && <cty.NumberIntVal(2) exclude all values`,
+		},
+		"unknown number cannot have equal bounds where only upper is inclusive": {
+			Build: func() Value {
+				return UnknownVal(Number).Refine().
+					// This is invalid because the upper bound is effectively
+					// less than the lower bound, due to the conflicting
+					// inclusiveness.
+					NumberRangeLowerBound(NumberIntVal(2), false).
+					NumberRangeUpperBound(NumberIntVal(2), true).
+					NewValue()
+			},
+			WantPanic: `numeric bounds >cty.NumberIntVal(2) && <=cty.NumberIntVal(2) exclude all values`,
+		},
+		"unknown number cannot have equal bounds where only lower is inclusive": {
+			Build: func() Value {
+				return UnknownVal(Number).Refine().
+					// This is invalid because the lower bound is effectively
+					// greater than the upper bound, due to the conflicting
+					// inclusiveness.
+					NumberRangeLowerBound(NumberIntVal(2), true).
+					NumberRangeUpperBound(NumberIntVal(2), false).
+					NewValue()
+			},
+			WantPanic: `numeric bounds >=cty.NumberIntVal(2) && <cty.NumberIntVal(2) exclude all values`,
+		},
 		"unknown number cannot have conflicting bounds": {
 			Build: func() Value {
 				return UnknownVal(Number).Refine().
@@ -244,7 +279,7 @@ func TestValueRefine(t *testing.T) {
 					NumberRangeUpperBound(NumberIntVal(1), false).
 					NewValue()
 			},
-			WantPanic: `number lower bound cty.NumberIntVal(2) is greater than upper bound cty.NumberIntVal(1)`,
+			WantPanic: `numeric bounds >=cty.NumberIntVal(2) && <cty.NumberIntVal(1) exclude all values`,
 		},
 		"known number can have its bounds confirmed": {
 			Build: func() Value {

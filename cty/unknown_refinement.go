@@ -710,13 +710,21 @@ func (r *refinementNumber) assertConsistentBounds() {
 		return // If only one bound is constrained then there's nothing to be inconsistent with
 	}
 	var ok Value
-	if r.minInc != r.maxInc {
-		ok = r.min.LessThan(r.max)
-	} else {
+	if r.minInc && r.maxInc {
 		ok = r.min.LessThanOrEqualTo(r.max)
+	} else {
+		ok = r.min.LessThan(r.max)
 	}
 	if ok.IsKnown() && ok.False() {
-		panic(fmt.Sprintf("number lower bound %#v is greater than upper bound %#v", r.min, r.max))
+		minIncStr := ">"
+		if r.minInc {
+			minIncStr = ">="
+		}
+		maxIncStr := "<"
+		if r.maxInc {
+			maxIncStr = "<="
+		}
+		panic(fmt.Sprintf("numeric bounds %s%#v && %s%#v exclude all values", minIncStr, r.min, maxIncStr, r.max))
 	}
 }
 

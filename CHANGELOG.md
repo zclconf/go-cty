@@ -9,8 +9,9 @@ The development of the functionality related to provenance marks was sponsored b
 Other smaller changes in this release:
 
 - The new `cty.Value.GetAttrByValue` is like `cty.Value.GetAttr` except that it takes the attribute name as `cty.Value` instead of `string`, and can therefore implement a reasonable reaction to the attribute name being unknown for calling applications that support dynamically-chosen attribute names.
-- stdlib: `SignumFunc` now works with any number cty can represent, whereas before it was unnecessarily limited only to numbers that could be converted to Go's `int` type.
-- json: Unmarshal no longer panics when a JSON array being decoded into a tuple type has too few elements.
+- numeric refinement now correctly rejects combinations of exclusive bounds with equal values that effectively exclude the entire range of number values. ([#228](https://github.com/zclconf/go-cty/issues/228))
+- stdlib: `SignumFunc` now works with any number cty can represent, whereas before it was unnecessarily limited only to numbers that could be converted to Go's `int` type. ([#218](https://github.com/zclconf/go-cty/issues/218))
+- json: Unmarshal no longer panics when a JSON array being decoded into a tuple type has too few elements. ([#230](https://github.com/zclconf/go-cty/issues/230))
 
 # 1.19.0 (July 6, 2026)
 
