@@ -42,7 +42,14 @@ func (p pathStepImpl) pathStepSigil() pathStepImpl {
 // This is provided as a convenient way to construct paths, but each call
 // will create garbage so it should not be used where memory pressure is a
 // concern.
+//
+// This function just returns the receiver nothing if the path already ends with
+// an "unknown nested steps" placeholder, because that subsumes everything
+// beneath it.
 func (p Path) Index(v Value) Path {
+	if p.HasUnknownTail() {
+		return p
+	}
 	ret := make(Path, len(p)+1)
 	copy(ret, p)
 	ret[len(p)] = IndexStep{
@@ -82,12 +89,35 @@ func IndexStringPath(v string) Path {
 // This is provided as a convenient way to construct paths, but each call
 // will create garbage so it should not be used where memory pressure is a
 // concern.
+//
+// This function just returns the receiver nothing if the path already ends with
+// an "unknown nested steps" placeholder, because that subsumes everything
+// beneath it.
 func (p Path) GetAttr(name string) Path {
+	if p.HasUnknownTail() {
+		return p
+	}
 	ret := make(Path, len(p)+1)
 	copy(ret, p)
 	ret[len(p)] = GetAttrStep{
 		Name: name,
 	}
+	return ret
+}
+
+// UnknownSubpath returns a new Path that is the reciever with an
+// UnknownNestedSteps placeholder appended to the end.
+//
+// This function just returns the receiver nothing if the path already ends with
+// an "unknown nested steps" placeholder, because that subsumes everything
+// beneath it.
+func (p Path) UnknownSubpath() Path {
+	if p.HasUnknownTail() {
+		return p
+	}
+	ret := make(Path, len(p)+1)
+	copy(ret, p)
+	ret[len(p)] = UnknownNestedSteps{}
 	return ret
 }
 
@@ -114,6 +144,9 @@ func (p Path) Equals(other Path) bool {
 			if !pv.Key.RawEquals(ov.Key) {
 				return false
 			}
+		case UnknownNestedSteps:
+			_, ok := other[i].(UnknownNestedSteps)
+			return ok
 		default:
 			// Any invalid steps default to evaluating false.
 			return false
@@ -121,7 +154,6 @@ func (p Path) Equals(other Path) bool {
 	}
 
 	return true
-
 }
 
 // HasPrefix determines if the path p contains the provided prefix.
@@ -131,6 +163,20 @@ func (p Path) HasPrefix(prefix Path) bool {
 	}
 
 	return p[:len(prefix)].Equals(prefix)
+}
+
+// Matches returns true if either the receiver is equal to the given path
+// or if the receiver has an unknown tail but the known prefix matches the
+// prefix of the given path.
+func (p Path) Matches(other Path) bool {
+	// The length check here is important because an unknown-tailed path
+	// only matches paths _under_ its known prefix, not _at_ its known
+	// prefix. We're checking this before we stripped off the tail, so
+	// it's >= rather than > because we're going to shorten it by one below.
+	if len(other) >= len(p) && p.HasUnknownTail() {
+		return other.HasPrefix(p[:len(p)-1])
+	}
+	return other.Equals(p)
 }
 
 // GetAttrPath is a convenience method to start a new Path with a GetAttrStep.
@@ -189,6 +235,23 @@ func (p Path) Copy() Path {
 	ret := make(Path, len(p))
 	copy(ret, p)
 	return ret
+}
+
+// HasUnknownTail returns true if the tail ends with the special
+// "unknown nested steps" marker which means that it actually matches an
+// unspecified number of different nested paths beneath an unknown value.
+//
+// Paths of this kind are produced when walking a value that contains unknown
+// values where cty knows that at least one mark is present on something
+// nested inside the unknown value but is not tracking exactly where inside
+// the unknown value that mark appears.
+func (p Path) HasUnknownTail() bool {
+	if len(p) == 0 {
+		return false
+	}
+	last := p[len(p)-1]
+	_, ok := last.(UnknownNestedSteps)
+	return ok
 }
 
 // IndexStep is a Step implementation representing applying the index operation
@@ -299,4 +362,53 @@ func (s GetAttrStep) Apply(val Value) (Value, error) {
 
 func (s GetAttrStep) GoString() string {
 	return fmt.Sprintf("cty.GetAttrStep{Name:%q}", s.Name)
+}
+
+// UnknownNestedSteps is a special [PathStep] used only to describe marks that
+// are expected to appear at some path beneath a currently-unknown value.
+// It is valid only at the very end of a path, in its last element.
+//
+// Applications that never use [UnknownValWithNestedMarks] directly and which
+// do not use values with any marks that implement [ctymarks.ProvenanceMark]
+// will not encounter paths containing steps of this type unless they explicitly
+// construct them, but any application that directly or indirectly produces
+// unknown values with nested marks must be ready to handle steps of this type
+// whenever "walking" or "transforming" a [Value].
+//
+// Note that this step type is an approximation that captures potential marks
+// at any level of nesting beneath an unknown value, and so when comparing
+// marked paths in a final unknown value an application must allow for the
+// marks on a step of this type potentially matching with any path whose
+// prefix matches the steps before this one, regardless of subsequent length.
+type UnknownNestedSteps struct {
+	pathStepImpl
+}
+
+// UnknownPath is a [Path] value representing a completely-unknown path: could
+// have zero or more steps of any kind.
+//
+// Because [UnknownNestedSteps] is allowed only as the final element of a path,
+// it isn't valid to append additional steps to this path.
+var UnknownPath = Path{
+	UnknownNestedSteps{},
+}
+
+// Apply returns the value of our named attribute from the given value, which
+// must be of an object type that has a value of that name.
+func (s UnknownNestedSteps) Apply(val Value) (Value, error) {
+	if val == NilVal || val.IsNull() {
+		return NilVal, errors.New("a null value does not have any nested attributes or elements")
+	}
+	ty := val.Type()
+	switch {
+	case ty.IsObjectType() || ty.IsCollectionType() || ty.IsTupleType():
+		_, marks := val.UnmarkDeep()
+		return DynamicVal.WithMarks(marks), nil
+	default:
+		return NilVal, errors.New("this value does not have any nested attribtues or elements")
+	}
+}
+
+func (s UnknownNestedSteps) GoString() string {
+	return "cty.UnknownNestedSteps{}"
 }

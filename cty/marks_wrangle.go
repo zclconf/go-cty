@@ -142,9 +142,24 @@ func wrangleMarksDeep(v Value, wranglers []WrangleFunc, path Path, topMarks Valu
 	// aggregated on the top-level set itself during construction.)
 	ty := v.Type()
 	switch {
-	case v.IsNull() || !v.IsKnown():
-		// Can't recurse into null or unknown values, regardless of type,
-		// so nothing to do here.
+	case v.IsNull():
+		// Can't recurse into null values regardless of type, so nothing to do here.
+
+	case !v.IsKnown():
+		// We only recurse into unknown values in the special case where they
+		// have at least one nested mark.
+		if nestedMarks := v.unknownValueNestedMarks(); len(nestedMarks) != 0 {
+			path := append(path, UnknownNestedSteps{})
+			newInnerV := wrangleMarksDeep(DynamicVal.WithMarks(nestedMarks), wranglers, path, topMarks, errs)
+			if newInnerV != NilVal {
+				needNewValue()
+				// We ignore the value data itself and just take the marks from
+				// it, since this value is just a placeholder for everything
+				// nested inside this unknown value.
+				_, newNestedMarks := newInnerV.UnmarkDeep()
+				v = v.unknownWithNewNestedMarks(newNestedMarks)
+			}
+		}
 
 	case ty.IsListType() || ty.IsTupleType():
 		// These types both have the same internal representation, and we
@@ -286,4 +301,14 @@ func replaceKWithIdx[K any, V any](in iter.Seq2[K, V]) iter.Seq2[int, V] {
 			i++
 		}
 	}
+}
+
+func onlyProvenanceMarks(v Value) Value {
+	ret, _ := v.WrangleMarksDeep(func(mark any, path Path) (ctymarks.WrangleAction, error) {
+		if ctymarks.IsProvenanceMark(mark) {
+			return ctymarks.WrangleKeep, nil
+		}
+		return ctymarks.WrangleDrop, nil
+	})
+	return ret
 }

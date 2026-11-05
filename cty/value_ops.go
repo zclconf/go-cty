@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"iter"
 	"math/big"
+	"strings"
 
 	"github.com/zclconf/go-cty/cty/set"
 )
@@ -43,6 +44,9 @@ func (val Value) GoString() string {
 			} else {
 				suffix = ".Refine()" + rfn.GoString() + ".NewValue()"
 			}
+		}
+		if nestedMarks := val.unknownValueNestedMarks(); len(nestedMarks) != 0 {
+			return fmt.Sprintf("cty.UnknownValWithNestedMarks(%#v, %#v.All())%s", val.ty, nestedMarks, suffix)
 		}
 		return fmt.Sprintf("cty.UnknownVal(%#v)%s", val.ty, suffix)
 	}
@@ -455,6 +459,12 @@ func (val Value) RawEquals(other Value) bool {
 	other = other.unmarkForce()
 
 	if (!val.IsKnown()) && (!other.IsKnown()) {
+		valNestedMarks := val.unknownValueNestedMarks()
+		otherNestedMarks := other.unknownValueNestedMarks()
+		if !valNestedMarks.Equal(otherNestedMarks) {
+			return false
+		}
+
 		// If either unknown value has refinements then they must match.
 		valRfn := val.v.(*unknownType).refinement
 		otherRfn := other.v.(*unknownType).refinement
@@ -847,6 +857,54 @@ func (val Value) GetAttr(name string) Value {
 	}
 }
 
+// GetAttrByValue is a variation of [Value.GetAttr] that accepts the attribute
+// name as a [Value] of type [String] instead of as a Go string value.
+//
+// This function panics if the given value is known not to be a string value,
+// or if it is known to be null. If given an unknown value of a suitable type
+// then this returns an unknown value acting as a placeholder result.
+func (val Value) GetAttrByValue(attrName Value) Value {
+	if val.IsMarked() || attrName.IsMarked() {
+		val, valMarks := val.Unmark()
+		attrName, attrNameMarks := attrName.Unmark()
+		return val.GetAttrByValue(attrName).WithMarks(valMarks, attrNameMarks)
+	}
+	if attrName.IsNull() {
+		panic("attribute name is null")
+	}
+	attrNameTy := attrName.Type()
+	if !(attrNameTy == String || attrNameTy == DynamicPseudoType) {
+		panic("attribute name must be a string")
+	}
+	if val.ty != DynamicPseudoType && !val.ty.IsObjectType() {
+		panic("value is not an object")
+	}
+	if val.ty == DynamicPseudoType {
+		return DynamicVal
+	}
+	if attrName.IsKnown() {
+		return val.GetAttr(attrName.AsString())
+	}
+	// If the attribute name is not known then we'll return a placeholder that
+	// represents selecting any one of the possible attributes.
+	attrNamePrefix := attrName.Range().StringPrefix()
+	return UnknownChoice(func(yield func(Value) bool) {
+		for name := range val.Type().AttributeTypes() {
+			if !strings.HasPrefix(name, attrNamePrefix) {
+				continue
+			}
+			// We only keep provenance marks here, because it would be too
+			// conservative to report that the full set of marks from all
+			// attributes would definitely appear on the result once the
+			// attribute name is known.
+			av := onlyProvenanceMarks(val.GetAttr(name))
+			if !yield(av) {
+				return
+			}
+		}
+	}, true)
+}
+
 // Index returns the value of an element of the receiver, which must have
 // either a list, map or tuple type. This method will panic if the receiver
 // type is not compatible.
@@ -873,23 +931,47 @@ func (val Value) Index(key Value) Value {
 	if val.ty == DynamicPseudoType {
 		return DynamicVal
 	}
+	var unknownKeyPlaceholder func(elty Type) Value
+	if !key.IsKnown() {
+		unknownKeyPlaceholder = func(elty Type) Value {
+			keyRng := key.Range()
+			ret := UnknownChoice(func(yield func(Value) bool) {
+				for idx, elem := range val.Elements() {
+					if inc := keyRng.Includes(idx); inc.IsKnown() && inc.False() {
+						continue
+					}
+					// We only keep provenance marks here, because it would be too
+					// conservative to report that the full set of marks from all
+					// attributes would definitely appear on the result once the
+					// attribute name is known.
+					av := onlyProvenanceMarks(elem)
+					if !yield(av) {
+						return
+					}
+				}
+			}, true)
+			if ret.Type() == DynamicPseudoType {
+				ret = UnknownVal(elty)
+			}
+			return ret
+		}
+	}
 
 	switch {
 	case val.Type().IsListType():
 		elty := val.Type().ElementType()
 		if key.Type() == DynamicPseudoType {
-			return UnknownVal(elty)
+			return unknownKeyPlaceholder(elty)
 		}
 
 		if key.Type() != Number {
 			panic("element key for list must be number")
 		}
-		if !key.IsKnown() {
-			return UnknownVal(elty)
-		}
-
 		if !val.IsKnown() {
-			return UnknownVal(elty)
+			return UnknownVal(elty).WithMarks(val.unknownValueNestedMarks())
+		}
+		if !key.IsKnown() {
+			return unknownKeyPlaceholder(elty)
 		}
 
 		index, accuracy := key.v.(*big.Float).Int64()
@@ -904,18 +986,17 @@ func (val Value) Index(key Value) Value {
 	case val.Type().IsMapType():
 		elty := val.Type().ElementType()
 		if key.Type() == DynamicPseudoType {
-			return UnknownVal(elty)
+			return unknownKeyPlaceholder(elty)
 		}
 
 		if key.Type() != String {
 			panic("element key for map must be string")
 		}
-		if !key.IsKnown() {
-			return UnknownVal(elty)
-		}
-
 		if !val.IsKnown() {
-			return UnknownVal(elty)
+			return UnknownVal(elty).WithMarks(val.unknownValueNestedMarks())
+		}
+		if !key.IsKnown() {
+			return unknownKeyPlaceholder(elty)
 		}
 
 		keyStr := key.v.(string)
@@ -926,14 +1007,14 @@ func (val Value) Index(key Value) Value {
 		}
 	case val.Type().IsTupleType():
 		if key.Type() == DynamicPseudoType {
-			return DynamicVal
+			return unknownKeyPlaceholder(DynamicPseudoType)
 		}
 
 		if key.Type() != Number {
 			panic("element key for tuple must be number")
 		}
 		if !key.IsKnown() {
-			return DynamicVal
+			return unknownKeyPlaceholder(DynamicPseudoType)
 		}
 
 		index, accuracy := key.v.(*big.Float).Int64()
@@ -1360,6 +1441,60 @@ func (val Value) Or(other Value) Value {
 	}
 
 	return BoolVal(val.v.(bool) || other.v.(bool))
+}
+
+// Cond selects between the two given values based on whether the reciever is
+// true or false.
+//
+// The reciever of this method acts as the predicate. This function panics if
+// the predicate not boolean or if it is null. If the predicate is an unknown
+// boolean value then the result is a placeholder that potentially partially
+// represents what both of the arguments have in common.
+//
+// The ifTrue and ifFalse values are not required to be of the same type, but
+// the return value is likely to be less unknown if the two results are of the
+// same type, so callers may wish to attempt type unification (e.g. using the
+// facilities in the "convert" package) before calling this function.
+//
+// When the predicate is known, the result preserves all marks from the selected
+// value and discards all marks from the other value. When the predicate is
+// unknown, the result has the union of marks from both values.
+func (val Value) Cond(ifTrue, ifFalse Value) Value {
+	if val.IsMarked() {
+		val, valMarks := val.Unmark()
+		return val.Cond(ifTrue, ifFalse).WithMarks(valMarks)
+		// (we handle marks on ifTrue and ifFalse directly below)
+	}
+
+	if val.IsNull() {
+		panic("cannot use null value as conditional predicate")
+	}
+	if ty := val.Type(); ty != Bool && ty != DynamicPseudoType {
+		panic("conditional predicate must be Bool value")
+	}
+
+	if !val.IsKnown() {
+		// NOTE: Some other features that rely on UnknownChoice intentionally
+		// preserve only "provenance marks" from their input values, but that
+		// special case was introduced to avoid breaking callers that were not
+		// expecting such conservative tracking of marks based on the behavior
+		// in earlier versions. The main outside caller that had its own
+		// conditional implementation was HCL (and the original ZCL
+		// implementation it forked from) and that _did_ have this conservative
+		// behavior of preserving all marks from both, and cty didn't ever have
+		// a Cond implementation prior to this behavior anyway, so there is no
+		// equivalent risk here.
+		return UnknownChoice(func(yield func(Value) bool) {
+			if !yield(ifTrue) {
+				return
+			}
+			yield(ifFalse)
+		}, false)
+	}
+	if val.True() {
+		return ifTrue
+	}
+	return ifFalse
 }
 
 // LessThan returns True if the receiver is less than the other given value,

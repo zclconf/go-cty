@@ -1,5 +1,6 @@
-# 1.19.1 (Unreleased)
+# 1.20.0 (Unreleased)
 
+- The new `cty.Value.GetAttrByValue` is like `cty.Value.GetAttr` except that it takes the attribute name as `cty.Value` instead of `string`, and can therefore implement a reasonable reaction to the attribute name being unknown for calling applications that support dynamically-chosen attribute names.
 - stdlib: `SignumFunc` now works with any number cty can represent, whereas before it was unnecessarily limited only to numbers that could be converted to Go's `int` type.
 
 # 1.19.0 (July 6, 2026)

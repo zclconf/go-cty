@@ -2,6 +2,7 @@ package cty
 
 import (
 	"fmt"
+	"iter"
 	"math"
 	"strings"
 )
@@ -89,6 +90,21 @@ func (v Value) Range() ValueRange {
 	return ValueRange{ty, synth}
 }
 
+// RangeBasedPlaceholder is essentially a shorthand for calling [Value.Range]
+// and then calling [ValueRange.AsValue] on its result, except that it
+// automatically handles propagating any relevant marks from the source into
+// the resulting value.
+func (v Value) RangeBasedPlaceholder() Value {
+	// For now we just shallowly unmark and then reapply those shallow marks
+	// afterwards. This will want to do something more involved once we start
+	// tracking nested "provenance marks" for unknown values, so that the
+	// provenance subset of the non-direct marks in the source value also get
+	// preserved in the result.
+	v, marks, nestedMarks := v.UnmarkDirectAndNested()
+	v = v.Range().asValueWithMarks(marks, nestedMarks)
+	return v
+}
+
 // ValueRange offers partial information about the range of a value.
 //
 // This is primarily interesting for unknown values, because it provides access
@@ -103,6 +119,28 @@ type ValueRange struct {
 // precisely as possible with the available information.
 func (r ValueRange) TypeConstraint() Type {
 	return r.ty
+}
+
+// AsValue returns an value that coulod be used as a placeholder for any
+// value included in the range.
+//
+// The result is usually at least partially unknown, but can potentially be
+// fully known in cases where the range is tightly constrained enough that
+// we can prove there's only one possible value.
+//
+// ValueRange has limited precision in what it can track for different types
+// of value, so round-tripping through [Value.Range] and [ValueRange.AsValue]
+// will typically lose information.
+func (r ValueRange) AsValue() Value {
+	return refinedValue(UnknownVal(r.ty), r.raw)
+}
+
+func (r ValueRange) asValueWithMarks(direct, nested ValueMarks) Value {
+	var nestedSeq iter.Seq[any]
+	if len(nested) != 0 {
+		nestedSeq = nested.All()
+	}
+	return refinedValue(UnknownValWithNestedMarks(r.ty, nestedSeq).WithMarks(direct), r.raw)
 }
 
 // CouldBeNull returns true unless the value being described is definitely
@@ -409,4 +447,105 @@ func definitelyNotNull(v Value) bool {
 		return !v.IsNull()
 	}
 	return v.Range().DefinitelyNotNull()
+}
+
+// commonRange returns a [ValueRange] that contains everything that is included
+// in the two other given value ranges, while attempting to return the tightest
+// possible range.
+func commonRange(a, b ValueRange) ValueRange {
+	if !a.ty.Equals(b.ty) || a.raw == nil || b.raw == nil {
+		return ValueRange{
+			ty:  DynamicPseudoType,
+			raw: nil, // no refinements at all, because only known-typed values can have refinements
+		}
+	}
+
+	var rfn unknownValRefinement
+	commonNullable := tristateUnknown
+	if aNullable, bNullable := a.raw.null(), b.raw.null(); aNullable == bNullable {
+		commonNullable = aNullable
+	}
+	nullable := refinementNullable{
+		isNull: commonNullable,
+	}
+	switch aRfn := a.raw.(type) {
+	case *refinementString:
+		bRfn, ok := b.raw.(*refinementString)
+		if !ok {
+			break
+		}
+		if aRfn.prefix == bRfn.prefix {
+			rfn = &refinementString{
+				prefix:             aRfn.prefix,
+				refinementNullable: nullable,
+			}
+			break
+		}
+		if commonLen := min(len(aRfn.prefix), len(bRfn.prefix)); commonLen != 0 {
+			// The following works with bytes, rather than UTF-8 sequences or
+			// grapheme clusters, because we assume that the prefix should
+			// already have been normalized during the construction of these
+			// refinements.
+			commonPrefix := aRfn.prefix[:commonLen]
+			for i := range commonLen {
+				if bRfn.prefix[i] != commonPrefix[i] {
+					commonPrefix = aRfn.prefix[:i]
+					break
+				}
+			}
+			if len(commonPrefix) != 0 {
+				rfn = &refinementString{
+					prefix:             commonPrefix,
+					refinementNullable: nullable,
+				}
+				break
+			}
+		}
+	case *refinementCollection:
+		bRfn, ok := b.raw.(*refinementCollection)
+		if !ok {
+			break
+		}
+		rfn = &refinementCollection{
+			minLen:             min(aRfn.minLen, bRfn.minLen),
+			maxLen:             max(aRfn.maxLen, bRfn.maxLen),
+			refinementNullable: nullable,
+		}
+	case *refinementNumber:
+		bRfn, ok := b.raw.(*refinementNumber)
+		if !ok {
+			break
+		}
+		newMin := mostNumberValue(Value.LessThan, aRfn.min, bRfn.min)
+		newMax := mostNumberValue(Value.GreaterThan, aRfn.max, bRfn.max)
+		if (newMin != NilVal && newMin != NegativeInfinity) || (newMax != NilVal && newMax != PositiveInfinity) {
+			// For simplicity we currently always return inclusive bounds here,
+			// which means our result is potentially slightly looser than it
+			// could've been but we're still definitely returning something that
+			// subsumes both ranges.
+			rfn = &refinementNumber{
+				min: newMin, minInc: true,
+				max: newMax, maxInc: true,
+				refinementNullable: nullable,
+			}
+		}
+	}
+	if rfn == nil && nullable.isNull != tristateUnknown {
+		// We do a little hoop-jumping here because RefinementBuilder knows
+		// the various rules about how refinements are supposed to be
+		// represented for different value types and we want to follow that
+		// without duplicating those rules here.
+		builder := UnknownVal(a.ty).Refine()
+		switch nullable.isNull {
+		case tristateTrue:
+			builder = builder.Null()
+		case tristateFalse:
+			builder = builder.NotNull()
+		}
+		rfn = builder.currentRefinement()
+	}
+	return ValueRange{
+		ty:  a.ty,
+		raw: rfn,
+	}
 }

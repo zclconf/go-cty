@@ -3,6 +3,7 @@ package cty
 import (
 	"io"
 	"iter"
+	"maps"
 )
 
 // Walk visits all of the values in a possibly-complex structure, calling
@@ -56,8 +57,24 @@ func walk(path Path, val Value, cb func(Path, Value) (bool, error)) error {
 		return nil
 	}
 
-	if val.IsNull() || !val.IsKnown() {
-		// Can't recurse into null or unknown values, regardless of type
+	if val.IsNull() {
+		// Can't recurse into null values regardless of type
+		return nil
+	}
+	if !val.IsKnown() {
+		// We recurse into an unknown value only in the special case where
+		// it has at least one nested mark, in which case we report a
+		// generic placeholder value containing those marks just to ensure
+		// that a mark-gathering walk will see them. We use a special path
+		// step type for this so that the callback can recognize and ignore
+		// it if they don't want to include these special values in the walk.
+		if nestedMarks := val.unknownValueNestedMarks(); len(nestedMarks) != 0 {
+			path := append(path, UnknownNestedSteps{})
+			_, err := cb(path, DynamicVal.WithMarks(nestedMarks))
+			if err != nil {
+				return err
+			}
+		}
 		return nil
 	}
 
@@ -176,8 +193,31 @@ func transform(path Path, val Value, t Transformer) (Value, error) {
 	switch {
 
 	case val.IsNull() || !val.IsKnown():
-		// Can't recurse into null or unknown values, regardless of type
+		// Can't recurse into null regardless of type
 		newVal = val
+
+	case !val.IsKnown():
+		// We recurse into unknown values in only one special case: if there
+		// are nested marks that therefore need to be reported as belonging
+		// to an "unknown-tailed" path. In this situation there isn't actually
+		// any real value and so we use DynamicVal as a placeholder, and just
+		// discard everything except the marks from the result.
+		if nestedMarks := val.unknownValueNestedMarks(); len(marks) != 0 {
+			path := append(path, UnknownNestedSteps{})
+			transformedV, err := transform(path, DynamicVal.WithMarks(nestedMarks), t)
+			if err != nil {
+				return DynamicVal, err
+			}
+			transformedV, newMarks := transformedV.UnmarkDeep()
+			maps.Copy(newMarks, marks)
+			newNestedMarks := transformedV.unknownValueNestedMarks()
+			// We'll reconstruct the unknown value from raw parts directly
+			// here so that we can preserve the type and any refinements
+			// that the transformer decided for the main unknown value.
+			newVal = val.unknownWithNewNestedMarks(newNestedMarks)
+		} else {
+			newVal = val
+		}
 
 	case ty.IsListType() || ty.IsSetType() || ty.IsTupleType():
 		l := rawVal.LengthInt()

@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+
+	"github.com/zclconf/go-cty/cty/ctymarks"
 )
 
 func TestContainsMarked(t *testing.T) {
@@ -60,6 +62,18 @@ func TestContainsMarked(t *testing.T) {
 			}),
 			true,
 		},
+		{
+			UnknownVal(Bool),
+			false,
+		},
+		{
+			UnknownVal(Bool).Mark("a"),
+			true,
+		},
+		{
+			UnknownValWithNestedMarks(List(Bool), slices.Values([]any{"a"})),
+			true,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -93,6 +107,18 @@ func TestIsMarked(t *testing.T) {
 		{
 			ListVal([]Value{NumberIntVal(1), NumberIntVal(2)}).Mark("a"),
 			true,
+		},
+		{
+			UnknownVal(Bool),
+			false,
+		},
+		{
+			UnknownVal(Bool).Mark("a"),
+			true,
+		},
+		{
+			UnknownValWithNestedMarks(List(Bool), slices.Values([]any{"a"})),
+			false,
 		},
 	}
 
@@ -345,6 +371,11 @@ func TestUnmarkDeep(t *testing.T) {
 			}),
 			NewValueMarks("a", "b", "c", "d", "e", "f", "g"),
 		},
+		"unknown with nested marks": {
+			UnknownValWithNestedMarks(List(String), slices.Values([]any{"nested"})).Mark("toplevel"),
+			UnknownVal(List(String)),
+			NewValueMarks("nested", "toplevel"),
+		},
 	}
 
 	for name, tc := range testCases {
@@ -477,6 +508,22 @@ func TestPathValueMarks(t *testing.T) {
 				{GetAttrPath("environment").IndexInt(0).GetAttr("variables").IndexString("foo"), NewValueMarks("sensitive")},
 			},
 		},
+		"unknown with nested marks": {
+			UnknownValWithNestedMarks(List(String), slices.Values([]any{"nested"})).Mark("toplevel"),
+			UnknownVal(List(String)),
+			[]PathValueMarks{
+				{nil, NewValueMarks("toplevel")},
+				{UnknownPath, NewValueMarks("nested")},
+			},
+		},
+		"unknown with nested provenance marks": {
+			UnknownValWithNestedMarks(List(String), slices.Values([]any{prvnMark("nested")})).Mark("toplevel"),
+			UnknownVal(List(String)),
+			[]PathValueMarks{
+				{nil, NewValueMarks("toplevel")},
+				{UnknownPath, NewValueMarks(prvnMark("nested"))},
+			},
+		},
 	}
 
 	for name, tc := range testCases {
@@ -503,8 +550,19 @@ func TestPathValueMarks(t *testing.T) {
 
 		t.Run(fmt.Sprintf("mark: %s", name), func(t *testing.T) {
 			got := tc.unmarked.MarkWithPaths(tc.pvms)
-			if !got.RawEquals(tc.marked) {
-				t.Errorf("wrong value\n got: %#v\nwant: %#v", got, tc.marked)
+			// For annoying legacy compatibility reasons we only preserve
+			// the provenance subset of nested marks in unknown values, and
+			// so we need to do a little transforming of our "marked" value
+			// to make it comparable with what this function is intended
+			// to produce.
+			want, _ := tc.marked.WrangleMarksDeep(func(mark any, path Path) (ctymarks.WrangleAction, error) {
+				if path.HasUnknownTail() && !ctymarks.IsProvenanceMark(mark) {
+					return ctymarks.WrangleDrop, nil
+				}
+				return ctymarks.WrangleKeep, nil
+			})
+			if !got.RawEquals(want) {
+				t.Errorf("wrong value\n got: %#v\nwant: %#v", got, want)
 			}
 		})
 	}
@@ -580,4 +638,19 @@ func TestValueMarksOfTypeDeep(t *testing.T) {
 	if diff := cmp.Diff(want, got); diff != "" {
 		t.Error("wrong result\n" + diff)
 	}
+}
+
+type provenanceMarkForTesting struct {
+	v string
+	ctymarks.ProvenanceMark
+}
+
+func prvnMark(v string) provenanceMarkForTesting {
+	return provenanceMarkForTesting{
+		v: v,
+	}
+}
+
+func (m provenanceMarkForTesting) GoString() string {
+	return fmt.Sprintf("prvnMark(%q)", m.v)
 }

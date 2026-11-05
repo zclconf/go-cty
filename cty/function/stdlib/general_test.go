@@ -111,6 +111,58 @@ func TestCoalesce(t *testing.T) {
 			[]cty.Value{cty.DynamicVal},
 			cty.DynamicVal,
 		},
+		{
+			[]cty.Value{cty.UnknownVal(cty.Bool).Mark("a").RefineNotNull()},
+			cty.UnknownVal(cty.Bool).Mark("a").RefineNotNull(),
+		},
+		{
+			[]cty.Value{cty.UnknownVal(cty.Bool).Mark("a"), cty.UnknownVal(cty.Bool).Mark("b")},
+			cty.UnknownVal(cty.Bool).Mark("a").Mark("b").RefineNotNull(),
+		},
+		{
+			[]cty.Value{cty.UnknownVal(cty.Bool).Mark("a").RefineNotNull(), cty.UnknownVal(cty.Bool).Mark("b")},
+			cty.UnknownVal(cty.Bool).Mark("a").RefineNotNull(),
+		},
+		{
+			[]cty.Value{cty.UnknownVal(cty.Bool).Mark("a"), cty.UnknownVal(cty.Bool).Mark("b").RefineNotNull(), cty.UnknownVal(cty.Bool).Mark("c")},
+			cty.UnknownVal(cty.Bool).Mark("a").Mark("b").RefineNotNull(),
+		},
+		{
+			[]cty.Value{cty.NullVal(cty.Bool).Mark("n"), cty.UnknownVal(cty.Bool).Mark("a"), cty.UnknownVal(cty.Bool).Mark("b").RefineNotNull(), cty.UnknownVal(cty.Bool).Mark("c")},
+			cty.UnknownVal(cty.Bool).Mark("a").Mark("b").Mark("n").RefineNotNull(),
+		},
+		{
+			[]cty.Value{
+				cty.UnknownVal(cty.String).Refine().
+					StringPrefixFull("beep").
+					NewValue(),
+				cty.UnknownVal(cty.String).Refine().
+					StringPrefixFull("boop").
+					NewValue(),
+			},
+			cty.UnknownVal(cty.String).Refine().
+				NotNull().
+				StringPrefixFull("b"). // the common prefix of "beep" and "boop"
+				NewValue(),
+		},
+		{
+			[]cty.Value{
+				cty.UnknownVal(cty.String).Refine().
+					StringPrefixFull("beep").
+					NewValue(),
+				cty.UnknownVal(cty.String).Refine().
+					NotNull().
+					StringPrefixFull("boop").
+					NewValue(),
+				cty.UnknownVal(cty.String).Refine().
+					StringPrefixFull("foo").
+					NewValue(),
+			},
+			cty.UnknownVal(cty.String).Refine().
+				NotNull().
+				StringPrefixFull("b"). // the common prefix of "beep" and "boop"; "foo" is excluded because second argument is known not null
+				NewValue(),
+		},
 	}
 
 	for _, test := range tests {

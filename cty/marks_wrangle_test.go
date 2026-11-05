@@ -2,6 +2,7 @@ package cty_test
 
 import (
 	"fmt"
+	"slices"
 	"testing"
 
 	"github.com/zclconf/go-cty/cty"
@@ -368,6 +369,58 @@ found mark "bad" at path cty.Path{cty.IndexStep{Key:cty.NumberIntVal(2)}}`,
 				"marked 3":   cty.StringVal("marked"),
 				"unmarked 2": cty.StringVal("unmarked"),
 			}),
+		},
+		"unknown with nested marks, which are replaced": {
+			input: cty.UnknownValWithNestedMarks(cty.List(cty.String), slices.Values([]any{"nested"})).Mark("toplevel"),
+			funcs: []cty.WrangleFunc{
+				func(mark any, path cty.Path) (ctymarks.WrangleAction, error) {
+					s := mark.(string)
+					return ctymarks.WrangleReplace(s + " replacement"), nil
+				},
+			},
+			want: cty.UnknownValWithNestedMarks(cty.List(cty.String), slices.Values([]any{"nested replacement"})).Mark("toplevel replacement"),
+		},
+		"unknown with nested marks, which are dropped": {
+			input: cty.UnknownValWithNestedMarks(cty.List(cty.String), slices.Values([]any{"nested"})).Mark("toplevel"),
+			funcs: []cty.WrangleFunc{
+				func(mark any, path cty.Path) (ctymarks.WrangleAction, error) {
+					return ctymarks.WrangleDrop, nil
+				},
+			},
+			want: cty.UnknownVal(cty.List(cty.String)),
+		},
+		"unknown with nested marks, which are expanded": {
+			input: cty.UnknownValWithNestedMarks(cty.List(cty.String), slices.Values([]any{"nested"})).Mark("toplevel"),
+			funcs: []cty.WrangleFunc{
+				func(mark any, path cty.Path) (ctymarks.WrangleAction, error) {
+					return ctymarks.WrangleExpand, nil
+				},
+			},
+			want: cty.UnknownValWithNestedMarks(cty.List(cty.String), slices.Values([]any{"nested"})).Mark("toplevel").Mark("nested"),
+		},
+		"unknown with nested marks, where only nested is replaced": {
+			input: cty.UnknownValWithNestedMarks(cty.List(cty.String), slices.Values([]any{"nested"})).Mark("toplevel"),
+			funcs: []cty.WrangleFunc{
+				func(mark any, path cty.Path) (ctymarks.WrangleAction, error) {
+					if path.HasUnknownTail() {
+						return ctymarks.WrangleReplace("replacement"), nil
+					}
+					return ctymarks.WrangleKeep, nil
+				},
+			},
+			want: cty.UnknownValWithNestedMarks(cty.List(cty.String), slices.Values([]any{"replacement"})).Mark("toplevel"),
+		},
+		"unknown with nested marks, where only toplevel replaced": {
+			input: cty.UnknownValWithNestedMarks(cty.List(cty.String), slices.Values([]any{"nested"})).Mark("toplevel"),
+			funcs: []cty.WrangleFunc{
+				func(mark any, path cty.Path) (ctymarks.WrangleAction, error) {
+					if !path.HasUnknownTail() {
+						return ctymarks.WrangleReplace("replacement"), nil
+					}
+					return ctymarks.WrangleKeep, nil
+				},
+			},
+			want: cty.UnknownValWithNestedMarks(cty.List(cty.String), slices.Values([]any{"nested"})).Mark("replacement"),
 		},
 	}
 

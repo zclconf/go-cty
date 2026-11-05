@@ -3,6 +3,7 @@ package cty
 import (
 	"fmt"
 	"iter"
+	"maps"
 	"strings"
 
 	"github.com/zclconf/go-cty/cty/ctymarks"
@@ -76,6 +77,10 @@ func (m ValueMarks) Has(mark any) bool {
 	return ok
 }
 
+func (m ValueMarks) All() iter.Seq[any] {
+	return maps.Keys(m)
+}
+
 // Equal returns true if the receiver and the given ValueMarks both contain
 // the same marks.
 func (m ValueMarks) Equal(o ValueMarks) bool {
@@ -98,7 +103,7 @@ func (m ValueMarks) GoString() string {
 		if i != 0 {
 			s.WriteString(", ")
 		}
-		s.WriteString(fmt.Sprintf("%#v", mv))
+		fmt.Fprintf(&s, "%#v", mv)
 		i++
 	}
 	s.WriteString(")")
@@ -265,9 +270,7 @@ func (val Value) Mark(mark any) Value {
 	if mr, ok := val.v.(marker); ok {
 		// It's already a marker, so we'll retain existing marks.
 		newMarker.marks = make(ValueMarks, len(mr.marks)+1)
-		for k, v := range mr.marks {
-			newMarker.marks[k] = v
-		}
+		maps.Copy(newMarker.marks, mr.marks)
 		// unwrap the inner marked value, so we don't get multiple layers
 		// of marking.
 		newMarker.realV = mr.realV
@@ -291,10 +294,47 @@ func (t *applyPathValueMarksTransformer) Enter(p Path, v Value) (Value, error) {
 }
 
 func (t *applyPathValueMarksTransformer) Exit(p Path, v Value) (Value, error) {
+	var directMarks ValueMarks
+	var nestedMarks ValueMarks
+	if !v.IsKnown() {
+		// If we're processing an unknown value then we need to be ready
+		// to collect any marks at nested paths and track them in the
+		// final value so that they don't get completely lost.
+		nestedMarks = make(ValueMarks)
+	}
 	for _, path := range t.pvm {
-		if p.Equals(path.Path) {
-			return v.WithMarks(path.Marks), nil
+		// We use "matches" here because path.Path might have an unknown tail,
+		// in which case we need to apply path.Marks to everything beneath
+		// its known prefix if the previously-unknown value has now become
+		// known and has stuff nested inside it.
+		if path.Path.Matches(p) {
+			if directMarks == nil {
+				directMarks = make(ValueMarks)
+			}
+			maps.Copy(directMarks, path.Marks)
 		}
+		if nestedMarks != nil {
+			if len(path.Path) > len(p) && path.Path.HasPrefix(p) {
+				for mark := range path.Marks {
+					// We only implicitly apply provenance marks here because
+					// historically nested marks were not handled here at all
+					// and older callers may be relying on that. Provenance
+					// marks were added at the same time as nested mark tracking
+					// so that callers can opt in to the more complete tracking
+					// for marks that need it without us breaking existing
+					// uses of marks where this detail isn't helpful.
+					if ctymarks.IsProvenanceMark(mark) {
+						nestedMarks[mark] = struct{}{}
+					}
+				}
+			}
+		}
+	}
+	if len(directMarks) != 0 {
+		v = v.WithMarks(directMarks)
+	}
+	if nestedMarks != nil {
+		v = v.unknownWithNewNestedMarks(nestedMarks)
 	}
 	return v, nil
 }
@@ -342,6 +382,30 @@ func (val Value) UnmarkDeep() (Value, ValueMarks) {
 		return ctymarks.WrangleDrop, nil
 	})
 	return retVal, retMarks
+}
+
+// UnmarkDirectAndNested is a compromise between [Value.Unmark] and
+// [Value.UnmarkDeep] which returns all of the marks throughout the nested
+// structure of the value but split into two buckets: marks directly on the
+// value, and marks nested anywhere inside the value.
+//
+// The returned unmarked value contains no marks anywhere within it.
+func (val Value) UnmarkDirectAndNested() (unmarked Value, direct, nested ValueMarks) {
+	unmarked, _ = val.WrangleMarksDeep(func(mark any, path Path) (ctymarks.WrangleAction, error) {
+		if len(path) == 0 {
+			if direct == nil {
+				direct = make(ValueMarks)
+			}
+			direct[mark] = struct{}{}
+		} else {
+			if nested == nil {
+				nested = make(ValueMarks)
+			}
+			nested[mark] = struct{}{}
+		}
+		return ctymarks.WrangleDrop, nil
+	})
+	return unmarked, direct, nested
 }
 
 // UnmarkDeepWithPaths is like UnmarkDeep, except it returns a slice

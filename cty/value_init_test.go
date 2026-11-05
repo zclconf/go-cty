@@ -2,6 +2,8 @@ package cty
 
 import (
 	"fmt"
+	"slices"
+	"strings"
 	"testing"
 )
 
@@ -430,5 +432,421 @@ func TestCanMapVal(t *testing.T) {
 		if got != tc.Want {
 			t.Errorf("wrong result for elements %#v:\ngot %v, want %v", tc.Elems, got, tc.Want)
 		}
+	}
+}
+
+func TestUnknownChoice(t *testing.T) {
+	tests := []struct {
+		Inputs         []Value
+		Want           Value
+		WantOrMismatch Value
+	}{
+		{
+			nil,
+			DynamicVal,
+			DynamicVal,
+		},
+
+		{
+			[]Value{
+				True,
+			},
+			True,
+			UnknownVal(Bool).RefineNotNull(),
+		},
+		{
+			[]Value{
+				True,
+				True,
+			},
+			True,
+			UnknownVal(Bool).RefineNotNull(),
+		},
+		{
+			[]Value{
+				True,
+				True,
+				True,
+			},
+			True,
+			UnknownVal(Bool).RefineNotNull(),
+		},
+		{
+			[]Value{
+				True,
+				False,
+			},
+			UnknownVal(Bool).RefineNotNull(),
+			UnknownVal(Bool).RefineNotNull(),
+		},
+		{
+			[]Value{
+				True,
+				NullVal(Bool),
+			},
+			UnknownVal(Bool),
+			UnknownVal(Bool),
+		},
+		{
+			[]Value{
+				NullVal(Bool),
+				NullVal(Bool),
+			},
+			NullVal(Bool),
+			NullVal(Bool),
+		},
+		{
+			[]Value{
+				True,
+				Zero,
+			},
+			DynamicVal,
+			DynamicVal,
+		},
+		{
+			[]Value{
+				True.Mark("a"),
+			},
+			True.Mark("a"),
+			UnknownVal(Bool).RefineNotNull().Mark("a"),
+		},
+		{
+			[]Value{
+				True.Mark("a"),
+				True.Mark("a"),
+			},
+			True.Mark("a"),
+			UnknownVal(Bool).RefineNotNull().Mark("a"),
+		},
+		{
+			[]Value{
+				True.Mark("a"),
+				True.Mark("b"),
+			},
+			UnknownVal(Bool).RefineNotNull().Mark("a").Mark("b"),
+			UnknownVal(Bool).RefineNotNull().Mark("a").Mark("b"),
+		},
+		{
+			[]Value{
+				True.Mark("a"),
+				True.Mark("b"),
+				True.Mark("c"),
+			},
+			UnknownVal(Bool).RefineNotNull().Mark("a").Mark("b").Mark("c"),
+			UnknownVal(Bool).RefineNotNull().Mark("a").Mark("b").Mark("c"),
+		},
+		{
+			[]Value{
+				True.Mark("a"),
+				False.Mark("b"),
+			},
+			UnknownVal(Bool).RefineNotNull().Mark("a").Mark("b"),
+			UnknownVal(Bool).RefineNotNull().Mark("a").Mark("b"),
+		},
+		{
+			[]Value{
+				True.Mark("a"),
+				NullVal(Bool).Mark("b"),
+			},
+			UnknownVal(Bool).Mark("a").Mark("b"),
+			UnknownVal(Bool).Mark("a").Mark("b"),
+		},
+		{
+			[]Value{
+				NullVal(Bool).Mark("a"),
+				NullVal(Bool).Mark("b"),
+			},
+			NullVal(Bool).Mark("a").Mark("b"),
+			NullVal(Bool).Mark("a").Mark("b"),
+		},
+		{
+			[]Value{
+				True.Mark("a"),
+				Zero.Mark("b"),
+			},
+			DynamicVal.Mark("a").Mark("b"),
+			DynamicVal.Mark("a").Mark("b"),
+		},
+		{
+			[]Value{
+				StringVal("a"),
+				StringVal("b"),
+			},
+			UnknownVal(String).RefineNotNull(),
+			UnknownVal(String).RefineNotNull(),
+		},
+		{
+			[]Value{
+				StringVal("boop:1"),
+				StringVal("boop:2"),
+			},
+			UnknownVal(String).Refine().
+				NotNull().
+				StringPrefixFull("boop:").
+				NewValue(),
+			UnknownVal(String).Refine().
+				NotNull().
+				StringPrefixFull("boop:").
+				NewValue(),
+		},
+		{
+			[]Value{
+				StringVal("boop:1").Mark("a"),
+				StringVal("boop:2").Mark("b"),
+			},
+			UnknownVal(String).Refine().
+				NotNull().
+				StringPrefixFull("boop:").
+				NewValue().
+				Mark("a").Mark("b"),
+			UnknownVal(String).Refine().
+				NotNull().
+				StringPrefixFull("boop:").
+				NewValue().
+				Mark("a").Mark("b"),
+		},
+		{
+			[]Value{
+				StringVal("boop").Mark("a"),
+				StringVal("boosh").Mark("b"),
+			},
+			UnknownVal(String).Refine().
+				NotNull().
+				StringPrefixFull("boo").
+				NewValue().
+				Mark("a").Mark("b"),
+			UnknownVal(String).Refine().
+				NotNull().
+				StringPrefixFull("boo").
+				NewValue().
+				Mark("a").Mark("b"),
+		},
+		{
+			[]Value{
+				ListValEmpty(String).Mark("a"),
+				ListValEmpty(String).Mark("b"),
+			},
+			ListValEmpty(String).Mark("a").Mark("b"),
+			ListValEmpty(String).Mark("a").Mark("b"),
+		},
+		{
+			[]Value{
+				ListVal([]Value{True}),
+				ListVal([]Value{True}),
+			},
+			ListVal([]Value{True}),
+			ListVal([]Value{UnknownVal(Bool)}),
+		},
+		{
+			[]Value{
+				ListVal([]Value{True}),
+				ListVal([]Value{False}),
+			},
+			ListVal([]Value{UnknownVal(Bool)}),
+			ListVal([]Value{UnknownVal(Bool)}),
+		},
+		{
+			[]Value{
+				ListVal([]Value{True}).Mark("a"),
+				ListVal([]Value{True}).Mark("a"),
+			},
+			ListVal([]Value{True}).Mark("a"),
+			ListVal([]Value{UnknownVal(Bool)}).Mark("a"),
+		},
+		{
+			[]Value{
+				ListVal([]Value{True}).Mark("a"),
+				ListVal([]Value{True}).Mark("b"),
+			},
+			ListVal([]Value{UnknownVal(Bool)}).Mark("a").Mark("b"),
+			ListVal([]Value{UnknownVal(Bool)}).Mark("a").Mark("b"),
+		},
+		{
+			[]Value{
+				ListVal([]Value{True}).Mark("a"),
+				ListVal([]Value{False}).Mark("b"),
+			},
+			ListVal([]Value{UnknownVal(Bool)}).Mark("a").Mark("b"),
+			ListVal([]Value{UnknownVal(Bool)}).Mark("a").Mark("b"),
+		},
+		{
+			[]Value{
+				// Nested _non-provenance_ marks do not propagate into the result
+				ListVal([]Value{True.Mark("a")}),
+				ListVal([]Value{False.Mark("b")}),
+			},
+			ListVal([]Value{UnknownVal(Bool)}),
+			ListVal([]Value{UnknownVal(Bool)}),
+		},
+		{
+			[]Value{
+				// Nested provenance marks _do_ propagate into the result
+				ListVal([]Value{True.Mark(prvnMark("a"))}),
+				ListVal([]Value{False.Mark(prvnMark("b"))}),
+			},
+			ListVal([]Value{UnknownVal(Bool).Mark(prvnMark("a")).Mark(prvnMark("b"))}),
+			ListVal([]Value{UnknownVal(Bool).Mark(prvnMark("a")).Mark(prvnMark("b"))}),
+		},
+		{
+			[]Value{
+				// Nested _non-provenance_ marks do not propagate into the result
+				ListVal([]Value{True.Mark("a")}),
+				ListVal([]Value{False.Mark("b"), False}),
+			},
+			UnknownVal(List(Bool)).Refine().
+				NotNull().
+				CollectionLengthLowerBound(1).
+				CollectionLengthUpperBound(2).
+				NewValue(),
+			UnknownVal(List(Bool)).Refine().
+				NotNull().
+				CollectionLengthLowerBound(1).
+				CollectionLengthUpperBound(2).
+				NewValue(),
+		},
+		{
+			[]Value{
+				// Nested provenance marks _do_ propagate into the result
+				ListVal([]Value{True.Mark(prvnMark("a"))}),
+				ListVal([]Value{False.Mark(prvnMark("b")), False}),
+			},
+			UnknownValWithNestedMarks(List(Bool), slices.Values([]any{prvnMark("a"), prvnMark("b")})).Refine().
+				NotNull().
+				CollectionLengthLowerBound(1).
+				CollectionLengthUpperBound(2).
+				NewValue(),
+			UnknownValWithNestedMarks(List(Bool), slices.Values([]any{prvnMark("a"), prvnMark("b")})).Refine().
+				NotNull().
+				CollectionLengthLowerBound(1).
+				CollectionLengthUpperBound(2).
+				NewValue(),
+		},
+		{
+			[]Value{
+				// Nested provenance mark propagates into the result regardless of whether we're setting "orMismatch"
+				ListVal([]Value{True.Mark(prvnMark("a"))}),
+			},
+			ListVal([]Value{True.Mark(prvnMark("a"))}),
+			ListVal([]Value{UnknownVal(Bool).Mark(prvnMark("a"))}),
+		},
+		{
+			[]Value{
+				ListValEmpty(Bool),
+				ListVal([]Value{True}),
+				ListVal([]Value{True, True}),
+			},
+			UnknownVal(List(Bool)).Refine().
+				NotNull().
+				CollectionLengthLowerBound(0).
+				CollectionLengthUpperBound(2).
+				NewValue(),
+			UnknownVal(List(Bool)).Refine().
+				NotNull().
+				CollectionLengthLowerBound(0).
+				CollectionLengthUpperBound(2).
+				NewValue(),
+		},
+		{
+			[]Value{
+				ListVal([]Value{True}),
+				ListVal([]Value{True, True}),
+			},
+			UnknownVal(List(Bool)).Refine().
+				NotNull().
+				CollectionLengthLowerBound(1).
+				CollectionLengthUpperBound(2).
+				NewValue(),
+			UnknownVal(List(Bool)).Refine().
+				NotNull().
+				CollectionLengthLowerBound(1).
+				CollectionLengthUpperBound(2).
+				NewValue(),
+		},
+		{
+			[]Value{
+				ListVal([]Value{True}).Mark("a"),
+				ListVal([]Value{True, True}).Mark("b"),
+			},
+			UnknownVal(List(Bool)).Refine().
+				NotNull().
+				CollectionLengthLowerBound(1).
+				CollectionLengthUpperBound(2).
+				NewValue().
+				Mark("a").Mark("b"),
+			UnknownVal(List(Bool)).Refine().
+				NotNull().
+				CollectionLengthLowerBound(1).
+				CollectionLengthUpperBound(2).
+				NewValue().
+				Mark("a").Mark("b"),
+		},
+		{
+			[]Value{
+				SetVal([]Value{True}),
+				SetVal([]Value{False}),
+			},
+			SetVal([]Value{UnknownVal(Bool)}),
+			SetVal([]Value{UnknownVal(Bool)}),
+		},
+		{
+			[]Value{
+				SetVal([]Value{True}),
+				ListVal([]Value{False}),
+			},
+			DynamicVal,
+			DynamicVal,
+		},
+		{
+			[]Value{
+				NullVal(Bool),
+				NullVal(Bool),
+			},
+			NullVal(Bool),
+			NullVal(Bool),
+		},
+		{
+			[]Value{
+				NullVal(Bool),
+				NullVal(String),
+			},
+			NullVal(DynamicPseudoType),
+			NullVal(DynamicPseudoType),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%#v", test.Inputs), func(t *testing.T) {
+			for _, orMismatch := range []bool{true, false} {
+				t.Run(fmt.Sprintf("orMismatch=%t", orMismatch), func(t *testing.T) {
+					got := UnknownChoice(slices.Values(test.Inputs), orMismatch)
+					want := test.Want
+					if orMismatch {
+						want = test.WantOrMismatch
+					}
+
+					if !want.RawEquals(got) {
+						var buf strings.Builder
+						for _, input := range test.Inputs {
+							fmt.Fprintf(&buf, " - %#v\n", input)
+						}
+						t.Errorf("wrong result\ninputs:\n%s\ngot:  %#v\nwant: %#v", buf.String(), got, test.Want)
+						if got.GoString() == test.Want.GoString() {
+							// We should not generally get in here, but since this test
+							// and the code it's testing involve a bunch of
+							// manually-assembled values rather than going through the
+							// public API it's possible that we'll accidentally
+							// construct something that the normal API couldn't normally
+							// make and thus have differences the GoString function
+							// doesn't take into account, in which case we'll show the
+							// internals too for easier debugging.
+							t.Logf(
+								"value internals\ngot: cty.Value{\n  v:  %#v,\n  ty: %#v,\n}\nwant: cty.Value{\n  v:  %#v,\n  ty: %#v,\n}",
+								got.v, got.ty, test.Want.v, test.Want.ty,
+							)
+						}
+					}
+				})
+			}
+		})
 	}
 }

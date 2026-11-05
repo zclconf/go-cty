@@ -2,9 +2,12 @@ package cty
 
 import (
 	"fmt"
+	"iter"
+	"maps"
 	"math/big"
 	"reflect"
 
+	"github.com/zclconf/go-cty/cty/ctymarks"
 	"github.com/zclconf/go-cty/cty/ctystrings"
 	"github.com/zclconf/go-cty/cty/set"
 )
@@ -363,4 +366,115 @@ func CapsuleVal(ty Type, wrapVal any) Value {
 		ty: ty,
 		v:  wrapVal,
 	}
+}
+
+// UnknownChoice takes a sequence of values and returns a single value that
+// somehow represents an as-yet-undecided choice of any one of them.
+//
+// If orMismatch is true, the result considers the possibility that the final
+// selection might actually not match any of the given values and return an
+// error instead. In practice this forces the result to represent only the
+// [ValueRange] of the given values, so the result won't "over-promise" and
+// thus potentially generate confusingly-precise results downstream. orMismatch
+// should be set only in cases where the final selection itself might fail,
+// such as in [Value.Index] with an unknown value, and not in cases where
+// exactly one of the values is guaranteed to be chosen assuming that no
+// non-selection related errors occur, such as in [Value.Cond] with an known
+// boolean predicate.
+//
+// If the given sequence has length zero then the result is always [DynamicVal].
+// If the sequence has length one then the result is that one value.
+// For two or more values that are not equal the result is a value that has
+// at least some aspects unknown, but is a best effort to represent what
+// all of the values have in common. The precision of the result might improve
+// in future versions such that some inputs produce a result with fewer unknown
+// values than before.
+//
+// The intended use of this function is for cty-based languages that want to
+// implement some sort of conditional choice between values where the selection
+// may itself be based on an unknown value, and therefore the result of that
+// conditional choice must include unknowns itself.
+//
+// This function does not impose restrictions on the types of the given values,
+// but if the values are of different types then the result is likely to be
+// an unknown value of an unknown type. Callers may therefore wish to attempt
+// to unify the types using functions in the "convert" package before passing
+// the converted values to this function, in which case the result is far more
+// likely to have a wholly-known type.
+func UnknownChoice(vals iter.Seq[Value], orMismatch bool) Value {
+	var ret Value
+	for val := range vals {
+		if orMismatch {
+			// We handle the "or mismatch" case by using a placeholder based
+			// on the value's range, instead of using the value directly.
+			// This will usually contain at least some unknown elements, except
+			// for some special situations like an empty list known not to be
+			// null, for which there is no possible other value it could have.
+			val = val.RangeBasedPlaceholder()
+		}
+		if ret == NilVal {
+			ret = val
+			continue
+		}
+		// We use RawEquals here because if the two values are equal but
+		// disagree on marks then existing applications like it better when we
+		// report that as an unknown value with both marks than as a known
+		// value with both marks, since once the choice becomes known only
+		// one of those sets of marks would actually be selected and some
+		// applications fail if one known value is replaced by another once
+		// new known information is added (although that's not something we
+		// generally guarantee -- just being pragmatic here because the cost
+		// of being more conservative here is relatively low).
+		if val.RawEquals(ret) {
+			continue
+		}
+		// If we get here then our result is going to be at least partially
+		// unknown, but we'll try to make it as known as possible if
+		// the values all have something in common. To do that we'll
+		// find a ValueRange that includes both values and then build our
+		// value from it.
+		a, aMarks, aNestedMarks := val.UnmarkDirectAndNested()
+		b, bMarks, bNestedMarks := ret.UnmarkDirectAndNested()
+		aRng, bRng := a.Range(), b.Range()
+		if aRng.raw != nil && bRng.raw != nil && aRng.raw.null() == tristateTrue && bRng.raw.null() == tristateTrue {
+			// If both of the values are definitely null then we'll prefer to
+			// return a null instead of a refined unknown value, because this
+			// allows us to preserve the nullness even if the types are
+			// different.
+			retTy := DynamicPseudoType
+			if aTy := a.Type(); aTy.Equals(b.Type()) {
+				retTy = aTy
+			}
+			ret = NullVal(retTy).WithMarks(aMarks, bMarks)
+			continue
+		}
+		newRng := commonRange(aRng, bRng)
+		// We'll just merge the a and b marks into "a"'s sets here, which is
+		// okay because UnmarkDirectAndNested creates distinct ValueMarks for
+		// each call.
+		if aMarks == nil {
+			aMarks = make(ValueMarks)
+		}
+		if aNestedMarks == nil {
+			aNestedMarks = make(ValueMarks)
+		}
+		maps.Copy(aMarks, bMarks)
+		maps.Copy(aNestedMarks, bNestedMarks)
+		// Only "provenance marks" are automatically propagated into the nested
+		// marks, which is important for backward-compatibility for cty callers
+		// that predate the concept of nested marks and could break if they
+		// suddenly encounter nested marks they weren't expecting. (Provenance
+		// marks are okay because that concept was introduced at the same time
+		// as unknown values began supporting nested marks.)
+		for mark := range aNestedMarks {
+			if !ctymarks.IsProvenanceMark(mark) {
+				delete(aNestedMarks, mark)
+			}
+		}
+		ret = newRng.asValueWithMarks(aMarks, aNestedMarks)
+	}
+	if ret == NilVal {
+		ret = DynamicVal // just to avoid a panic hazard for callers if they pass an empty sequence
+	}
+	return ret
 }

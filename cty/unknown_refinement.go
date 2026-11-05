@@ -510,6 +510,10 @@ func (b *RefinementBuilder) StringPrefixFull(prefix string) *RefinementBuilder {
 	return b
 }
 
+func (b *RefinementBuilder) currentRefinement() unknownValRefinement {
+	return b.wip
+}
+
 // NewValue completes the refinement process by constructing a new value
 // that is guaranteed to meet all of the previously-specified refinements.
 //
@@ -522,27 +526,31 @@ func (b *RefinementBuilder) StringPrefixFull(prefix string) *RefinementBuilder {
 // refinements have reduced the range to a single exact value then the result
 // might be that known value.
 func (b *RefinementBuilder) NewValue() (ret Value) {
-	defer func() {
-		// Regardless of how we return, the new value should have the same
-		// marks as our original value.
-		ret = ret.WithMarks(b.marks)
-	}()
+	return refinedValue(b.orig.WithMarks(b.marks), b.wip)
+}
 
-	if b.orig.IsKnown() || b.orig == DynamicVal {
-		return b.orig
+func refinedValue(origVal Value, refinement unknownValRefinement) Value {
+	if origVal.IsMarked() {
+		v, marks := origVal.Unmark()
+		return refinedValue(v, refinement).WithMarks(marks)
 	}
+
+	if origVal.IsKnown() || refinement == nil || origVal == DynamicVal {
+		return origVal
+	}
+	nestedMarks := origVal.unknownValueNestedMarks()
 
 	// We have a few cases where the value has been refined enough that we now
 	// know exactly what the value is, or at least we can produce a more
 	// detailed approximation of it.
-	switch b.wip.null() {
+	switch refinement.null() {
 	case tristateTrue:
 		// There is only one null value of each type so this is now known.
-		return NullVal(b.orig.Type())
+		return NullVal(origVal.Type())
 	case tristateFalse:
 		// If we know it's definitely not null then we might have enough
 		// information to construct a known, non-null value.
-		if rfn, ok := b.wip.(*refinementNumber); ok {
+		if rfn, ok := refinement.(*refinementNumber); ok {
 			// If both bounds are inclusive and equal then our value can
 			// only be the same number as the bounds.
 			if rfn.maxInc && rfn.minInc {
@@ -553,12 +561,12 @@ func (b *RefinementBuilder) NewValue() (ret Value) {
 					}
 				}
 			}
-		} else if rfn, ok := b.wip.(*refinementCollection); ok {
+		} else if rfn, ok := refinement.(*refinementCollection); ok {
 			// If both of the bounds are equal then we know the length is
 			// the same number as the bounds.
 			if rfn.minLen == rfn.maxLen {
 				knownLen := rfn.minLen
-				ty := b.orig.Type()
+				ty := origVal.Type()
 				if knownLen == 0 {
 					// If we know the length is zero then we can construct
 					// a known value of any collection kind.
@@ -577,7 +585,7 @@ func (b *RefinementBuilder) NewValue() (ret Value) {
 					elems := make([]Value, knownLen)
 					unk := UnknownVal(ty.ElementType())
 					for i := range elems {
-						elems[i] = unk
+						elems[i] = unk.WithMarks(nestedMarks)
 					}
 					return ListVal(elems)
 				} else if ty.IsSetType() && knownLen == 1 {
@@ -585,15 +593,30 @@ func (b *RefinementBuilder) NewValue() (ret Value) {
 					// know the one element can't possibly coalesce with
 					// anything else and so we can create a known set with
 					// an unknown element.
-					return SetVal([]Value{UnknownVal(ty.ElementType())})
+					return SetVal([]Value{UnknownVal(ty.ElementType()).WithMarks(nestedMarks)})
 				}
 			}
 		}
 	}
 
+	if origVal.ty.IsSetType() {
+		// Set elements cannot retain their own separate marks and so they
+		// always aggregate up onto the set itself. We'll mimick that here
+		// even when we're dealing with an unknown set, just to give a more
+		// realistic result.
+		return Value{
+			ty: origVal.ty,
+			v: &unknownType{
+				refinement: refinement,
+			},
+		}.WithMarks(nestedMarks)
+	}
 	return Value{
-		ty: b.orig.ty,
-		v:  &unknownType{refinement: b.wip},
+		ty: origVal.ty,
+		v: &unknownType{
+			refinement:  refinement,
+			nestedMarks: nestedMarks,
+		},
 	}
 }
 

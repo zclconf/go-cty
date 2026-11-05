@@ -3,6 +3,7 @@ package cty
 import (
 	"fmt"
 	"reflect"
+	"slices"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -1753,6 +1754,36 @@ func TestValueRawEquals(t *testing.T) {
 			StringVal("b").Mark(2),
 			false,
 		},
+		{
+			UnknownVal(String).Mark(1),
+			UnknownVal(String).Mark(1),
+			true,
+		},
+		{
+			UnknownVal(String).Mark(1),
+			UnknownVal(String),
+			false,
+		},
+		{
+			UnknownVal(String).Mark(1),
+			UnknownVal(String).Mark(2),
+			false,
+		},
+		{
+			UnknownValWithNestedMarks(List(String), slices.Values([]any{1})),
+			UnknownValWithNestedMarks(List(String), slices.Values([]any{1})),
+			true,
+		},
+		{
+			UnknownValWithNestedMarks(List(String), slices.Values([]any{1})),
+			UnknownVal(String),
+			false,
+		},
+		{
+			UnknownValWithNestedMarks(List(String), slices.Values([]any{1})),
+			UnknownValWithNestedMarks(List(String), slices.Values([]any{2})),
+			false,
+		},
 	}
 
 	for _, test := range tests {
@@ -2493,6 +2524,156 @@ func TestValueGetAttr(t *testing.T) {
 	}
 }
 
+func TestValueGetAttrByValue(t *testing.T) {
+	tests := []struct {
+		Object   Value
+		AttrName Value
+		Expected Value
+	}{
+		{
+			ObjectVal(map[string]Value{
+				"greeting": StringVal("hello"),
+			}),
+			StringVal("greeting"),
+			StringVal("hello"),
+		},
+		{
+			UnknownVal(Object(map[string]Type{
+				"gr\u00e9eting": String, // precombined é
+			})),
+			StringVal("gre\u0301eting"), // e with combining acute accent
+			UnknownVal(String),
+		},
+		{
+			DynamicVal,
+			StringVal("hello"),
+			DynamicVal,
+		},
+		{
+			DynamicVal,
+			UnknownVal(String),
+			DynamicVal,
+		},
+		{
+			DynamicVal,
+			DynamicVal,
+			DynamicVal,
+		},
+		{
+			ObjectVal(map[string]Value{
+				"greeting": StringVal("hello"),
+			}).Mark(1),
+			StringVal("greeting"),
+			StringVal("hello").Mark(1),
+		},
+		{
+			DynamicVal,
+			UnknownVal(String).Mark(1),
+			DynamicVal.Mark(1),
+		},
+		{
+			DynamicVal.Mark(1),
+			UnknownVal(String).Mark(2),
+			DynamicVal.Mark(1).Mark(2),
+		},
+		{
+			ObjectVal(map[string]Value{
+				"greeting": StringVal("hello").Mark(1),
+				"name":     StringVal("ermintrude").Mark(4),
+			}).Mark(2),
+			UnknownVal(String).Mark(3),
+			UnknownVal(String).RefineNotNull().Mark(2).Mark(3),
+		},
+		{
+			ObjectVal(map[string]Value{
+				"greeting": StringVal("hello").Mark(1),
+			}).Mark(2),
+			UnknownVal(String).Mark(3),
+			UnknownVal(String).Refine().
+				NotNull().
+				StringPrefixFull("hello").
+				NewValue().Mark(2).Mark(3),
+		},
+		{
+			ObjectVal(map[string]Value{
+				"greeting": StringVal("hello").Mark(prvnMark("a")),
+				"name":     StringVal("ermintrude").Mark(prvnMark("b")),
+			}).Mark(2),
+			UnknownVal(String).Mark(3),
+			UnknownVal(String).RefineNotNull().Mark(2).Mark(3).Mark(prvnMark("a")).Mark(prvnMark("b")),
+		},
+		{
+			ObjectVal(map[string]Value{
+				"greeting": StringVal("hello").Mark(prvnMark("a")),
+			}).Mark(2),
+			UnknownVal(String).Mark(3),
+			UnknownVal(String).Refine().
+				NotNull().
+				StringPrefixFull("hello").
+				NewValue().Mark(2).Mark(3).Mark(prvnMark("a")),
+		},
+		{
+			ObjectVal(map[string]Value{
+				"greeting": StringVal("hello").Mark(prvnMark("a")),
+				"happy":    True.Mark(prvnMark("b")),
+			}).Mark(2),
+			UnknownVal(String).Mark(3),
+			DynamicVal.Mark(2).Mark(3).Mark(prvnMark("a")).Mark(prvnMark("b")),
+		},
+		{
+			ObjectVal(map[string]Value{
+				"greeting": StringVal("hello").Mark(prvnMark("a")),
+				"stuff":    ListVal([]Value{True.Mark(prvnMark("c"))}).Mark(prvnMark("b")),
+			}).Mark(2),
+			UnknownVal(String).Mark(3),
+			// Because prvnMark("c") is a provenance mark, it gets preserved
+			// as a "nested mark" in the result. This is important because it
+			// means that a mark like this could be used to represent where
+			// this value came from without that tracking getting erased by
+			// a lookup of an unknown attribute.
+			UnknownValWithNestedMarks(DynamicPseudoType, slices.Values([]any{prvnMark("c")})).Mark(2).Mark(3).Mark(prvnMark("a")).Mark(prvnMark("b")),
+		},
+		{
+			ObjectVal(map[string]Value{
+				"greeting": StringVal("hello").Mark(prvnMark("a")),
+				"happy":    True.Mark(prvnMark("b")),
+			}).Mark(2),
+			UnknownVal(String).Refine().StringPrefixFull("hap").NewValue().Mark(3),
+			// The known prefix on the attribute name let us filter out all
+			// but one of the attributes, giving a more precise result.
+			UnknownVal(Bool).RefineNotNull().Mark(2).Mark(3).Mark(prvnMark("b")),
+		},
+		{
+			EmptyObjectVal.Mark(1),
+			UnknownVal(String).Mark(2),
+			// We actually know this can't possibly succeed, but we return a
+			// wholly-unknown value anyway so that the caller can wait to return
+			// a less confusing error once the attribute name is known.
+			DynamicVal.Mark(1).Mark(2),
+		},
+		{
+			ObjectVal(map[string]Value{
+				"greeting": StringVal("hello").Mark(prvnMark("a")),
+				"happy":    True.Mark(prvnMark("b")),
+			}).Mark(2),
+			UnknownVal(String).Refine().StringPrefixFull("nonmatch").NewValue().Mark(3),
+			// The prefix means this can't possibly succeed, but we return a
+			// wholly-unknown value anyway so that the caller can wait to return
+			// a less confusing error once the attribute name is known.
+			DynamicVal.Mark(2).Mark(3),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%#v.GetAttrByValue(%#v)", test.Object, test.AttrName), func(t *testing.T) {
+			got := test.Object.GetAttrByValue(test.AttrName)
+			if !got.RawEquals(test.Expected) {
+				t.Fatalf("wrong result from GetAttrByValue\nobject: %#v\nattr:   %#v\ngot:    %#v\nwant:   %#v", test.Object, test.AttrName, got, test.Expected)
+			}
+		})
+	}
+}
+
 func TestValueIndex(t *testing.T) {
 	tests := []struct {
 		Collection Value
@@ -2510,14 +2691,38 @@ func TestValueIndex(t *testing.T) {
 			StringVal("world"),
 		},
 		{
+			ListVal([]Value{StringVal("http://foo.example.com"), StringVal("http://bar.example.com")}),
+			UnknownVal(Number),
+			UnknownVal(String).Refine().
+				NotNull().
+				StringPrefixFull("http://").
+				NewValue(),
+		},
+		{
 			ListVal([]Value{StringVal("hello")}),
 			UnknownVal(Number),
-			UnknownVal(String),
+			UnknownVal(String).Refine().
+				NotNull().
+				StringPrefixFull("hello").
+				NewValue(), // unknown because the final known index could be out of range, but still approximates what's guaranteed if index is valid
+		},
+		{
+			ListVal([]Value{StringVal("http://foo.example.com"), StringVal("http://bar.example.com"), StringVal("https://bar.example.com")}),
+			UnknownVal(Number).Refine().
+				NumberRangeInclusive(Zero, NumberIntVal(1)). // excludes the last element
+				NewValue(),
+			UnknownVal(String).Refine().
+				NotNull().
+				StringPrefixFull("http://").
+				NewValue(),
 		},
 		{
 			ListVal([]Value{StringVal("hello")}),
 			DynamicVal,
-			UnknownVal(String),
+			UnknownVal(String).Refine().
+				NotNull().
+				StringPrefixFull("hello").
+				NewValue(),
 		},
 		{
 			UnknownVal(List(String)),
@@ -2535,14 +2740,34 @@ func TestValueIndex(t *testing.T) {
 			StringVal("hello"),
 		},
 		{
-			MapVal(map[string]Value{"greeting": True}),
+			MapVal(map[string]Value{"greeting": True, "dismissal": False}),
 			UnknownVal(String),
+			UnknownVal(Bool).RefineNotNull(),
+		},
+		{
+			MapVal(map[string]Value{"greeting": True, "dismissal": False}),
+			UnknownVal(String).Refine().StringPrefixFull("greet").NewValue(),
+			UnknownVal(Bool).RefineNotNull(), // unknown because the final known index could be out of range, but still approximates what's guaranteed if index is valid
+		},
+		{
+			MapVal(map[string]Value{"greeting": True, "dismissal": False}),
+			UnknownVal(String).Refine().StringPrefixFull("dis").NewValue(),
+			UnknownVal(Bool).RefineNotNull(), // unknown because the final known index could be out of range, but still approximates what's guaranteed if index is valid
+		},
+		{
+			MapVal(map[string]Value{"greeting": True, "dismissal": False}),
+			UnknownVal(String).Refine().StringPrefixFull("nonmatch").NewValue(),
 			UnknownVal(Bool),
 		},
 		{
 			MapVal(map[string]Value{"greeting": True}),
+			UnknownVal(String),
+			UnknownVal(Bool).RefineNotNull(),
+		},
+		{
+			MapVal(map[string]Value{"greeting": True}),
 			DynamicVal,
-			UnknownVal(Bool),
+			UnknownVal(Bool).RefineNotNull(),
 		},
 		{
 			UnknownVal(Map(String)),
@@ -2600,6 +2825,11 @@ func TestValueIndex(t *testing.T) {
 			DynamicVal,
 		},
 		{
+			TupleVal([]Value{StringVal("hello"), StringVal("goodbye"), UnknownVal(Number)}),
+			UnknownVal(Number).Refine().NumberRangeInclusive(Zero, NumberIntVal(1)).NewValue(), // excludes the last element
+			UnknownVal(String).RefineNotNull(),
+		},
+		{
 			UnknownVal(Tuple([]Type{String})),
 			NumberIntVal(0),
 			UnknownVal(String),
@@ -2614,13 +2844,30 @@ func TestValueIndex(t *testing.T) {
 			NumberIntVal(0).Mark(1),
 			StringVal("hello").Mark(1),
 		},
+		{
+			ListVal([]Value{
+				ObjectVal(map[string]Value{
+					"inner": True.Mark(1).Mark(prvnMark("a")),
+				}).Mark(2).Mark(prvnMark("b")),
+				ObjectVal(map[string]Value{
+					"inner": False.Mark(prvnMark("d")),
+				}).Mark(2).Mark(prvnMark("c")),
+			}).Mark(3),
+			UnknownVal(Number),
+			UnknownValWithNestedMarks(Object(map[string]Type{
+				"inner": Bool,
+			}), slices.Values([]any{prvnMark("a"), prvnMark("d")})).RefineNotNull().
+				Mark(3).
+				Mark(prvnMark("b")).
+				Mark(prvnMark("c")), // not 1 or 2 intentionally, because they are too nested and are not provenance marks
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(fmt.Sprintf("%#v.Index(%q)", test.Collection, test.Key), func(t *testing.T) {
 			got := test.Collection.Index(test.Key)
 			if !got.RawEquals(test.Expected) {
-				t.Fatalf("Index returned %#v; want %#v", got, test.Expected)
+				t.Fatalf("wrong result from Index\ngot:  %#v\nwant: %#v", got, test.Expected)
 			}
 		})
 	}
@@ -3227,6 +3474,171 @@ func TestValueOr(t *testing.T) {
 			got := test.Receiver.Or(test.Other)
 			if !got.RawEquals(test.Expected) {
 				t.Fatalf("Or returned %#v; want %#v", got, test.Expected)
+			}
+		})
+	}
+}
+
+func TestValueCond(t *testing.T) {
+	tests := []struct {
+		Predicate       Value
+		IfTrue, IfFalse Value
+		Expected        Value
+	}{
+		{
+			True,
+			StringVal("yes"),
+			StringVal("no"),
+			StringVal("yes"),
+		},
+		{
+			False,
+			StringVal("yes"),
+			StringVal("no"),
+			StringVal("no"),
+		},
+		{
+			UnknownVal(Bool),
+			StringVal("yes"),
+			StringVal("no"),
+			UnknownVal(String).RefineNotNull(),
+		},
+		{
+			DynamicVal,
+			StringVal("yes"),
+			StringVal("no"),
+			UnknownVal(String).RefineNotNull(),
+		},
+		{
+			True,
+			StringVal("yes"),
+			Zero,
+			StringVal("yes"),
+		},
+		{
+			False,
+			StringVal("yes"),
+			Zero,
+			Zero,
+		},
+		{
+			UnknownVal(Bool),
+			StringVal("yes"),
+			Zero,
+			DynamicVal,
+		},
+		{
+			DynamicVal,
+			StringVal("yes"),
+			Zero,
+			DynamicVal,
+		},
+		{
+			UnknownVal(Bool),
+			StringVal("yes"),
+			NullVal(String),
+			UnknownVal(String),
+		},
+		{
+			UnknownVal(Bool),
+			NullVal(String),
+			NullVal(String),
+			NullVal(String),
+		},
+		{
+			UnknownVal(Bool),
+			NullVal(String),
+			NullVal(Number),
+			NullVal(DynamicPseudoType),
+		},
+		{
+			UnknownVal(Bool),
+			StringVal("uhh, yes"),
+			StringVal("uhh, no"),
+			UnknownVal(String).Refine().
+				NotNull().
+				StringPrefixFull("uhh, ").
+				NewValue(),
+		},
+		{
+			UnknownVal(Bool),
+			StringVal("a"),
+			StringVal("a"),
+			StringVal("a"),
+		},
+		{
+			True,
+			StringVal("yes").Mark("y"),
+			StringVal("no").Mark("n"),
+			StringVal("yes").Mark("y"),
+		},
+		{
+			False,
+			StringVal("yes").Mark("y"),
+			StringVal("no").Mark("n"),
+			StringVal("no").Mark("n"),
+		},
+		{
+			UnknownVal(Bool),
+			StringVal("yes").Mark("y"),
+			StringVal("no").Mark("n"),
+			UnknownVal(String).RefineNotNull().Mark("y").Mark("n"),
+		},
+		{
+			UnknownVal(Bool),
+			StringVal("a").Mark("t"),
+			StringVal("a").Mark("f"),
+			UnknownVal(String).Refine().
+				NotNull().
+				StringPrefixFull("a").
+				NewValue().Mark("t").Mark("f"),
+		},
+		{
+			True.Mark("?"),
+			StringVal("yes"),
+			StringVal("no"),
+			StringVal("yes").Mark("?"),
+		},
+		{
+			False.Mark("?"),
+			StringVal("yes"),
+			StringVal("no"),
+			StringVal("no").Mark("?"),
+		},
+		{
+			UnknownVal(Bool).Mark("?"),
+			StringVal("yes"),
+			StringVal("no"),
+			UnknownVal(String).RefineNotNull().Mark("?"),
+		},
+		{
+			True.Mark("?"),
+			StringVal("yes").Mark("y"),
+			StringVal("no").Mark("n"),
+			StringVal("yes").Mark("?").Mark("y"),
+		},
+		{
+			False.Mark("?"),
+			StringVal("yes").Mark("y"),
+			StringVal("no").Mark("n"),
+			StringVal("no").Mark("?").Mark("n"),
+		},
+		{
+			UnknownVal(Bool).Mark("?"),
+			StringVal("yes").Mark("y"),
+			StringVal("no").Mark("n"),
+			UnknownVal(String).RefineNotNull().Mark("?").Mark("y").Mark("n"),
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("%#v.Cond(%#v,%#v)", test.Predicate, test.IfTrue, test.IfFalse), func(t *testing.T) {
+			got := test.Predicate.Cond(test.IfTrue, test.IfFalse)
+			if !got.RawEquals(test.Expected) {
+				t.Fatalf(
+					"wrong result\npredicate: %#v\nif true:   %#v\nif false:  %#v\n\ngot:  %#v\nwant: %#v",
+					test.Predicate, test.IfTrue, test.IfFalse, got, test.Expected,
+				)
 			}
 		})
 	}
