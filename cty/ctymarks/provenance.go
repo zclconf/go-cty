@@ -50,6 +50,10 @@ package ctymarks
 // as provenance marks, expecting that any gaps in the tracking of those marks
 // discovered in future will be fixed in a future version of cty.
 //
+// Any mark whose type does not have this zero-sized type embedded in it is
+// known as a "plain" mark, to distinguish from "provenance" marks. These
+// are currently the only two subcategories of mark.
+//
 // [OpenTofu]: https://opentofu.org/
 type ProvenanceMark struct{}
 
