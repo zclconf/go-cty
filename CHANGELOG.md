@@ -1,5 +1,13 @@
 # 1.20.0 (Unreleased)
 
+This release introduces a new concept called [provenance marks](./docs/marks.md#provenance-marks), which is a subcategory of marks that get more conservative treatment in how they are propagated through operations involving unknown values.
+
+Alongside that, it's now possible for an unknown value to track both direct marks (as before) _and_ an approximation of what marks could be nested inside a final known value in the same position. This means that for unknown values it's now possible for `Value.UnmarkDeep` to return a larger set of marks than `Value.Unmark`, just as for known collection and structural values. This is an approximation, though: it tracks only that a certain mark could potentially appear _anywhere_ within the final object, not a specific path where it will appear. This is just enough complexity to preserve the presence of nested provenance marks, at the expense of being more conservative in how marks might propagate in subsequent operations.
+
+The development of the functionality related to provenance marks was sponsored by Spacelift on behalf of the OpenTofu Project, which is intending to make more extensive use of marks to track dependencies by dynamic analysis instead of by simply searching for syntactic references to other objects. That mechanism relies on the assumption that an operation involving unknown values will produce an unknown result that has the superset of all possible dependency marks that could appear on a subsequent re-run of the same operation with known operands, which is what the more conservative treatment of provenance marks is intended to achieve.
+
+Other smaller changes in this release:
+
 - The new `cty.Value.GetAttrByValue` is like `cty.Value.GetAttr` except that it takes the attribute name as `cty.Value` instead of `string`, and can therefore implement a reasonable reaction to the attribute name being unknown for calling applications that support dynamically-chosen attribute names.
 - stdlib: `SignumFunc` now works with any number cty can represent, whereas before it was unnecessarily limited only to numbers that could be converted to Go's `int` type.
 
