@@ -279,7 +279,7 @@ func unmarshalTuple(buf []byte, etys []cty.Type, path cty.Path) (cty.Value, erro
 	}
 
 	if len(vals) != len(etys) {
-		return cty.NilVal, path[:len(path)-1].NewErrorf("not enough tuple elements (need %d)", len(etys))
+		return cty.NilVal, path.NewErrorf("not enough tuple elements (need %d)", len(etys))
 	}
 
 	if len(vals) == 0 {
