@@ -114,6 +114,13 @@ func NormalizeString(s string) string {
 
 // ObjectVal returns a Value of an object type whose structure is defined
 // by the key names and value types in the given map.
+//
+// The attribute names are automatically normalized in the same way that cty
+// strings are normalized, as implemented by [NormalizeString]. If two distinct
+// attribute names have the same normalization then this function will panic.
+// If you're choosing attribute names dynamically based on [String] values
+// then they are already pre-normalized anyway, but take care when using
+// strings from outside of cty directly as attribute names.
 func ObjectVal(attrs map[string]Value) Value {
 	attrTypes := make(map[string]Type, len(attrs))
 	attrVals := make(map[string]any, len(attrs))
@@ -226,7 +233,18 @@ func MapVal(vals map[string]Value) Value {
 			))
 		}
 
-		rawMap[NormalizeString(key)] = val.v
+		key := NormalizeString(key)
+		if _, exists := rawMap[key]; exists {
+			// This can occur if the caller provides two different keys that
+			// normalize to the same string. Callers that are implementing
+			// a higher-level language like ZCL/HCL typically pre-normalize
+			// strings before getting here, but if someone directly calls this
+			// function with non-normalized strings then they're required to
+			// deal with conflicts themselves before calling, so they can
+			// decide their own policy for how to resolve the conflict.
+			panic(fmt.Sprintf("multiple map keys that normalize to %q", key))
+		}
+		rawMap[key] = val.v
 	}
 
 	return Value{
@@ -244,10 +262,16 @@ func MapValEmpty(element Type) Value {
 }
 
 // CanMapVal returns false if the given Values can not be coalesced into a
-// single Map due to inconsistent element types.
+// single Map due to inconsistent element types or conflicting keys.
 func CanMapVal(vals map[string]Value) bool {
 	elementType := DynamicPseudoType
-	for _, val := range vals {
+	keys := make(map[string]struct{}, len(vals))
+	for key, val := range vals {
+		key := NormalizeString(key)
+		if _, exists := keys[key]; exists {
+			return false
+		}
+		keys[key] = struct{}{}
 		if elementType == DynamicPseudoType {
 			elementType = val.ty
 		} else if val.ty != DynamicPseudoType && !elementType.Equals(val.ty) {

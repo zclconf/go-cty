@@ -13,22 +13,18 @@ type typeObject struct {
 
 // Object creates an object type with the given attribute types.
 //
-// After a map is passed to this function the caller must no longer access it,
-// since ownership is transferred to this library.
+// The attribute names are automatically normalized in the same way that cty
+// strings are normalized, as implemented by [NormalizeString]. If two distinct
+// attribute names have the same normalization then this function will panic.
+// If you're choosing attribute names dynamically based on [String] values
+// then they are already pre-normalized anyway, but take care when using
+// strings from outside of cty directly as attribute names.
 func Object(attrTypes map[string]Type) Type {
 	return ObjectWithOptionalAttrs(attrTypes, nil)
 }
 
 // ObjectWithOptionalAttrs creates an object type where some of its attributes
 // are optional.
-//
-// This function is EXPERIMENTAL. The behavior of the function or of any other
-// functions working either directly or indirectly with a type created by
-// this function is not currently considered as a compatibility constraint, and
-// is subject to change even in minor-version releases of this module. Other
-// modules that work with cty types and values may or may not support object
-// types with optional attributes; if they do not, their behavior when
-// receiving one may be non-ideal.
 //
 // Optional attributes are significant only when an object type is being used
 // as a target type for conversion in the "convert" package. A value of an
@@ -43,7 +39,18 @@ func Object(attrTypes map[string]Type) Type {
 func ObjectWithOptionalAttrs(attrTypes map[string]Type, optional []string) Type {
 	attrTypesNorm := make(map[string]Type, len(attrTypes))
 	for k, v := range attrTypes {
-		attrTypesNorm[NormalizeString(k)] = v
+		name := NormalizeString(k)
+		if _, exists := attrTypesNorm[name]; exists {
+			// This can occur if the caller provides two different names that
+			// normalize to the same string. Callers that are implementing
+			// a higher-level language like ZCL/HCL typically pre-normalize
+			// strings before getting here, but if someone directly calls this
+			// function with non-normalized strings then they're required to
+			// deal with conflicts themselves before calling, so they can
+			// decide their own policy for how to resolve the conflict.
+			panic(fmt.Sprintf("multiple attributes that normalize to %q", name))
+		}
+		attrTypesNorm[name] = v
 	}
 
 	var optionalSet map[string]struct{}
