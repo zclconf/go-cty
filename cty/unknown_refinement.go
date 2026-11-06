@@ -599,6 +599,9 @@ func refinedValue(origVal Value, refinement unknownValRefinement) Value {
 		}
 	}
 
+	if !refinementIsUseful(refinement) {
+		refinement = nil
+	}
 	if origVal.ty.IsSetType() {
 		// Set elements cannot retain their own separate marks and so they
 		// always aggregate up onto the set itself. We'll mimick that here
@@ -817,3 +820,22 @@ type tristateBool rune
 const tristateTrue tristateBool = 'T'
 const tristateFalse tristateBool = 'F'
 const tristateUnknown tristateBool = 0
+
+func refinementIsUseful(r unknownValRefinement) bool {
+	switch r := r.(type) {
+	case nil:
+		return false
+	case *refinementNullable:
+		return r.isNull != tristateUnknown
+	case *refinementString:
+		return r.isNull != tristateUnknown || r.prefix != ""
+	case *refinementNumber:
+		return r.isNull != tristateUnknown || (r.max != NilVal && r.max.IsKnown()) || (r.min != NilVal && r.min.IsKnown())
+	case *refinementCollection:
+		return r.isNull != tristateUnknown || r.minLen != 0 || r.maxLen != math.MaxInt
+	default:
+		// Should not get here because this should be extended for any new
+		// refinement type.
+		panic(fmt.Sprintf("refinementIsUseful doesn't support %T", r))
+	}
+}
