@@ -2605,12 +2605,41 @@ func TestValueGetAttrByValue(t *testing.T) {
 		{
 			ObjectVal(map[string]Value{
 				"greeting": StringVal("hello").Mark(prvnMark("a")),
+				"name":     StringVal("ermintrude").Mark(prvnMark("b")),
+			}).Mark(2),
+			DynamicVal,
+			UnknownVal(String).RefineNotNull().Mark(2).Mark(prvnMark("a")).Mark(prvnMark("b")),
+		},
+		{
+			ObjectVal(map[string]Value{
+				"greeting": StringVal("hello").Mark(prvnMark("a")),
 			}).Mark(2),
 			UnknownVal(String).Mark(3),
 			UnknownVal(String).Refine().
 				NotNull().
 				StringPrefixFull("hello").
 				NewValue().Mark(2).Mark(3).Mark(prvnMark("a")),
+		},
+		{
+			UnknownValWithNestedMarks(Object(map[string]Type{
+				"greeting": String,
+				"age":      Number,
+			}), slices.Values([]any{prvnMark("a")})),
+			UnknownVal(String).Mark(3),
+			DynamicVal.Mark(prvnMark("a")).Mark(3),
+		},
+		{
+			UnknownValWithNestedMarks(Object(map[string]Type{
+				"greeting": String,
+				"age":      Number,
+			}), slices.Values([]any{prvnMark("a")})),
+			StringVal("greeting").Mark(3),
+			UnknownVal(String).Mark(prvnMark("a")).Mark(3),
+		},
+		{
+			UnknownValWithNestedMarks(DynamicPseudoType, slices.Values([]any{"a"})),
+			UnknownVal(String).Mark("a"),
+			DynamicVal.Mark("a"),
 		},
 		{
 			ObjectVal(map[string]Value{
@@ -2860,6 +2889,34 @@ func TestValueIndex(t *testing.T) {
 				Mark(3).
 				Mark(prvnMark("b")).
 				Mark(prvnMark("c")), // not 1 or 2 intentionally, because they are too nested and are not provenance marks
+		},
+		{
+			ListVal([]Value{
+				ObjectVal(map[string]Value{
+					"inner": True.Mark(1).Mark(prvnMark("a")),
+				}).Mark(2).Mark(prvnMark("b")),
+				ObjectVal(map[string]Value{
+					"inner": False.Mark(prvnMark("d")),
+				}).Mark(2).Mark(prvnMark("c")),
+			}).Mark(3),
+			DynamicVal.Mark("k"),
+			UnknownValWithNestedMarks(Object(map[string]Type{
+				"inner": Bool,
+			}), slices.Values([]any{prvnMark("a"), prvnMark("d")})).RefineNotNull().
+				Mark(3).
+				Mark("k").
+				Mark(prvnMark("b")).
+				Mark(prvnMark("c")), // not 1 or 2 intentionally, because they are too nested and are not provenance marks
+		},
+		{
+			UnknownValWithNestedMarks(List(String), slices.Values([]any{"a"})),
+			DynamicVal.Mark("k"),
+			UnknownVal(String).Mark("a").Mark("k"),
+		},
+		{
+			UnknownValWithNestedMarks(List(String), slices.Values([]any{"a"})),
+			NumberIntVal(0).Mark("k"),
+			UnknownVal(String).Mark("a").Mark("k"),
 		},
 	}
 

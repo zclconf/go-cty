@@ -42,7 +42,7 @@ func (val Value) GoString() string {
 			if calls == ".NotNull()" {
 				suffix = ".RefineNotNull()"
 			} else {
-				suffix = ".Refine()" + rfn.GoString() + ".NewValue()"
+				suffix = ".Refine()" + calls + ".NewValue()"
 			}
 		}
 		if nestedMarks := val.unknownValueNestedMarks(); len(nestedMarks) != 0 {
@@ -832,8 +832,11 @@ func (val Value) GetAttr(name string) Value {
 		return val.GetAttr(name).WithMarks(valMarks)
 	}
 
+	if val.IsNull() {
+		panic("object is null")
+	}
 	if val.ty == DynamicPseudoType {
-		return DynamicVal
+		return DynamicVal.WithMarks(val.unknownValueNestedMarks())
 	}
 
 	if !val.ty.IsObjectType() {
@@ -848,7 +851,7 @@ func (val Value) GetAttr(name string) Value {
 	attrType := val.ty.AttributeType(name)
 
 	if !val.IsKnown() {
-		return UnknownVal(attrType)
+		return UnknownVal(attrType).WithMarks(val.unknownValueNestedMarks())
 	}
 
 	return Value{
@@ -872,6 +875,9 @@ func (val Value) GetAttrByValue(attrName Value) Value {
 	if attrName.IsNull() {
 		panic("attribute name is null")
 	}
+	if val.IsNull() {
+		panic("object is null")
+	}
 	attrNameTy := attrName.Type()
 	if !(attrNameTy == String || attrNameTy == DynamicPseudoType) {
 		panic("attribute name must be a string")
@@ -880,7 +886,8 @@ func (val Value) GetAttrByValue(attrName Value) Value {
 		panic("value is not an object")
 	}
 	if val.ty == DynamicPseudoType {
-		return DynamicVal
+		_, marks := val.UnmarkDeep()
+		return DynamicVal.WithMarks(marks)
 	}
 	if attrName.IsKnown() {
 		return val.GetAttr(attrName.AsString())
@@ -929,29 +936,35 @@ func (val Value) Index(key Value) Value {
 	}
 
 	if val.ty == DynamicPseudoType {
-		return DynamicVal
+		return DynamicVal.WithMarks(val.unknownValueNestedMarks())
 	}
 	var unknownKeyPlaceholder func(elty Type) Value
 	if !key.IsKnown() {
 		unknownKeyPlaceholder = func(elty Type) Value {
+			var ret Value
 			keyRng := key.Range()
-			ret := UnknownChoice(func(yield func(Value) bool) {
-				for idx, elem := range val.Elements() {
-					if inc := keyRng.Includes(idx); inc.IsKnown() && inc.False() {
-						continue
+			if val.IsKnown() {
+				ret = UnknownChoice(func(yield func(Value) bool) {
+					for idx, elem := range val.Elements() {
+						if inc := keyRng.Includes(idx); inc.IsKnown() && inc.False() {
+							continue
+						}
+						// We only keep provenance marks here, because it would be too
+						// conservative to report that the full set of marks from all
+						// attributes would definitely appear on the result once the
+						// attribute name is known.
+						av := onlyProvenanceMarks(elem)
+						if !yield(av) {
+							return
+						}
 					}
-					// We only keep provenance marks here, because it would be too
-					// conservative to report that the full set of marks from all
-					// attributes would definitely appear on the result once the
-					// attribute name is known.
-					av := onlyProvenanceMarks(elem)
-					if !yield(av) {
-						return
-					}
-				}
-			}, true)
+				}, true)
+			} else {
+				ret = UnknownVal(elty).WithMarks(val.unknownValueNestedMarks())
+			}
 			if ret.Type() == DynamicPseudoType {
-				ret = UnknownVal(elty)
+				_, marks := val.UnmarkDeep()
+				ret = UnknownVal(elty).WithMarks(marks)
 			}
 			return ret
 		}
